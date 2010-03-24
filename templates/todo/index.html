@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% load recurse %}
+
+{% block title_matter %}todo dashboard{% endblock %}
+{% block head_matter %}
+  <style>
+    body {
+       margin: 2em 6em 6em;
+    }
+    p, form {
+      margin: 0;
+      padding: 0;
+    }
+    small {
+      font-size: 80%;
+      color: #666;
+    }
+    strong {
+      font-weight: normal;
+    }
+    #menu {
+      margin: 0 20px 6em;
+      padding: 10px;
+      font-size: small;
+      font-style: italic;
+      background-color: #eee;
+    }
+    .task, .todo {
+      margin: 10px 20px;
+    }
+    .task {
+      border: 1px solid #ccc;
+      margin-bottom: 4em;
+      padding: 10px;
+    }
+    .task > form > strong {
+      font-size: 1.3em;
+    }
+    .todo {
+      font-style: italic;
+    }
+    select {
+      display: none;
+    }
+    div:hover > form > select {
+      display: inline;
+    }
+  </style>
+{% endblock %}
+
+
+
+{% block content %}
+  <div id="menu">
+    <a href="{% url todo.views.new %}">new task</a>
+  </div>
+  {% for task in tasks %}
+  <div class="task">
+    <form action="{% url todo.views.change task.id %}" method="post">
+      <strong>{{task.summary}}</strong>
+      {% comment %}
+      <select name="status" onchange="this.form.submit()">
+        {% for i, status_tuple in statuses.items %}
+        <option value="{{ i }}"{% ifequal i task.status %} selected="selected"{% endifequal %}>{{ status_tuple.1 }}</option>
+        {% endfor %}
+      </select>
+      {% endcomment %}
+    </form>
+    {% with task.children.all as todos %}
+    {% recurse_children %}
+      {% for todo in todos %}
+        <div class="todo">
+          <form action="{% url todo.views.change todo.id %}" method="post">
+            <input type="checkbox"/>
+            <strong>{{todo.summary}}</strong>
+            {% comment %}
+            <select name="status" onchange="this.form.submit()">
+              {% for i, status_tuple in statuses.items %}
+              <option value="{{ i }}"{% ifequal i step.status %} selected="selected"{% endifequal %}>{{ status_tuple.1 }}</option>
+              {% endfor %}
+            </select>
+            {% endcomment %}
+          </form>
+          {% recurse todo.children.all as todos %}
+        </div>
+      {% endfor %}
+    {% endrecurse %}
+    {% endwith %}
+  </div>
+  {% endfor %}
+{% endblock %}
