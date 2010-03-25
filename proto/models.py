@@ -26,5 +26,8 @@ class Nesting(models.Model):
     resolves_parent = models.BooleanField(default=False)
     repeat_if_failed = models.BooleanField(default=False)
     
+    class Meta:
+        ordering = ('parent', 'order')
+    
     def __unicode__(self):
        return "%s in %s" % (self.child, self.parent)
