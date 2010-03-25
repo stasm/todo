@@ -13,7 +13,7 @@ from todo.workflow import statuses
 
 
 def index(request):
-    tasks = Todo.tasks.get_active()
+    tasks = Todo.tasks.active()
     return render_to_response('todo/index.html',
                        {'tasks' : tasks,
                         'statuses' : statuses})

@@ -10,10 +10,14 @@ class TodoManager(models.Manager):
         return self.filter(status=2)
         
 class TaskManager(TodoManager):
-    def get_tasks(self):
+    def all(self):
         return self.filter(parent=None)
-    def get_active(self):
-        return self.get_tasks().filter(status=2)
+    def active(self):
+        return self.all().filter(status=2)
+    def on_hold(self):
+        return self.all().filter(status=3)
+    def resolved(self):
+        return self.all().filter(status=4)
 
 class ProtoManager(models.Manager):
     iterable = ['summary', 'owner', 'is_review']
