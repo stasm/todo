@@ -11,7 +11,11 @@ class Prototype(models.Model):
                                        through="Nesting")
 
     def __unicode__(self):
-        return "[%s%s] %s" % (self.owner, ': r?' if self.is_review else '', self.summary)
+        if self.owner is not None:
+            owner_str = " [%s%s]" % (self.owner, ': r?' if self.is_review else '')
+        else:
+            owner_str = ""
+        return "%s%s" % (self.summary, owner_str)
 
 class ProtoTask(Prototype):
         
