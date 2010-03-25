@@ -14,7 +14,7 @@ class AddTodoFromProtoForm2(forms.ModelForm):
         
 class AddTodoFromProtoForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
-    summary = forms.CharField(max_length=200, required=False)
+    summary = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
     # class Meta:
     #     model = Todo
     #     fields = ['summary']
