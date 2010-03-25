@@ -4,13 +4,16 @@ from todo.proto.models import Prototype, Nesting
 
 class TodoManager(models.Manager):
     #use_for_related_fields = True
-    def get_tasks(self):
-        return self.filter(parent=None)
-    def get_open_tasks(self):
-        return self.get_tasks().filter(status__in=(1, 2))
+    def get_open(self):
+        return self.filter(status__in=(1, 2))
     def get_active(self):
         return self.filter(status=2)
-
+        
+class TaskManager(TodoManager):
+    def get_tasks(self):
+        return self.filter(parent=None)
+    def get_active(self):
+        return self.get_tasks().filter(status=2)
 
 class ProtoManager(models.Manager):
     iterable = ['summary', 'owner', 'is_review']

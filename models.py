@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import Group, User
 
 from todo.proto.models import Prototype
-from todo.managers import TodoManager, ProtoManager
+from todo.managers import TodoManager, TaskManager, ProtoManager
 from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
 from todo.signals import todo_changed
     
@@ -24,6 +24,7 @@ class Todo(models.Model):
     repeat_if_failed = models.BooleanField(default=False) #set on review action's parent
     
     objects = TodoManager()
+    tasks = TaskManager()
     proto = ProtoManager()
 
     class Meta:
