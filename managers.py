@@ -31,6 +31,8 @@ class ProtoManager(models.Manager):
                 'parent': todo,
                 'order': nesting.order,
                 'is_auto_activated': nesting.is_auto_activated,
+                'resolves_parent': nesting.resolves_parent,
+                'repeat_if_failed': nesting.repeat_if_failed,
             }
             self._create_with_children(nesting.child, **child_fields)
 
