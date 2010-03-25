@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load recurse %}
 
-{% block title_matter %}productization dashboard{% endblock %}
+{% block title_matter %}todo dashboard{% endblock %}
 {% block head_matter %}
 <style>
   body {
@@ -28,18 +28,24 @@
   .task, .todo {
     margin: 10px 20px;
   }
+  
   .task {
     border: 1px solid #ccc;
     margin-bottom: 2em;
     padding: 10px;
   }
-  .task > form > strong {
+  .task.resolved > strong {
+    text-decoration: line-through;
+  }
+  .task > strong {
     font-size: 1.3em;
   }
+  
   .details-link {
     font-size: .8em;
     margin-left: 25px;
   }
+  
   .todo input {
     float: left;
   }
@@ -57,12 +63,7 @@
     color: #999;
     text-decoration: line-through;
   }
-  select {
-    display: none;
-  }
-  div:hover > form > select {
-    display: inline;
-  }
+
 </style>
 {% endblock %}
 
@@ -73,11 +74,12 @@
     <a href="{% url todo.views.index %}">&larr; back</a>
   </div>
 
-  <div class="task">
-    <form action="{% url todo.views.change todo.id %}" method="post">
-      <strong>{{todo.summary}}</strong>
-    </form>
-    {% with todo.children.all as todos %}
+  <div class="task {{task.get_status_display}}">
+    {% ifequal task.get_status_display "resolved" %}
+    <input type="checkbox" checked="checked" disabled="disabled"/>
+    {% endifequal %}
+    <strong>{{task.summary}}</strong>
+    {% with task.children.all as todos %}
     {% recurse_children %}
       {% for todo in todos %}
       
@@ -85,7 +87,8 @@
           {% if not todo.children.get_active %}
             <div class="todo active next">
               <form action="{% url todo.views.change todo.id %}" method="post">
-                <input type="checkbox"/>
+                <input type="hidden" name="task_id" value="{{task.id}}"/>
+                <input type="checkbox" name="resolved" onclick="this.form.submit()"/>
                 <span>
                   {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
                   {{todo.summary}}

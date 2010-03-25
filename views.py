@@ -1,5 +1,5 @@
 from django.shortcuts import render_to_response
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.template import Context, loader
 from django.http import HttpResponse, HttpResponseNotFound,\
@@ -18,13 +18,13 @@ def index(request):
                        {'tasks' : tasks,
                         'statuses' : statuses})
     
-def details(request, todo_id):
-    todo = Todo.objects.get(pk=todo_id)
+def task(request, task_id):
+    task = Todo.objects.get(pk=task_id)
     return render_to_response('todo/details.html',
-                       {'todo' : todo,
-                        'statuses' : statuses})
+                              {'task' : task,
+                               'statuses' : statuses})
                         
-@require_http_methods(["POST"])
+@require_POST
 def change(request, todo_id):
     form = ChangeTodoForm(request.POST)
     error_message = "Incorrect data"
@@ -34,11 +34,12 @@ def change(request, todo_id):
         except KeyError:
             error_message = "Todo %s doesn't exist." % todo_id
         else:
-             new_status = form.cleaned_data['status']
-             todo.status = new_status
-             todo.save()
-             return HttpResponseRedirect(reverse('todo.views.changed', 
-                                                 args=(todo_id,)))
+             resolved = form.cleaned_data['resolved']
+             task_id = form.cleaned_data['task_id']
+             if resolved:
+                 todo.resolve()
+             return HttpResponseRedirect(reverse('todo.views.task', 
+                                                 args=(task_id,)))
     return HttpResponse("%s" % error_message)
 
 def changed(request, todo_id):
@@ -51,7 +52,7 @@ def new(request):
     return render_to_response('todo/new.html', {'form' : form,
                                                 'error_message' : error_message})
 
-@require_http_methods(["POST"])
+@require_POST
 def create(request):
     form = AddTodoFromProtoForm(request.POST)
     if form.is_valid():
@@ -59,8 +60,7 @@ def create(request):
         custom_fields = form.cleaned_data
         task = Todo.proto.create(prototype, **custom_fields)
         task.activate()
-        return HttpResponseRedirect(reverse('todo.views.created', 
-                                             args=(task.id,)))
+        return HttpResponseRedirect(reverse('todo.views.index'))
     else:
         error_message = "Incorrect data"
         return render_to_response('todo/new.html', {'form' : form,

@@ -2,10 +2,9 @@ from django import forms
 from todo.models import Todo
 from todo.proto.models import ProtoTask
 
-class ChangeTodoForm(forms.ModelForm):
-    class Meta:
-        model = Todo
-        fields = ['status']
+class ChangeTodoForm(forms.Form):
+    resolved = forms.BooleanField()
+    task_id = forms.IntegerField()
 
 class AddTodoFromProtoForm2(forms.ModelForm):
     class Meta:

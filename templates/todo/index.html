@@ -33,7 +33,7 @@
     margin-bottom: 2em;
     padding: 10px;
   }
-  .task > form > strong {
+  .task strong {
     font-size: 1.3em;
   }
   .details-link {
@@ -57,12 +57,15 @@
     color: #999;
     text-decoration: line-through;
   }
-  select {
-    display: none;
+  
+  .empty {
+    margin: 10px 20px;
+    padding: 10px;
   }
-  div:hover > form > select {
-    display: inline;
+  .empty h2 {
+    font-style: italic;
   }
+    
 </style>
 {% endblock %}
 
@@ -74,22 +77,13 @@
   </div>
   {% for task in tasks %}
   <div class="task">
-    <form action="{% url todo.views.change task.id %}" method="post">
-      <strong>{{task.summary}}</strong>
-      {% comment %}
-      <select name="status" onchange="this.form.submit()">
-        {% for i, status_tuple in statuses.items %}
-        <option value="{{ i }}"{% ifequal i task.status %} selected="selected"{% endifequal %}>{{ status_tuple.1 }}</option>
-        {% endfor %}
-      </select>
-      {% endcomment %}
-    </form>
+    <strong>{{task.summary}}</strong>
     {% with task.children.get_active as todos %}
     {% recurse_children %}
       {% for todo in todos %}
         <div class="todo">
           <form action="{% url todo.views.change todo.id %}" method="post">
-            <input type="checkbox" {% if todo.children.get_active %}disabled="disabled"{% endif %}/>
+            <input type="checkbox" disabled="disabled"/>
             <span>
               {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
               {{todo.summary}}
@@ -100,7 +94,12 @@
       {% endfor %}
     {% endrecurse %}
     {% endwith %}
-    <p class="details-link"><a href="{% url todo.views.details task.id %}">details &rarr;</a></p>
+    <p class="details-link"><a href="{% url todo.views.task task.id %}">details &rarr;</a></p>
+  </div>
+  {% empty %}
+  <div class="empty">
+    <h2>Good news!</h2>
+    <p>There are no active tasks.</p>
   </div>
   {% endfor %}
 {% endblock %}

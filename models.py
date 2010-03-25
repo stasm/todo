@@ -41,25 +41,19 @@ class Todo(models.Model):
         self.status = 4
         self.resolution = resolution
         self.save()
-        if self.resolves_parent or self.is_last:
-            self.parent.resolve(self.resolution)
-        elif self.repeat_if_failed:
-            Todo.proto.create(prototype=self.prototype, parent=self.parent, order=self.order)
-        else:
-            self.next.activate()
-
-    def is_self_or_ancestor(self, attr, value):
-        if getattr(self, attr) == value:
-            return True
-        elif self.parent is not None:
-            return self.parent.is_self_or_ancestor(attr, value)
-        else:
-            return False
+        if not self.is_task:
+            if self.resolves_parent or self.is_last:
+                self.parent.resolve(self.resolution)
+            #elif self.repeat_if_failed:
+            #    Todo.proto.create(prototype=self.prototype, parent=self.parent, order=self.order)
+            else:
+                self.next.activate()
             
     def activate(self):
         self.status = 2
         self.save()
-        self.activate_children()
+        if self.has_children():
+            self.activate_children()
 
     def activate_children(self):
         auto_activated_children = self.children.filter(is_auto_activated=True)
@@ -68,21 +62,14 @@ class Todo(models.Model):
         for child in auto_activated_children:
             child.status = 2
             child.save()
-
-    def children_of_type(self, type_int):
-        return self.children.filter(type=type_int)
-
-    @property        
-    def siblings(self):
-        siblings = []
-        for todo in self.parent.children.exclude(pk=self.id):
-            siblings.append(todo)
-        return siblings        
+        
+    def has_children(self):
+        return len(self.children.all()) > 0    
 
     @property
     def next(self):
-        next = self.order + 1
         try:
+            next = self.order + 1
             return self.parent.children.get(order=next)
         except:
             return None
@@ -90,3 +77,7 @@ class Todo(models.Model):
     @property
     def is_last(self):
         return self.next is None
+        
+    @property
+    def is_task(self):
+        return self.parent is None
