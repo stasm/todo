@@ -36,8 +36,26 @@
   .task > form > strong {
     font-size: 1.3em;
   }
-  .todo {
-    font-style: italic;
+  .details-link {
+    font-size: .8em;
+    margin-left: 20px;
+  }
+  .todo input {
+    float: left;
+  }
+  .todo span {
+    display: block;
+    padding-left: 25px;
+  }
+  .todo.new {
+    color: #999;
+  }
+  .todo.next {
+    background-color: #ff9;
+  }
+  .todo.resolved {
+    color: #999;
+    text-decoration: line-through;
   }
   select {
     display: none;
@@ -62,13 +80,41 @@
     {% with todo.children.all as todos %}
     {% recurse_children %}
       {% for todo in todos %}
-        <div class="todo">
-          <form action="{% url todo.views.change todo.id %}" method="post">
-            <input type="checkbox"/>
-            <strong>{{todo.summary}}</strong>
-          </form>
-          {% recurse todo.children.all as todos %}
-        </div>
+      
+        {% ifequal todo.get_status_display "active" %}
+          {% if not todo.children.get_active %}
+            <div class="todo active next">
+              <form action="{% url todo.views.change todo.id %}" method="post">
+                <input type="checkbox"/>
+                <span>
+                  {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
+                  {{todo.summary}}
+                </span>
+              </form>
+              {% recurse todo.children.all as todos %}
+            </div>
+          {% else %}
+            <div class="todo active">
+              <input type="checkbox" disabled="disabled"/>
+              <span>
+                {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
+                {{todo.summary}}
+              </span>
+              {% recurse todo.children.all as todos %}
+            </div>
+          {% endif %}
+        {% else %}
+          <div class="todo {{todo.get_status_display}}">
+            {% ifequal todo.get_status_display "resolved" %}<input type="checkbox" disabled="disabled" checked="checked"/>{% endifequal %}
+            {% ifequal todo.get_status_display "new" %}<input type="checkbox" disabled="disabled"/>{% endifequal %}
+            <span>
+              {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
+              {{todo.summary}}
+            </span>
+            {% recurse todo.children.all as todos %}
+          </div>
+        {% endifequal %}  
+
       {% endfor %}
     {% endrecurse %}
     {% endwith %}
