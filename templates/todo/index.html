@@ -82,13 +82,11 @@
     {% recurse_children %}
       {% for todo in todos %}
         <div class="todo">
-          <form action="{% url todo.views.change todo.id %}" method="post">
-            <input type="checkbox" disabled="disabled"/>
-            <span>
-              {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-              {{todo.summary}}
-            </span>
-          </form>
+          <input type="checkbox" disabled="disabled"/>
+          <span>
+            {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
+            {{todo.summary}}
+          </span>
           {% recurse todo.children.get_active as todos %}
         </div>
       {% endfor %}

@@ -37,6 +37,9 @@ class Todo(models.Model):
         super(Todo, self).save()
         todo_changed.send(sender=self, user=User.objects.get(pk=1), action=self.status)
         
+    def clone(self):
+        return Todo.proto.clone(self, parent=self.parent, order=self.order)
+        
     def resolve(self, resolution=1):
         self.status = 4
         self.resolution = resolution
@@ -44,9 +47,10 @@ class Todo(models.Model):
         if not self.is_task:
             if self.resolves_parent or self.is_last:
                 self.parent.resolve(self.resolution)
-            #elif self.repeat_if_failed:
-            #    Todo.proto.create(prototype=self.prototype, parent=self.parent, order=self.order)
-            else:
+                if self.resolution == 2:
+                    clone = self.parent.clone()
+                    clone.activate()
+            elif self.resolution == 1:
                 self.next.activate()
             
     def activate(self):

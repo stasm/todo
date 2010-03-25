@@ -7,7 +7,7 @@ from django.http import HttpResponse, HttpResponseNotFound,\
 from django.utils import simplejson
 
 from todo.models import Todo
-from todo.forms import ChangeTodoForm, AddTodoFromProtoForm
+from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm
 
 from todo.workflow import statuses
 
@@ -25,26 +25,31 @@ def task(request, task_id):
                                'statuses' : statuses})
                         
 @require_POST
-def change(request, todo_id):
-    form = ChangeTodoForm(request.POST)
+def resolve(request, todo_id):
     error_message = "Incorrect data"
-    if form.is_valid():
-        try:
-            todo = Todo.objects.get(pk=todo_id)
-        except KeyError:
-            error_message = "Todo %s doesn't exist." % todo_id
+    try:
+        todo = Todo.objects.get(pk=todo_id)
+    except KeyError:
+        error_message = "Todo %s doesn't exist." % todo_id
+    else:
+        if not todo.is_review:
+            form = ResolveTodoForm(request.POST)
+            if form.is_valid():
+                task_id = form.cleaned_data['task_id']
+                todo.resolve()
+                return HttpResponseRedirect(reverse('todo.views.task', 
+                                                    args=(task_id,)))
         else:
-             resolved = form.cleaned_data['resolved']
-             task_id = form.cleaned_data['task_id']
-             if resolved:
-                 todo.resolve()
-             return HttpResponseRedirect(reverse('todo.views.task', 
-                                                 args=(task_id,)))
+            form = ResolveReviewTodoForm(request.POST)
+            if form.is_valid():
+                task_id = form.cleaned_data['task_id']
+                success = form.cleaned_data['success']
+                resolution = 1 if success else 2
+                todo.resolve(resolution)
+                return HttpResponseRedirect(reverse('todo.views.task', 
+                                                    args=(task_id,)))
+        
     return HttpResponse("%s" % error_message)
-
-def changed(request, todo_id):
-    todo = Todo.objects.get(pk=todo_id)
-    return HttpResponse("Todo %s has been changed. The new status is %s" % (todo_id, todo.get_status_display()))
 
 def new(request):
     error_message = None
@@ -60,14 +65,10 @@ def create(request):
         custom_fields = form.cleaned_data
         task = Todo.proto.create(prototype, **custom_fields)
         task.activate()
-        return HttpResponseRedirect(reverse('todo.views.index'))
+        return HttpResponseRedirect(reverse('todo.views.task', 
+                                            args=(task.id,)))
     else:
         error_message = "Incorrect data"
         return render_to_response('todo/new.html', {'form' : form,
                                                     'error_message' : error_message})
-                                                
-def created(request, todo_id):
-    todo = Todo.objects.get(pk=todo_id)
-    return HttpResponse("Todo %s has been created." % (todo_id,))
-    
-    
+

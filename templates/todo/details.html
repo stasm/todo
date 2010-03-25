@@ -15,15 +15,25 @@
     font-size: 80%;
     color: #666;
   }
-  strong {
-    font-weight: normal;
-  }
   #menu {
     margin: 0 20px 6em;
     padding: 10px;
     font-size: small;
     font-style: italic;
     background-color: #eee;
+  }
+  #menu ul {
+    list-style: none;
+    float: left;
+    margin: 0;
+    padding: 0;
+  }
+  #menu li {
+    float: left;
+    margin: 0 10px;
+  }
+  #menu br {
+    clear: both;
   }
   .task, .todo {
     margin: 10px 20px;
@@ -39,6 +49,7 @@
   }
   .task > strong {
     font-size: 1.3em;
+    font-weight: normal;
   }
   
   .details-link {
@@ -48,10 +59,11 @@
   
   .todo input {
     float: left;
+    margin-right: 10px;
+    margin-left: 0;
   }
   .todo span {
     display: block;
-    padding-left: 25px;
   }
   .todo.new {
     color: #999;
@@ -71,7 +83,11 @@
 
 {% block content %}
   <div id="menu">
-    <a href="{% url todo.views.index %}">&larr; back</a>
+    <ul>
+      <li><a href="{% url todo.views.index %}">&larr; back</a></li>
+      <li><a href="{% url todo.views.new %}">new task</a></li>
+    </ul>
+    <br/>
   </div>
 
   <div class="task {{task.get_status_display}}">
@@ -86,9 +102,14 @@
         {% ifequal todo.get_status_display "active" %}
           {% if not todo.children.get_active %}
             <div class="todo active next">
-              <form action="{% url todo.views.change todo.id %}" method="post">
+              <form action="{% url todo.views.resolve todo.id %}" method="post">
                 <input type="hidden" name="task_id" value="{{task.id}}"/>
-                <input type="checkbox" name="resolved" onclick="this.form.submit()"/>
+                {% if not todo.is_review %}
+                  <input type="checkbox" onclick="this.form.submit()"/>
+                {% else %}
+                  <input type="checkbox" name="success" onclick="this.form.submit()"/>
+                  <input type="checkbox" name="failure" onclick="this.form.submit()"/>
+                {% endif %}
                 <span>
                   {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
                   {{todo.summary}}
@@ -112,7 +133,7 @@
             {% ifequal todo.get_status_display "new" %}<input type="checkbox" disabled="disabled"/>{% endifequal %}
             <span>
               {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-              {{todo.summary}}
+              {{todo.summary}} {% ifequal todo.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
             </span>
             {% recurse todo.children.all as todos %}
           </div>

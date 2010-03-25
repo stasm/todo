@@ -52,4 +52,7 @@ class ProtoManager(models.Manager):
         if not isinstance(prototype, Prototype):
             raise Exception("Specified object must be a Prototype.")
         return self._create_with_children(prototype, **custom_fields)
+        
+    def clone(self, orig_todo, **custom_fields):
+        return self._create_with_children(orig_todo.prototype, **custom_fields)
             
