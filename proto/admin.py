@@ -6,7 +6,7 @@ class PrototypeInline(admin.TabularInline):
     model = Nesting
     fk_name = "parent"
     verbose_name_plural = 'Sub proto steps'
-    fields = ('order', 'child', 'is_auto_activated', 'resolves_parent', 'repeat_if_failed')
+    fields = ('order', 'child', 'is_auto_activated', 'resolves_parent')
     extra = 3
 
 class PrototypeAdmin(admin.ModelAdmin):
@@ -29,7 +29,7 @@ class ProtoTaskAdmin(admin.ModelAdmin):
     
 class NestingAdmin(admin.ModelAdmin):
     list_display_links = ('__unicode__',)
-    list_editable = ('parent', 'child', 'order', 'is_auto_activated', 'resolves_parent', 'repeat_if_failed')
+    list_editable = ('parent', 'child', 'order', 'is_auto_activated', 'resolves_parent')
     list_display = list_display_links + list_editable
 
 admin.site.register(Prototype, PrototypeAdmin)

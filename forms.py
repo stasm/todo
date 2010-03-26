@@ -1,5 +1,6 @@
 from django import forms
-from todo.models import Todo
+from life.models import Locale
+from todo.models import Project, Todo
 from todo.proto.models import ProtoTask
 
 class ResolveTodoForm(forms.Form):
@@ -21,3 +22,5 @@ class ResolveReviewTodoForm(forms.Form):
 class AddTodoFromProtoForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
     summary = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
+    locale = forms.ModelChoiceField(queryset=Locale.objects.all(), required=False)
+    project = forms.ModelChoiceField(queryset=Project.objects.active(), required=False)

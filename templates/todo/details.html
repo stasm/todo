@@ -1,90 +1,12 @@
-{% extends "base.html" %}
+{% extends "todo/base.html" %}
 {% load recurse %}
-
-{% block title_matter %}todo dashboard{% endblock %}
-{% block head_matter %}
-<style>
-  body {
-     margin: 2em 6em 6em;
-  }
-  p, form {
-    margin: 0;
-    padding: 0;
-  }
-  small {
-    font-size: 80%;
-    color: #666;
-  }
-  #menu {
-    margin: 0 20px 6em;
-    padding: 10px;
-    font-size: small;
-    font-style: italic;
-    background-color: #eee;
-  }
-  #menu ul {
-    list-style: none;
-    float: left;
-    margin: 0;
-    padding: 0;
-  }
-  #menu li {
-    float: left;
-    margin: 0 10px;
-  }
-  #menu br {
-    clear: both;
-  }
-  .task, .todo {
-    margin: 10px 20px;
-  }
-  
-  .task {
-    border: 1px solid #ccc;
-    margin-bottom: 2em;
-    padding: 10px;
-  }
-  .task.resolved > strong {
-    text-decoration: line-through;
-  }
-  .task > strong {
-    font-size: 1.3em;
-    font-weight: normal;
-  }
-  
-  .details-link {
-    font-size: .8em;
-    margin-left: 25px;
-  }
-  
-  .todo input {
-    float: left;
-    margin-right: 10px;
-    margin-left: 0;
-  }
-  .todo span {
-    display: block;
-  }
-  .todo.new {
-    color: #999;
-  }
-  .todo.next {
-    background-color: #ff9;
-  }
-  .todo.resolved {
-    color: #999;
-    text-decoration: line-through;
-  }
-
-</style>
-{% endblock %}
-
-
 
 {% block content %}
   <div id="menu">
     <ul>
-      <li><a href="{% url todo.views.index %}">&larr; back</a></li>
+      <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
+      <li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>
+      <li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>
       <li><a href="{% url todo.views.new %}">new task</a></li>
     </ul>
     <br/>
@@ -94,13 +16,15 @@
     {% ifequal task.get_status_display "resolved" %}
     <input type="checkbox" checked="checked" disabled="disabled"/>
     {% endifequal %}
-    <strong>{{task.summary}}</strong>
+    <h3>{{task}}</h3>
+    {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
+    {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
     {% with task.children.all as todos %}
     {% recurse_children %}
       {% for todo in todos %}
       
         {% ifequal todo.get_status_display "active" %}
-          {% if not todo.children.get_active %}
+          {% if not todo.children.active %}
             <div class="todo active next">
               <form action="{% url todo.views.resolve todo.id %}" method="post">
                 <input type="hidden" name="task_id" value="{{task.id}}"/>
@@ -112,7 +36,7 @@
                 {% endif %}
                 <span>
                   {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-                  {{todo.summary}}
+                  {{todo}}
                 </span>
               </form>
               {% recurse todo.children.all as todos %}

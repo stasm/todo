@@ -1,34 +1,19 @@
-{% extends "base.html" %}
-{% block head_matter %}
-  <style>
-    body {
-       margin: 1in;
-    }
-    p, form {
-      margin: 0;
-      padding: 0;
-    }
-    small {
-      font-size: 80%;
-      color: #666;
-    }
-    div {
-      margin: 10px 10px 10px 20px;
-      border: 1px solid #ccc;
-      padding: 10px;
-    }
-  </style>
-{% endblock %}
-
-
+{% extends "todo/base.html" %}
 
 {% block content %}
+  <div id="menu">
+    <ul>
+      <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
+    </ul>
+    <br/>
+  </div>
+  <h1>Create a new task</h1>
   {% if error_message %}
     <div>{{error_message}}</div>
   {% endif %}
-  <div>
+  <div class="task">
     <form action="{% url todo.views.create %}" method="post">
-      <table>  
+      <table id="new">  
       {{form.as_table}}
       <tr><td></td><td><input type="submit" value="Create" /></td></tr>
       </table>

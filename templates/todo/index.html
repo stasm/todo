@@ -1,103 +1,37 @@
-{% extends "base.html" %}
-{% load recurse %}
-
-{% block title_matter %}todo dashboard{% endblock %}
-{% block head_matter %}
-<style>
-  body {
-     margin: 2em 6em 6em;
-  }
-  p, form {
-    margin: 0;
-    padding: 0;
-  }
-  small {
-    font-size: 80%;
-    color: #666;
-  }
-  strong {
-    font-weight: normal;
-  }
-  #menu {
-    margin: 0 20px 6em;
-    padding: 10px;
-    font-size: small;
-    font-style: italic;
-    background-color: #eee;
-  }
-  .task, .todo {
-    margin: 10px 20px;
-  }
-  .task {
-    border: 1px solid #ccc;
-    margin-bottom: 2em;
-    padding: 10px;
-  }
-  .task strong {
-    font-size: 1.3em;
-  }
-  .details-link {
-    font-size: .8em;
-    margin-left: 25px;
-  }
-  .todo input {
-    float: left;
-  }
-  .todo span {
-    display: block;
-    padding-left: 25px;
-  }
-  .todo.new {
-    color: #999;
-  }
-  .todo.next {
-    background-color: #ff9;
-  }
-  .todo.resolved {
-    color: #999;
-    text-decoration: line-through;
-  }
-  
-  .empty {
-    margin: 10px 20px;
-    padding: 10px;
-  }
-  .empty h2 {
-    font-style: italic;
-  }
-    
-</style>
-{% endblock %}
-
-
+{% extends "todo/base.html" %}
 
 {% block content %}
   <div id="menu">
-    <a href="{% url todo.views.new %}">new task</a>
+    <ul>
+      <li><a href="{% url todo.views.dashboard %}">all tasks</a></li>
+      <li><a href="{% url todo.views.new %}">new task</a></li>
+    </ul>
+    <br/>
   </div>
-  {% for task in tasks %}
-  <div class="task">
-    <strong>{{task.summary}}</strong>
-    {% with task.children.get_active as todos %}
-    {% recurse_children %}
-      {% for todo in todos %}
-        <div class="todo">
-          <input type="checkbox" disabled="disabled"/>
-          <span>
-            {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-            {{todo.summary}}
-          </span>
-          {% recurse todo.children.get_active as todos %}
-        </div>
-      {% endfor %}
-    {% endrecurse %}
-    {% endwith %}
-    <p class="details-link"><a href="{% url todo.views.task task.id %}">details &rarr;</a></p>
+  
+  <div id="by_locale" class="column">
+    <h2>Locales</h2>
+    <ul>
+    {% for locale, open in tasks_by_locale.items %}
+      <li><a href="{% url todo.views.dashboard %}?locale={{locale.code}}"title="{{open}} open tasks">{{locale}} ({{open}})</a></li>
+    {% empty %}
+      <p>Good news! There are no open tasks for any of the locales.</p>
+    {% endfor %}
+    </ul>
   </div>
-  {% empty %}
-  <div class="empty">
-    <h2>Good news!</h2>
-    <p>There are no active tasks.</p>
+  
+  <div id="by_project" class="column">
+    <h2>Projects</h2>
+    <ul>
+    {% for project, len in tasks_by_project.items %}
+      <li>
+        <div class="bar"><div class="progress" style="width: {{len.percent}}%;"></div></div>
+        <a href="{% url todo.views.dashboard %}?project={{project.slug}}" title="{{len.open}} open tasks out of {{len.all}} total.">{{project}} ({{len.percent}}%)</a>
+      </li>
+    {% empty %}
+      <li>There are no active projects.</li>
+    {% endfor %}
+    </ul>
   </div>
-  {% endfor %}
+  
 {% endblock %}

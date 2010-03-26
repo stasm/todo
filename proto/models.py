@@ -5,9 +5,9 @@ class Prototype(models.Model):
     summary = models.CharField(max_length=200, blank=True)
     owner = models.ForeignKey(Group, null=True, blank=True)
     is_review = models.BooleanField(default=False)
-    sub_steps = models.ManyToManyField('self', 
+    children = models.ManyToManyField('self', 
                                        symmetrical=False,
-                                       related_name='parent_steps',
+                                       related_name='parents',
                                        through="Nesting")
 
     def __unicode__(self):
@@ -23,8 +23,8 @@ class ProtoTask(Prototype):
         return "%s" % self.summary 
 
 class Nesting(models.Model):
-    parent = models.ForeignKey(Prototype, related_name="child_nestings")
-    child = models.ForeignKey(Prototype, related_name="parent_nestings")
+    parent = models.ForeignKey(Prototype, related_name="nestings_where_parent")
+    child = models.ForeignKey(Prototype, related_name="nestings_where_child")
     order = models.PositiveIntegerField(null=True, blank=True)
     is_auto_activated = models.BooleanField(default=False)
     resolves_parent = models.BooleanField(default=False)

@@ -6,23 +6,53 @@ from django.http import HttpResponse, HttpResponseNotFound,\
     HttpResponseNotModified, HttpResponseRedirect
 from django.utils import simplejson
 
-from todo.models import Todo
-from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm
+from life.models import Locale
 
+from todo.models import Project, Todo
+from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm
 from todo.workflow import statuses
+
+from itertools import groupby
 
 
 def index(request):
-    tasks = Todo.tasks.active()
+    tasks_for_locales = Todo.tasks.active().select_related('locale').order_by('locale')
+    tasks_by_locale = dict([(l, len(list(tasks))) for l, tasks in groupby(tasks_for_locales, lambda t: t.locale)])
+    projects = Project.objects.active()
+    tasks_for_projects = Todo.tasks.select_related('project').filter(project__in=projects).order_by('project')
+    tasks_by_project = {}
+    for p, tasks in groupby(tasks_for_projects, lambda t: t.project):
+        tasks = list(tasks)
+        all_tasks = len(tasks)
+        open_tasks = len([task for task in tasks if task.status in (1, 2)])
+        tasks_by_project[p] = {'open': open_tasks,
+                               'all': all_tasks,
+                               'percent': 100 * (all_tasks - open_tasks) / all_tasks}
     return render_to_response('todo/index.html',
-                       {'tasks' : tasks,
-                        'statuses' : statuses})
+                              {'tasks_by_locale' : tasks_by_locale,
+                               'tasks_by_project' : tasks_by_project})
+    
+def dashboard(request):
+    title = 'Tasks '
+    tasks = Todo.tasks.active().select_related('locale', 'project')
+    if request.GET.has_key('locale'):
+        locales = request.GET.getlist('locale')
+        locale_names = [unicode(locale) for locale in Locale.objects.filter(code__in=locales)]
+        title += 'for %s' % ', '.join(locale_names)
+        tasks = tasks.filter(locale__code__in=locales)
+    if request.GET.has_key('project'):
+        projects = request.GET.getlist('project')
+        project_names = [unicode(project) for project in Project.objects.filter(slug__in=projects)]
+        title += 'for %s' % ', '.join(project_names)
+        tasks = tasks.filter(project__slug__in=projects)
+    return render_to_response('todo/dashboard.html',
+                              {'tasks' : tasks,
+                               'title' : title})
     
 def task(request, task_id):
     task = Todo.objects.get(pk=task_id)
     return render_to_response('todo/details.html',
-                              {'task' : task,
-                               'statuses' : statuses})
+                              {'task' : task})
                         
 @require_POST
 def resolve(request, todo_id):
@@ -71,4 +101,3 @@ def create(request):
         error_message = "Incorrect data"
         return render_to_response('todo/new.html', {'form' : form,
                                                     'error_message' : error_message})
-
