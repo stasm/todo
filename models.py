@@ -43,6 +43,8 @@ class Todo(models.Model):
     objects = StatusManager()
     tasks = TaskManager()
     proto = ProtoManager()
+    
+    _next = None
 
     class Meta:
         ordering = ('order',)
@@ -68,7 +70,8 @@ class Todo(models.Model):
                     clone = self.parent.clone()
                     clone.activate()
                 self.parent.resolve(self.resolution, bubble_up)
-            elif self.resolution == 1:
+            elif self.resolution == 1 and self.next.status_is('new'):
+                print "A"
                 self.next.activate()
             
     def activate(self):
@@ -82,19 +85,25 @@ class Todo(models.Model):
         if len(auto_activated_children) == 0:
             auto_activated_children = (self.children.get(order=1),)
         for child in auto_activated_children:
-            child.status = 2
-            child.save()
+            child.activate()
         
     def is_next_action(self):
-        return self.status == 2 and not self.has_children    
+        return self.status == 2 and not self.has_children 
+        
+    def status_is(self, status_adj):
+        return self.get_status_display() == status_adj   
 
     @property
     def next(self):
-        try:
-            next = self.order + 1
-            return self.parent.children.get(order=next)
-        except:
-            return None
+        print self.pk, self._next
+        if self._next is None:
+            try:
+                next = self.order + 1
+                self._next = self.parent.children.get(order=next)
+            except:
+                self._next = None
+        print self.pk, self._next
+        return self._next
 
     @property
     def is_last(self):

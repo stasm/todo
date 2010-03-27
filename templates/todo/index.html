@@ -15,7 +15,7 @@
     {% for locale, open in tasks_by_locale.items %}
       <li><a href="{% url todo.views.dashboard %}?locale={{locale.code}}"title="{{open}} open tasks">{{locale}} ({{open}})</a></li>
     {% empty %}
-      <p>Good news! There are no open tasks for any of the locales.</p>
+      <li>There are no open tasks for any of the locales.</li>
     {% endfor %}
     </ul>
   </div>

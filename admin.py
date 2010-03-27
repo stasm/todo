@@ -10,7 +10,7 @@ class TodoInline(admin.TabularInline):
         
 class TodoAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_editable = ('summary', 'status', 'resolution', 'owner', 'order', 'is_auto_activated', 'is_review', 'resolves_parent', 'locale', 'project')
+    list_editable = ('summary', 'status', 'resolution', 'owner', 'order', 'is_auto_activated', 'is_review', 'has_children', 'resolves_parent', 'locale', 'project')
     list_display = list_display_links + list_editable + ('prototype', 'parent',)
     fieldsets = [
         (None, {'fields': ['prototype', 'summary', 'owner', 'status', 'resolution', 'parent', 'order', 'is_auto_activated', 'is_review', 'resolves_parent']}),
