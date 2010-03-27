@@ -71,7 +71,6 @@ class Todo(models.Model):
                     clone.activate()
                 self.parent.resolve(self.resolution, bubble_up)
             elif self.resolution == 1 and self.next.status_is('new'):
-                print "A"
                 self.next.activate()
             
     def activate(self):
@@ -95,14 +94,12 @@ class Todo(models.Model):
 
     @property
     def next(self):
-        print self.pk, self._next
         if self._next is None:
             try:
                 next = self.order + 1
                 self._next = self.parent.children.get(order=next)
             except:
                 self._next = None
-        print self.pk, self._next
         return self._next
 
     @property
