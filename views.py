@@ -16,21 +16,32 @@ from itertools import groupby
 
 
 def index(request):
-    tasks_for_locales = Todo.tasks.active().select_related('locale').order_by('locale')
-    tasks_by_locale = dict([(l, len(list(tasks))) for l, tasks in groupby(tasks_for_locales, lambda t: t.locale)])
-    projects = Project.objects.active()
-    tasks_for_projects = Todo.tasks.select_related('project').filter(project__in=projects).order_by('project')
-    tasks_by_project = {}
-    for p, tasks in groupby(tasks_for_projects, lambda t: t.project):
-        tasks = list(tasks)
-        all_tasks = len(tasks)
-        open_tasks = len([task for task in tasks if task.status in (1, 2)])
-        tasks_by_project[p] = {'open': open_tasks,
-                               'all': all_tasks,
-                               'percent': 100 * (all_tasks - open_tasks) / all_tasks}
+    tasks_orderby_locale = Todo.tasks.active().select_related('locale').order_by('locale__code')
+    tasks_by_locale = [(l, len(list(tasks))) for l, tasks in groupby(tasks_orderby_locale, lambda t: t.locale)]
+    
+    active_projects= Project.objects.active().order_by('type')
+    tasks_orderby_project = Todo.tasks.select_related('project').filter(project__in=active_projects).order_by('project')
+    tasks_by_project = dict([ (p, list(tasks)) for p, tasks in groupby(tasks_orderby_project, lambda t: t.project)])
+    projects_by_type = []
+    for t, projects in groupby(active_projects, lambda p: p.type):
+        projects_of_type = []
+        type = dict(Project._meta.get_field('type').flatchoices)[t]
+        for project in projects:
+            if tasks_by_project.has_key(project):
+                tasks = tasks_by_project[project]
+                all_tasks = len(tasks)
+                open_tasks = len([task for task in tasks if task.status in (1, 2)])
+                projects_of_type.append((project, {'has_tasks': True,
+                                                  'open': open_tasks,
+                                                  'all': all_tasks,
+                                                  'percent': 100 * (all_tasks - open_tasks) / all_tasks}))
+            else:
+                projects_of_type.append((project, {'has_tasks': False}))
+        projects_by_type.append((type, projects_of_type))
+
     return render_to_response('todo/index.html',
                               {'tasks_by_locale' : tasks_by_locale,
-                               'tasks_by_project' : tasks_by_project})
+                               'projects_by_type' : projects_by_type})
     
 def dashboard(request):
     title = 'Tasks '

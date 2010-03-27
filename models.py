@@ -10,15 +10,23 @@ from todo.signals import todo_changed
     
 from datetime import datetime
 
+PROJECT_TYPE_CHOICES = (
+    (1, 'Product'),
+    (2, 'Web'),
+    (99, 'Other'),
+)
+
 class Project(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200)
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
+    type = models.PositiveIntegerField(choices=PROJECT_TYPE_CHOICES, default=99)
     
     objects = StatusManager()
     
     def __unicode__(self):
         return "%s" % (self.name,)
+
 
 class Todo(models.Model):
     prototype = models.ForeignKey(Prototype, related_name='instances', null=True, blank=True)

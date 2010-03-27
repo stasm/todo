@@ -12,8 +12,8 @@
   <div id="by_locale" class="column">
     <h2>Locales</h2>
     <ul>
-    {% for locale, open in tasks_by_locale.items %}
-      <li><a href="{% url todo.views.dashboard %}?locale={{locale.code}}"title="{{open}} open tasks">{{locale}} ({{open}})</a></li>
+    {% for locale, open in tasks_by_locale %}
+      <li><a href="{% url todo.views.dashboard %}?locale={{locale.code}}"title="{{open}} open tasks">{{locale.code}}: {{locale.name}} ({{open}})</a></li>
     {% empty %}
       <li>There are no open tasks for any of the locales.</li>
     {% endfor %}
@@ -22,16 +22,23 @@
   
   <div id="by_project" class="column">
     <h2>Projects</h2>
-    <ul>
-    {% for project, len in tasks_by_project.items %}
-      <li>
-        <div class="bar"><div class="progress" style="width: {{len.percent}}%;"></div></div>
-        <a href="{% url todo.views.dashboard %}?project={{project.slug}}" title="{{len.open}} open tasks out of {{len.all}} total.">{{project}} ({{len.percent}}%)</a>
-      </li>
-    {% empty %}
-      <li>There are no active projects.</li>
+    {% for type, projects in projects_by_type %}
+      <h3>{{type}}</h3>
+      <ul>
+      {% for project, info in projects %}
+        {% if info.has_tasks %}
+          <li>
+            <div class="bar"><div class="progress" style="width: {{info.percent}}%;"></div></div>
+            <a href="{% url todo.views.dashboard %}?project={{project.slug}}" title="{{info.open}} open tasks out of {{info.all}} total.">{{project}} ({{info.percent}}%)</a>
+          </li>
+        {% else %}
+          <li>
+            <span class="no_tasks" title="No tasks yet.">{{project}}</span>
+          </li>
+        {% endif %}
+      {% endfor %}
+      </ul>
     {% endfor %}
-    </ul>
   </div>
   
 {% endblock %}

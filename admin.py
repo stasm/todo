@@ -2,6 +2,9 @@ from django.contrib import admin
 from todo.models import Project, Todo
 
 class ProjectAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_editable = ('name', 'status', 'type')
+    list_display = list_display_links + list_editable
     prepopulated_fields = {'slug': ('name',)}
     
 class TodoInline(admin.TabularInline):
