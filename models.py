@@ -68,7 +68,7 @@ class Todo(models.Model):
         return Todo.proto.create(self.prototype, parent=self.parent, order=self.order)
         
     def resolve(self, resolution=1, bubble_up=True):
-        self.status = 4
+        self.status = 5
         self.resolution = resolution
         self.save()
         if bubble_up and not self.is_task:
@@ -82,10 +82,12 @@ class Todo(models.Model):
                 self.next.activate()
             
     def activate(self):
-        self.status = 2
-        self.save()
         if self.has_children:
+            self.status = 2
             self.activate_children()
+        else:
+            self.status = 3
+        self.save()
 
     def activate_children(self):
         auto_activated_children = self.children.filter(is_auto_activated=True)
@@ -94,11 +96,8 @@ class Todo(models.Model):
         for child in auto_activated_children:
             child.activate()
         
-    def is_next_action(self):
-        return self.status == 2 and not self.has_children 
-        
     def status_is(self, status_adj):
-        return self.get_status_display() == status_adj   
+        return self.get_status_display() == status_adj
 
     @property
     def next(self):

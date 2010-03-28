@@ -13,55 +13,46 @@
   </div>
 
   <div class="task {{task.get_status_display}}">
-    {% ifequal task.get_status_display "resolved" %}
-    <input type="checkbox" checked="checked" disabled="disabled"/>
-    {% endifequal %}
-    <h3>{{task}}</h3>
+    <h3>
+      {% ifequal task.get_status_display "resolved" %}
+        <input type="checkbox" checked="checked" disabled="disabled"/>
+      {% endifequal %}
+      {{task}}
+    </h3>
     {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
     {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
     {% with task.children.all as todos %}
     {% recurse_children %}
       {% for todo in todos %}
       
-        {% ifequal todo.get_status_display "active" %}
-          {% if not todo.children.active %}
-            <div class="todo active next">
-              <form action="{% url todo.views.resolve todo.id %}" method="post">
-                <input type="hidden" name="task_id" value="{{task.id}}"/>
-                {% if not todo.is_review %}
-                  <input type="checkbox" onclick="this.form.submit()"/>
-                {% else %}
-                  <input type="checkbox" name="success" onclick="this.form.submit()"/>
-                  <input type="checkbox" name="failure" onclick="this.form.submit()"/>
-                {% endif %}
-                <span>
-                  {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-                  {{todo}}
-                </span>
-              </form>
-              {% recurse todo.children.all as todos %}
-            </div>
-          {% else %}
-            <div class="todo active">
-              <input type="checkbox" disabled="disabled"/>
+        <div class="todo {{todo.get_status_display}}">
+          {% ifequal todo.get_status_display "next" %}
+            <form action="{% url todo.views.resolve todo.id %}" method="post">
+              <input type="hidden" name="task_id" value="{{task.id}}"/>
+              {% if not todo.is_review %}
+                <input type="checkbox" onclick="this.form.submit()"/>
+              {% else %}
+                <input type="checkbox" name="success" onclick="this.form.submit()"/>
+                <input type="checkbox" name="failure" onclick="this.form.submit()"/>
+              {% endif %}
               <span>
                 {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-                {{todo.summary}}
+                {{todo}}
               </span>
-              {% recurse todo.children.all as todos %}
-            </div>
-          {% endif %}
-        {% else %}
-          <div class="todo {{todo.get_status_display}}">
-            {% ifequal todo.get_status_display "resolved" %}<input type="checkbox" disabled="disabled" checked="checked"/>{% endifequal %}
-            {% ifequal todo.get_status_display "new" %}<input type="checkbox" disabled="disabled"/>{% endifequal %}
+            </form>
+          {% else %}
+            {% ifequal todo.get_status_display "resolved" %}
+              <input type="checkbox" disabled="disabled" checked="checked"/>
+            {% else %}
+              <input type="checkbox" disabled="disabled"/>
+            {% endifequal %}
             <span>
               {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
               {{todo.summary}} {% ifequal todo.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
             </span>
-            {% recurse todo.children.all as todos %}
-          </div>
-        {% endifequal %}  
+          {% endifequal %}
+          {% recurse todo.children.all as todos %}
+        </div>
 
       {% endfor %}
     {% endrecurse %}

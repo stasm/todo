@@ -3,27 +3,25 @@ from django.contrib.auth.models import User
 from todo.proto.models import Prototype, Nesting
 
 class StatusManager(models.Manager):
-    #use_for_related_fields = True
+    use_for_related_fields = True
     def open(self):
-        return self.filter(status__in=(1, 2))
+        return self.filter(status__in=(1, 2, 3))
     def new(self):
         return self.filter(status=1)
     def active(self):
-        return self.filter(status=2)
-    def on_hold(self):
+        return self.filter(status__in=(2, 3))
+    def next(self):
         return self.filter(status=3)
-    def resolved(self):
+    def on_hold(self):
         return self.filter(status=4)
+    def resolved(self):
+        return self.filter(status=5)
         
 class TaskManager(StatusManager):
+    def filter(self, *args, **kwargs):
+        return super(TaskManager, self).filter(parent=None, *args, **kwargs)
     def all(self):
-        return self.filter(parent=None)
-    def active(self):
-        return self.all().filter(status=2)
-    def on_hold(self):
-        return self.all().filter(status=3)
-    def resolved(self):
-        return self.all().filter(status=4)
+        return self.filter()
 
 class ProtoManager(models.Manager):
     inheritable = ['summary', 'owner', 'is_review']

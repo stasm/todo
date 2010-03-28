@@ -2,8 +2,9 @@ statuses = {
     # int: (verb, adjective)
     1: ('created', 'new'),
     2: ('activated', 'active'),
-    3: ('put on hold', 'on hold'),
-    4: ('resolved', 'resolved'),
+    3: ('nexted', 'next'),
+    4: ('put on hold', 'on hold'),
+    5: ('resolved', 'resolved'),
 }
 
 STATUS_ADJ_CHOICES = tuple([(i, adj) for i, (verb, adj) in statuses.items()])
