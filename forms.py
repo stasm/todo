@@ -32,7 +32,7 @@ class AddTodoFromProtoForm(forms.Form):
         self.fields['project'].choices = self.types_as_choices()
 
     def types_as_choices(self):
-        choices = []
+        choices = [('', '---------')]
         projects = Project.objects.active().order_by('type')
         by_type = groupby(projects, lambda p: p.type)
         for t, projects_of_type in by_type:
@@ -42,6 +42,8 @@ class AddTodoFromProtoForm(forms.Form):
 
     def clean_project(self):
         project_id = self.cleaned_data['project']
+        if project_id == '':
+            return None
         try:
             project = Project.objects.get(pk=project_id)
         except:
