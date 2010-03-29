@@ -24,14 +24,17 @@ class TaskManager(StatusManager):
         return self.filter()
 
 class ProtoManager(models.Manager):
-    inheritable = ['summary', 'owner', 'is_review']
-    
     def _create(self, prototype, **custom_fields):
         fields = custom_fields
         if prototype is not None:
-            for prop in self.inheritable:
-                if not custom_fields.has_key(prop) or custom_fields[prop] is None or custom_fields[prop] == '':
-                    fields[prop] = getattr(prototype, prop)
+            for f in self.model._meta.fields:
+                if f.name == 'id':
+                    continue
+                if not custom_fields.has_key(f.name) or custom_fields[f.name] is None or custom_fields[f.name] == '':
+                    try:
+                        fields[f.name] = getattr(prototype, f.name)
+                    except AttributeError:
+                        pass
         todo = self.model(prototype=prototype, **fields)
         return todo
     
