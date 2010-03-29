@@ -43,7 +43,7 @@ class Todo(models.Model):
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES, null=True, blank=True)
     
-    has_children = models.BooleanField()
+    _has_children = models.NullBooleanField(null=True, blank=True)
     is_auto_activated = models.BooleanField(default=False) #set on first
     is_review = models.BooleanField(default=False)
     resolves_parent = models.BooleanField(default=False) #set on last
@@ -63,10 +63,20 @@ class Todo(models.Model):
     def save(self):
         super(Todo, self).save()
         todo_changed.send(sender=self, user=User.objects.get(pk=1), action=self.status)
-        
+
+    def get_has_children(self):
+        if self._has_children is None:
+            self._has_children = len(self.children.all()) > 0
+        return self._has_children
+
+    def set_has_children(self, value):
+        self._has_children = value
+
+    has_children = property(get_has_children, set_has_children)
+
     def clone(self):
         return Todo.proto.create(self.prototype, parent=self.parent, order=self.order)
-        
+
     def resolve(self, resolution=1, bubble_up=True):
         self.status = 5
         self.resolution = resolution
@@ -80,7 +90,7 @@ class Todo(models.Model):
                 self.parent.resolve(self.resolution, bubble_up)
             elif self.resolution == 1 and self.next.status_is('new'):
                 self.next.activate()
-            
+
     def activate(self):
         if self.has_children:
             self.status = 2
