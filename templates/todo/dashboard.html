@@ -1,5 +1,4 @@
 {% extends "todo/base.html" %}
-{% load recurse %}
 
 {% block content %}
   <div id="menu">
@@ -17,20 +16,17 @@
     <h3><a href="{% url todo.views.task task.id %}">{{task}} &rarr;</a></h3>
     {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
     {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
-    {% with task.children.active as todos %}
-    {% recurse_children %}
-      {% for todo in todos %}
+
+      {% for todo in task.steps.next %}
         <div class="todo">
           <input type="checkbox" disabled="disabled"/>
           <span>
             {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
             {{todo}}
           </span>
-          {% recurse todo.children.active as todos %}
         </div>
       {% endfor %}
-    {% endrecurse %}
-    {% endwith %}
+      
   </div>
   {% empty %}
   <div class="empty">

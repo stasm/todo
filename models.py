@@ -76,26 +76,26 @@ class Todo(models.Model):
     has_children = property(get_has_children, set_has_children)
 
     def clone(self):
-        return Todo.proto.create(self.prototype, parent=self.parent, order=self.order)
+        return Todo.proto.create(self.prototype, task=self.task, parent=self.parent, order=self.order)
 
-    def resolve(self, resolution=1, bubble_up=True):
+    def resolve(self, resolution=1, cascade=True):
         self.status = 5
         self.resolution = resolution
         self.save()
-        if bubble_up and not self.is_task:
+        if cascade and not self.is_task:
             if self.resolves_parent or self.is_last:
                 if self.resolution == 2:
-                    bubble_up = False
+                    cascade = False
                     clone = self.parent.clone()
                     clone.activate()
-                self.parent.resolve(self.resolution, bubble_up)
+                self.parent.resolve(self.resolution, cascade)
             elif self.resolution == 1 and self.next.status_is('new'):
                 self.next.activate()
 
     def activate(self):
         if self.has_children:
-            self.status = 2
             self.activate_children()
+            self.status = 2
         else:
             self.status = 3
         self.save()
@@ -126,4 +126,4 @@ class Todo(models.Model):
         
     @property
     def is_task(self):
-        return self.parent is None
+        return self.task is None
