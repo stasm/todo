@@ -5,8 +5,8 @@
   <div id="menu">
     <ul>
       <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
-      <li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>
-      <li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>
+      {% if task.locale %}<li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>{% endif %}
+      {% if task.project %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>{% endif %}
       <li><a href="{% url todo.views.new %}">new task</a></li>
     </ul>
     <br/>

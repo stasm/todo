@@ -47,6 +47,7 @@ class ProtoManager(models.Manager):
         for nesting in nestings:
             child_fields = {
                 'parent': todo,
+                'task': custom_fields['task'] if custom_fields.has_key('task') else todo,
                 'order': nesting.order,
                 'is_auto_activated': nesting.is_auto_activated,
                 'resolves_parent': nesting.resolves_parent

@@ -32,6 +32,7 @@ class Todo(models.Model):
     prototype = models.ForeignKey(Prototype, related_name='instances', null=True, blank=True)
     summary = models.CharField(max_length=200, blank=True)
     parent = models.ForeignKey('self', related_name='children', null=True, blank=True)
+    task = models.ForeignKey('self', related_name='steps', null=True, blank=True)
     owner = models.ForeignKey(Group, null=True, blank=True)
     order = models.PositiveIntegerField(null=True, blank=True)
     
