@@ -66,7 +66,12 @@ def index(request):
 def dashboard(request):
     title = 'Tasks'
     subtitle = None
-    tasks = Todo.tasks.active().select_related('locale', 'project')
+    show_resolved = request.GET.get('show_resolved', 0)
+    if int(show_resolved) == 1:
+        tasks = Todo.tasks.all()
+    else:
+        tasks = Todo.tasks.active()
+    tasks = tasks.select_related('locale', 'project')
     if request.GET.has_key('locale'):
         locales = request.GET.getlist('locale')
         locale_names = [unicode(locale) for locale in Locale.objects.filter(code__in=locales)]
@@ -82,11 +87,13 @@ def dashboard(request):
             batch_names = [unicode(batch) for batch in Batch.objects.filter(slug__in=batches)]
             subtitle = 'Batch: %s' % ', '.join(batch_names)
             tasks = tasks.filter(batch__slug__in=batches)
-            
+    query = request.GET.copy()
+    query['show_resolved'] = 1       
     return render_to_response('todo/dashboard.html',
                               {'tasks' : tasks,
                                'title' : title,
-                               'subtitle' : subtitle})
+                               'subtitle' : subtitle,
+                               'show_resolved_path' : request.path + '?' + query.urlencode()})
     
 def task(request, task_id):
     task = Todo.objects.get(pk=task_id)

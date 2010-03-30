@@ -4,6 +4,7 @@
   <div id="menu">
     <ul>
       <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
+      <li><a href="{{show_resolved_path}}">show resolved</a></li>
       <li><a href="{% url todo.views.new %}">new task</a></li>
     </ul>
     <br/>
@@ -12,8 +13,8 @@
   {% if subtitle %}<h2>{{subtitle}}</h2>{% endif %}
   
   {% for task in tasks %}
-  <div class="task">
-    <h3><a href="{% url todo.views.task task.id %}">{{task}} &rarr;</a></h3>
+  <div class="dashboard task {{task.get_status_display}}">
+    <h3><a href="{% url todo.views.task task.id %}">{{task}}</a></h3>
     {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
     {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
     {% if task.batch %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}" class="tag">{{task.batch}}</a>{% endif %}
