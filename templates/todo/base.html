@@ -39,7 +39,11 @@
   h1, h2 {
     font-weight: normal;
     font-size: 2.5em;
+    margin-top: 0;
   }
+  h1 + h2 { 
+    margin-top: -.5em; 
+  }   
   
   .column {
     width: 45%;
@@ -47,17 +51,25 @@
     margin: 10px 0;
     padding: 10px;
   }
+  .column.narrow {
+    width: 30%;
+  }
+  .column.wide {
+    width: 60%;
+  }
   
   .bar {
     float: right;
-    width: 100px;
-    height: 10px;
+    width: 175px;
     background-color: #ccc;
   }
   .bar .progress {
     width: 0;
     height: 10px;
     background-color: #38AB03;
+  }
+  .bar.batch {
+    width: 100px;
   }
   .no_tasks {
     color: #999;

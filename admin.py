@@ -1,9 +1,22 @@
 from django.contrib import admin
-from todo.models import Project, Todo
+from todo.models import Project, Batch, Todo
+
+class BatchInline(admin.TabularInline):
+    model = Batch
+    prepopulated_fields = {'slug': ('name',)}
+    verbose_name_plural = 'Batches'
+    extra = 3
 
 class ProjectAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
     list_editable = ('name', 'status', 'type')
+    list_display = list_display_links + list_editable
+    prepopulated_fields = {'slug': ('name',)}
+    inlines = (BatchInline,)
+    
+class BatchAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_editable = ('name', 'status')
     list_display = list_display_links + list_editable
     prepopulated_fields = {'slug': ('name',)}
     

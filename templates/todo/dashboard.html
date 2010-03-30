@@ -8,14 +8,15 @@
     </ul>
     <br/>
   </div>
-  <h1>
-    {{title}}
-  </h1>
+  <h1>{{title}}</h1>
+  {% if subtitle %}<h2>{{subtitle}}</h2>{% endif %}
+  
   {% for task in tasks %}
   <div class="task">
     <h3><a href="{% url todo.views.task task.id %}">{{task}} &rarr;</a></h3>
     {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
     {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
+    {% if task.batch %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}" class="tag">{{task.batch}}</a>{% endif %}
 
       {% for todo in task.steps.next %}
         <div class="todo">

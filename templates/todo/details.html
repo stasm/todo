@@ -7,6 +7,7 @@
       <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
       {% if task.locale %}<li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>{% endif %}
       {% if task.project %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>{% endif %}
+      {% if task.batch %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}">&larr; all {{task.batch}}</a></li>{% endif %}
       <li><a href="{% url todo.views.new %}">new task</a></li>
     </ul>
     <br/>
@@ -21,6 +22,8 @@
     </h3>
     {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
     {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
+    {% if task.batch %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}" class="tag">{{task.batch}}</a>{% endif %}
+    
     {% with task.children.all as todos %}
     {% recurse_children %}
       {% for todo in todos %}

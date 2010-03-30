@@ -1,6 +1,6 @@
 from django import forms
 from life.models import Locale
-from todo.models import Project, Todo
+from todo.models import Project, Batch, Todo
 from todo.proto.models import ProtoTask
 
 from itertools import groupby
@@ -24,14 +24,16 @@ class ResolveReviewTodoForm(forms.Form):
 class AddTodoFromProtoForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
     summary = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
-    locale = forms.ModelChoiceField(queryset=Locale.objects.all(), required=False)
-    project = forms.ChoiceField(required=False)
+    locale = forms.ModelChoiceField(queryset=Locale.objects.all(), required=True)
+    project = forms.ChoiceField(required=True)
+    batch = forms.ChoiceField(required=False)
     
     def __init__(self, *args, **kwargs):
         super(AddTodoFromProtoForm, self).__init__(*args, **kwargs)
-        self.fields['project'].choices = self.types_as_choices()
+        self.fields['project'].choices = self.projects_as_choices()
+        self.fields['batch'].choices = self.batches_as_choices()
 
-    def types_as_choices(self):
+    def projects_as_choices(self):
         choices = [('', '---------')]
         projects = Project.objects.active().order_by('type')
         by_type = groupby(projects, lambda p: p.type)
@@ -40,13 +42,28 @@ class AddTodoFromProtoForm(forms.Form):
             choices.append((type_names[t], [(p.id, p.name) for p in projects_of_type]))
         return choices
 
+    def batches_as_choices(self):
+        choices = [('', '---------')]
+        batches = Batch.objects.active().order_by('project')
+        by_project = groupby(batches, lambda p: p.project)
+        for project, batches_of_project in by_project:
+            choices.append((project, [(b.id, b.name) for b in batches_of_project]))
+        return choices
+
     def clean_project(self):
         project_id = self.cleaned_data['project']
-        if project_id == '':
-            return None
         try:
             project = Project.objects.get(pk=project_id)
         except:
-            raise forms.ValidationError("Project must be a valid todo.models.Project")
+            raise forms.ValidationError("Please choose a project.")
         return project
         
+    def clean_batch(self):
+        batch_id = self.cleaned_data['batch']
+        if batch_id == '':
+            return None
+        try:
+            batch = Batch.objects.get(pk=batch_id)
+        except:
+            raise forms.ValidationError("If given, batch must be a valid Batch object.")
+        return batch

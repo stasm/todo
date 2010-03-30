@@ -18,14 +18,25 @@ PROJECT_TYPE_CHOICES = (
 
 class Project(models.Model):
     name = models.CharField(max_length=200)
-    slug = models.SlugField(max_length=200)
-    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
+    slug = models.SlugField(max_length=200, unique=True)
+    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
     type = models.PositiveIntegerField(choices=PROJECT_TYPE_CHOICES, default=99)
     
     objects = StatusManager()
     
     def __unicode__(self):
-        return "%s" % (self.name,)
+        return self.name
+        
+class Batch(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
+    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
+    project = models.ForeignKey(Project, related_name='batches')
+    
+    objects = StatusManager()
+    
+    def __unicode__(self):
+        return self.name
 
 
 class Todo(models.Model):
@@ -36,10 +47,12 @@ class Todo(models.Model):
     owner = models.ForeignKey(Group, null=True, blank=True)
     order = models.PositiveIntegerField(null=True, blank=True)
     
-    # task-only
-    locale = models.ForeignKey(Locale, related_name='todos', null=True, blank=True)
+    # tasks only
+    locale = models.ForeignKey(Locale, related_name='tasks', null=True, blank=True)
     bug = models.PositiveIntegerField(null=True, blank=True)
-    project = models.ForeignKey(Project, related_name='todos', null=True, blank=True)
+    #move to Bug?
+    project = models.ForeignKey(Project, related_name='tasks', null=True, blank=True)
+    batch = models.ForeignKey(Batch, related_name='tasks', null=True, blank=True)
     
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES, null=True, blank=True)
