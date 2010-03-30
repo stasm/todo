@@ -53,6 +53,8 @@
   <div ex:role="collection" ex:itemTypes="Task"></div>
   <div class="column wide left" 
     ex:role="view"
+    ex:possibleOrders=".project, .batch, .locale"
+    ex:orders="{{order}}"
     ex:grouped="true">
   
     <div ex:role="lens" ex:itemTypes="Task">

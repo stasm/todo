@@ -67,6 +67,7 @@ def index(request):
 def dashboard(request):
     title = 'Tasks'
     subtitle = None
+    order = ['.project', '.batch', '.locale']
     show_resolved = request.GET.get('show_resolved', 0)
     args = [('show_resolved', show_resolved)]
     if request.GET.has_key('locale'):
@@ -85,6 +86,7 @@ def dashboard(request):
         if projects:
             args += [('project', project) for project in projects]
             title += ' for %s' % ', '.join(projects_names)
+            order.remove('.project')
             if request.GET.has_key('batch'):
                 batches = request.GET.getlist('batch')
                 batches = Batch.objects.filter(slug__in=batches, project__slug__in=projects)
@@ -93,12 +95,14 @@ def dashboard(request):
                 if batches:
                     args += [('batch', batch) for batch in batches]
                     subtitle = 'Batch: %s' % ', '.join(batch_names)
+                    order.remove('.batch')
 
     query = request.GET.copy()
     query['show_resolved'] = 1       
     return render_to_response('todo/dashboard.html',
                               {'title' : title,
                                'subtitle' : subtitle,
+                               'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
                                'show_resolved_path' : request.path + '?' + query.urlencode()})
 
