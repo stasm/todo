@@ -8,7 +8,7 @@
         SimileAjax.jQuery(document).ready(function() {
             var fDone = function() {
                var params = SimileAjax.parseURLParameters();
-               var options = ["tree", "result", "locale", "shipping"];
+               var options = ["owner"];
                {% block extra_query_options %}{% endblock %}
                 for ( var i in options ) {
                   var option = options[i];
@@ -76,7 +76,7 @@
   </div>
   <div class="column narrow right">
     <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale"></div>
-    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner"></div>
+    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" id="owner-facet"></div>
     <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action"></div>
     <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" ex:height="3em"></div>
     <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" ex:height="3em"></div>
