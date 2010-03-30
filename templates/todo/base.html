@@ -57,6 +57,12 @@
   .column.wide {
     width: 60%;
   }
+  .column.left {
+    float: left;
+  }
+  .column.right {
+    float: right;
+  }
   
   .bar {
     float: right;
@@ -116,9 +122,6 @@
     margin-right: 10px;
     margin-left: 0;
   }
-  .todo span {
-    display: block;
-  }
   .todo.new {
     color: #999;
   }
@@ -143,4 +146,5 @@
   }
 
 </style>
+{% block extra_head_matter %}{% endblock %}
 {% endblock %}

@@ -1,4 +1,42 @@
 {% extends "todo/base.html" %}
+{% load simile %}
+
+{% block extra_head_matter %}
+  <link href="{% url todo.views.tasks_json %}?{{ args }}" type="application/json" rel="exhibit/data" />
+  {% exhibit autoCreate=false %}
+  <script type="text/javascript">
+        SimileAjax.jQuery(document).ready(function() {
+            var fDone = function() {
+               var params = SimileAjax.parseURLParameters();
+               var options = ["tree", "result", "locale", "shipping"];
+               {% block extra_query_options %}{% endblock %}
+                for ( var i in options ) {
+                  var option = options[i];
+                  if (option in params) {
+                    if (params[option]) {
+                      document.getElementById(option +
+                        "-facet").setAttribute("ex:selection", params[option]);
+                     }
+                     else {
+                      document.getElementById(option +
+                        "-facet").setAttribute("ex:selectMissing", "true");
+                     }
+                  }
+                }
+
+                window.exhibit = Exhibit.create();
+                window.exhibit.configureFromDOM();
+            };
+
+            window.database = Exhibit.Database.create();
+            window.database.loadDataLinks(fDone);
+        });
+  </script>
+
+  <style>
+    
+  </style>
+{% endblock %}
 
 {% block content %}
   <div id="menu">
@@ -12,27 +50,36 @@
   <h1>{{title}}</h1>
   {% if subtitle %}<h2>{{subtitle}}</h2>{% endif %}
   
-  {% for task in tasks %}
-  <div class="dashboard task {{task.get_status_display}}">
-    <h3><a href="{% url todo.views.task task.id %}">{{task}}</a></h3>
-    {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
-    {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
-    {% if task.batch %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}" class="tag">{{task.batch}}</a>{% endif %}
-
-      {% for todo in task.steps.next %}
-        <div class="todo">
+  <div ex:role="collection" ex:itemTypes="Task"></div>
+  <div class="column wide left" 
+    ex:role="view"
+    ex:grouped="true">
+  
+    <div ex:role="lens" ex:itemTypes="Task">
+      <div ex:class-content="concat('dashboard task ', .status)">
+        <h3><a ex:href-content="concat('{% url todo.views.task 0 %}', .pk)" ex:content=".label"></a></h3>
+        <a ex:href-content="concat('{% url todo.views.dashboard %}', '?locale=', .locale_code)" ex:content=".locale" class="tag"></a>
+        <a ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug)" ex:content=".project" class="tag"></a>
+        <a ex:if-exists=".batch" ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug, '&amp;batch=', .batch_slug)" ex:content=".batch" class="tag"></a>
+        
+        <div class="todo" ex:content="!task">
           <input type="checkbox" disabled="disabled"/>
           <span>
-            {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-            {{todo}}
+            <em ex:if-exists=".owner" ex:content="concat(.owner, ':')"></em>
+            <span ex:content=".label"></span>
           </span>
         </div>
-      {% endfor %}
-      
+        
+      </div>
+    </div>
+
   </div>
-  {% empty %}
-  <div class="empty">
-    <p>Good news! There are no active tasks.</p>
+  <div class="column narrow right">
+    <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale"></div>
+    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner"></div>
+    <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action"></div>
+    <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" ex:height="3em"></div>
+    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" ex:height="3em"></div>
+    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" ex:height="3em"></div>
   </div>
-  {% endfor %}
 {% endblock %}

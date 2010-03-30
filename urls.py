@@ -7,4 +7,5 @@ urlpatterns = patterns('todo.views',
     (r'^(?P<todo_id>\d+)/resolve$', 'resolve'),
     (r'^new$', 'new'),
     (r'^new/create$', 'create'),
+    (r'^api/tasks$', 'tasks_json'),
 )

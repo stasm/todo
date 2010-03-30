@@ -2,9 +2,10 @@ from django.shortcuts import render_to_response
 from django.views.decorators.http import require_POST
 from django.core.urlresolvers import reverse
 from django.template import Context, loader
-from django.http import HttpResponse, HttpResponseNotFound,\
-    HttpResponseNotModified, HttpResponseRedirect
+from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
+from django.utils.http import urlencode
+from django.utils.safestring import mark_safe
 
 from life.models import Locale
 
@@ -67,33 +68,107 @@ def dashboard(request):
     title = 'Tasks'
     subtitle = None
     show_resolved = request.GET.get('show_resolved', 0)
+    args = [('show_resolved', show_resolved)]
+    if request.GET.has_key('locale'):
+        locales = request.GET.getlist('locale')
+        locales = Locale.objects.filter(code__in=locales)
+        locale_names = [unicode(locale) for locale in locales]
+        locales = locales.values_list('code', flat=True)
+        if locales:
+            args += [('locale', loc) for loc in locales]
+            title += ' for %s' % ', '.join(locale_names)
+    if request.GET.has_key('project'):
+        projects = request.GET.getlist('project')
+        projects = Project.objects.filter(slug__in=projects)
+        projects_names = [unicode(project) for project in projects]
+        projects = projects.values_list('slug', flat=True)
+        if projects:
+            args += [('project', project) for project in projects]
+            title += ' for %s' % ', '.join(projects_names)
+            if request.GET.has_key('batch'):
+                batches = request.GET.getlist('batch')
+                batches = Batch.objects.filter(slug__in=batches, project__slug__in=projects)
+                batch_names = [unicode(batch) for batch in batches]
+                batches = batches.values_list('slug', flat=True)
+                if batches:
+                    args += [('batch', batch) for batch in batches]
+                    subtitle = 'Batch: %s' % ', '.join(batch_names)
+
+    query = request.GET.copy()
+    query['show_resolved'] = 1       
+    return render_to_response('todo/dashboard.html',
+                              {'title' : title,
+                               'subtitle' : subtitle,
+                               'args' : mark_safe(urlencode(args)),
+                               'show_resolved_path' : request.path + '?' + query.urlencode()})
+
+schema = {
+    "types": {
+        "Task": {
+            "pluralLabel": "Tasks"
+            },
+        "Next Action": {
+            "pluralLabel": "Next actions"
+            }
+        },
+    "properties": {
+        "changed": {
+            "valueType": "number"
+            }
+        }
+    }
+
+def tasks_json(request):
+    items = []
+    show_resolved = request.GET.get('show_resolved', 0)
     if int(show_resolved) == 1:
         tasks = Todo.tasks.all()
     else:
         tasks = Todo.tasks.active()
-    tasks = tasks.select_related('locale', 'project')
+    tasks = tasks.select_related('locale', 'project', 'batch', 'prototype')
+    
     if request.GET.has_key('locale'):
         locales = request.GET.getlist('locale')
-        locale_names = [unicode(locale) for locale in Locale.objects.filter(code__in=locales)]
-        title += ' for %s' % ', '.join(locale_names)
-        tasks = tasks.filter(locale__code__in=locales)
+        locales = Locale.objects.filter(code__in=locales)
+        tasks = tasks.filter(locale__in=locales)
     if request.GET.has_key('project'):
         projects = request.GET.getlist('project')
-        project_names = [unicode(project) for project in Project.objects.filter(slug__in=projects)]
-        title += ' for %s' % ', '.join(project_names)
-        tasks = tasks.filter(project__slug__in=projects)
+        projects = Project.objects.filter(slug__in=projects)
+        tasks = tasks.filter(project__in=projects)
         if request.GET.has_key('batch'):
             batches = request.GET.getlist('batch')
-            batch_names = [unicode(batch) for batch in Batch.objects.filter(slug__in=batches)]
-            subtitle = 'Batch: %s' % ', '.join(batch_names)
-            tasks = tasks.filter(batch__slug__in=batches)
-    query = request.GET.copy()
-    query['show_resolved'] = 1       
-    return render_to_response('todo/dashboard.html',
-                              {'tasks' : tasks,
-                               'title' : title,
-                               'subtitle' : subtitle,
-                               'show_resolved_path' : request.path + '?' + query.urlencode()})
+            batches = Batch.objects.filter(slug__in=batches)
+            tasks = tasks.filter(batch__in=batches)
+    
+    task_items = []
+    for task in tasks:
+        task_data = {'type': 'Task',
+                     'pk': task.pk,
+                     'label': unicode(task),
+                     'status': task.get_status_display(),
+                     'locale': unicode(task.locale),
+                     'locale_code': task.locale.code,
+                     'project': unicode(task.project),
+                     'project_slug': task.project.slug,
+                     'prototype': unicode(task.prototype)}
+        if task.batch is not None:
+            task_data.update({'batch': unicode(task.batch),
+                              'batch_slug': task.batch.slug,})
+        task_items.append(task_data)
+    items += task_items
+    
+    next_actions = Todo.objects.next().filter(task__in=tasks).select_related('task', 'owner')
+    next_actions_items = []
+    for action in next_actions:
+        next_actions_items.append({'type': 'Next Action',
+                                   'label': unicode(action),
+                                   'task': unicode(action.task),
+                                   'owner': unicode(action.owner)})
+
+    items += next_actions_items
+    data = {'items': items}
+    data.update(schema)
+    return HttpResponse(simplejson.dumps(data, indent=2))
     
 def task(request, task_id):
     task = Todo.objects.get(pk=task_id)
