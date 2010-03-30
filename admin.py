@@ -22,6 +22,7 @@ class BatchAdmin(admin.ModelAdmin):
     
 class TodoInline(admin.TabularInline):
     model = Todo
+    fk_name = 'parent'
     extra = 3
         
 class TodoAdmin(admin.ModelAdmin):
