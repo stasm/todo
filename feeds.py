@@ -1,9 +1,8 @@
 from django.contrib.syndication.feeds import Feed
 from django.utils.feedgenerator import Atom1Feed
-from django.contrib.auth.models import Group
 
 from life.models import Locale
-from todo.models import Project, Todo
+from todo.models import Actor, Project, Todo
 
 class Lens(object):
     def __init__(self, args):
@@ -13,7 +12,7 @@ class Lens(object):
         self._props = []
         
         if args.has_key('owner'):
-            self.owner = Group.objects.get(name=args['owner'])
+            self.owner = Actor.objects.get(slug=args['owner'])
             self._props.append('owner')
         if args.has_key('locale'):
             self.locale = Locale.objects.get(code=args['locale'])
@@ -31,8 +30,7 @@ class Lens(object):
     def get_url_string(self):
         string = ''
         for prop in self._props:
-            val = getattr(self, prop).name if prop == 'owner' else getattr(self, prop).code
-            string += "%s:%s" % (prop, val)
+            string += "%s:%s" % (prop, getattr(self, prop).code)
         return string
 
     def filter_queryset(self, q, rel_string='%s'):

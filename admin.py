@@ -1,5 +1,11 @@
 from django.contrib import admin
-from todo.models import Project, Batch, Todo
+from todo.models import Actor, Project, Batch, Todo
+
+class ActorAdmin(admin.ModelAdmin):
+    list_display_links = ('id',)
+    list_editable = ('name', 'slug')
+    list_display = list_display_links + list_editable
+    prepopulated_fields = {'slug': ('name',)}
 
 class BatchInline(admin.TabularInline):
     model = Batch
@@ -9,7 +15,7 @@ class BatchInline(admin.TabularInline):
 
 class ProjectAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_editable = ('name', 'status', 'type')
+    list_editable = ('name', 'slug', 'status', 'type')
     list_display = list_display_links + list_editable
     prepopulated_fields = {'slug': ('name',)}
     inlines = (BatchInline,)
@@ -34,5 +40,6 @@ class TodoAdmin(admin.ModelAdmin):
     ]
     inlines = (TodoInline,)
 
+admin.site.register(Actor, ActorAdmin)
 admin.site.register(Project, ProjectAdmin)
 admin.site.register(Todo, TodoAdmin)

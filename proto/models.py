@@ -1,9 +1,15 @@
 from django.db import models
-from django.contrib.auth.models import Group
+
+class Actor(models.Model):
+    name = models.CharField(max_length=200)
+    slug = models.SlugField(max_length=200, unique=True)
+    
+    def __unicode__(self):
+        return self.name
 
 class Prototype(models.Model):
     summary = models.CharField(max_length=200, blank=True)
-    owner = models.ForeignKey(Group, null=True, blank=True)
+    owner = models.ForeignKey(Actor, null=True, blank=True)
     is_review = models.BooleanField(default=False)
     children = models.ManyToManyField('self', 
                                        symmetrical=False,

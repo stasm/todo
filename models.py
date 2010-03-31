@@ -1,21 +1,30 @@
 from django.db import models
-from django.contrib.auth.models import Group, User
+from django.contrib.auth.models import User
 
 from life.models import Locale
 
-from todo.proto.models import Prototype
+from todo.proto.models import Prototype, Actor as ProtoActor
 from todo.managers import StatusManager, TaskManager, ProtoManager
 from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
 from todo.signals import todo_changed
     
 from datetime import datetime
 
+class Actor(ProtoActor):
+    
+    class Meta:
+        proxy = True
+    
+    @property
+    def code(self):
+        return self.slug
+
 PROJECT_TYPE_CHOICES = (
     (1, 'Product'),
     (2, 'Web'),
     (99, 'Other'),
 )
-
+        
 class Project(models.Model):
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200, unique=True)
@@ -48,7 +57,7 @@ class Todo(models.Model):
     summary = models.CharField(max_length=200, blank=True)
     parent = models.ForeignKey('self', related_name='children', null=True, blank=True)
     task = models.ForeignKey('self', related_name='steps', null=True, blank=True)
-    owner = models.ForeignKey(Group, null=True, blank=True)
+    owner = models.ForeignKey(Actor, null=True, blank=True)
     order = models.PositiveIntegerField(null=True, blank=True)
     
     # tasks only
