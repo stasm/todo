@@ -26,6 +26,10 @@ class Project(models.Model):
     
     def __unicode__(self):
         return self.name
+    
+    @property
+    def code(self):
+        return self.slug
         
 class Batch(models.Model):
     name = models.CharField(max_length=200)
@@ -122,7 +126,11 @@ class Todo(models.Model):
         
     def status_is(self, status_adj):
         return self.get_status_display() == status_adj
-
+        
+    @models.permalink
+    def get_absolute_url(self):
+            return ('todo.views.task', [str(self.id)])
+    
     @property
     def next(self):
         if self._next is None:
