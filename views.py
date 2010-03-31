@@ -18,7 +18,13 @@ from itertools import groupby
 
 def index(request):
     tasks_orderby_locale = Todo.tasks.active().select_related('locale').order_by('locale__code')
-    tasks_by_locale = [(loc, len(list(tasks))) for loc, tasks in groupby(tasks_orderby_locale, lambda t: t.locale) if loc is not None]
+    tasks_by_locale = dict([ (loc, len(list(tasks))) for loc, tasks in groupby(tasks_orderby_locale, lambda t: t.locale)])
+    locales = []
+    for locale in Locale.objects.all().order_by('code'):
+        try:
+            locales.append((locale, tasks_by_locale[locale]))
+        except KeyError:
+            locales.append((locale, 0))
 
     active_projects= Project.objects.active().order_by('type')
     active_batches= Batch.objects.active().select_related('project').order_by('project')
@@ -61,7 +67,7 @@ def index(request):
         projects_by_type.append((type, projects_of_type))
 
     return render_to_response('todo/index.html',
-                              {'tasks_by_locale' : tasks_by_locale,
+                              {'locales' : locales,
                                'projects_by_type' : projects_by_type})
     
 def dashboard(request):

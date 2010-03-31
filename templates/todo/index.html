@@ -12,10 +12,13 @@
   <div id="by_locale" class="index column narrow left">
     <h2>Locales</h2>
     <ul>
-    {% for locale, open in tasks_by_locale %}
-      <li><a href="{% url todo.views.dashboard %}?locale={{locale.code}}"title="{{open}} open tasks">{{locale.code}}: {{locale.name}} ({{open}})</a></li>
-    {% empty %}
-      <li>There are no open tasks for any of the locales.</li>
+    {% for locale, open_count in locales %}
+      <li {% ifequal open_count 0 %}class="no_tasks"{% endifequal %}>
+        <a href="{% url todo.views.dashboard %}?locale={{locale.code}}" 
+           title="{{open_count}} open tasks">
+          {{locale.code}}: {{locale.name}} ({{open_count}})
+        </a>
+      </li>
     {% endfor %}
     </ul>
   </div>
