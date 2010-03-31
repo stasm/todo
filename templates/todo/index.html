@@ -9,7 +9,7 @@
     <br/>
   </div>
   
-  <div id="by_locale" class="column narrow left">
+  <div id="by_locale" class="index column narrow left">
     <h2>Locales</h2>
     <ul>
     {% for locale, open in tasks_by_locale %}
@@ -20,7 +20,7 @@
     </ul>
   </div>
   
-  <div id="by_project" class="column wide right">
+  <div id="by_project" class="index column wide right">
     <h2>Projects</h2>
     {% for type, projects in projects_by_type %}
       <h3>{{type}}</h3>
