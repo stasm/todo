@@ -3,7 +3,7 @@ from todo.feeds import NewTasksFeed, NewNextActionsFeed
 
 feeds = {
     'tasks': NewTasksFeed,
-    'nextactions': NewNextActionsFeed,
+    'next': NewNextActionsFeed,
 }
 
 urlpatterns = patterns('todo.views',
