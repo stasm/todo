@@ -1,13 +1,11 @@
 {% extends "todo/base.html" %}
 
-{% block content %}
-  <div id="menu">
-    <ul>
-      <li><a href="{% url todo.views.dashboard %}">all tasks</a></li>
-      <li><a href="{% url todo.views.new %}">new task</a></li>
-    </ul>
-    <br/>
-  </div>
+{% block menu_back %}{% endblock %}
+{% block extra_menu_items %}
+  <li><a href="{% url todo.views.dashboard %}">all tasks</a></li>
+{% endblock %}
+
+{% block view %}
   
   <div id="by_locale" class="index column narrow left">
     <h2>Locales</h2>

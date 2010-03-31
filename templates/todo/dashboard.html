@@ -62,15 +62,12 @@
   </style>
 {% endblock %}
 
-{% block content %}
-  <div id="menu">
-    <ul>
-      <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
-      <li><a href="{{show_resolved_path}}">show resolved</a></li>
-      <li><a href="{% url todo.views.new %}">new task</a></li>
-    </ul>
-    <br/>
-  </div>
+{% block extra_menu_items %}
+  <li><a href="{{show_resolved_path}}">show resolved</a></li>
+{% endblock %}
+
+{% block view %}
+
   <h1>{{title}}</h1>
   {% if subtitle %}<h2>{{subtitle}}</h2>{% endif %}
   

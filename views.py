@@ -1,7 +1,8 @@
 from django.shortcuts import render_to_response
 from django.views.decorators.http import require_POST
+from django.contrib.auth.decorators import login_required, permission_required
 from django.core.urlresolvers import reverse
-from django.template import Context, loader
+from django.template import Context, RequestContext, loader
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
 from django.utils.http import urlencode
@@ -68,7 +69,8 @@ def index(request):
 
     return render_to_response('todo/index.html',
                               {'locales' : locales,
-                               'projects_by_type' : projects_by_type})
+                               'projects_by_type' : projects_by_type},
+                              context_instance=RequestContext(request))
     
 def dashboard(request):
     title = 'Tasks'
@@ -110,7 +112,8 @@ def dashboard(request):
                                'subtitle' : subtitle,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
-                               'show_resolved_path' : request.path + '?' + query.urlencode()})
+                               'show_resolved_path' : request.path + '?' + query.urlencode()},
+                              context_instance=RequestContext(request))
 
 schema = {
     "types": {
@@ -183,9 +186,11 @@ def tasks_json(request):
 def task(request, task_id):
     task = Todo.objects.get(pk=task_id)
     return render_to_response('todo/details.html',
-                              {'task' : task})
+                              {'task' : task},
+                              context_instance=RequestContext(request))
                         
 @require_POST
+@permission_required('todo.change_todo')
 def resolve(request, todo_id):
     error_message = "Incorrect data"
     try:
@@ -212,13 +217,17 @@ def resolve(request, todo_id):
         
     return HttpResponse("%s" % error_message)
 
+@login_required
 def new(request):
     error_message = None
     form = AddTodoFromProtoForm()
-    return render_to_response('todo/new.html', {'form' : form,
-                                                'error_message' : error_message})
+    return render_to_response('todo/new.html', 
+                              {'form' : form,
+                               'error_message' : error_message},
+                              context_instance=RequestContext(request))
 
 @require_POST
+@login_required
 def create(request):
     form = AddTodoFromProtoForm(request.POST)
     if form.is_valid():

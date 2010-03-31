@@ -1,17 +1,13 @@
 {% extends "todo/base.html" %}
 {% load recurse %}
 
-{% block content %}
-  <div id="menu">
-    <ul>
-      <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
-      {% if task.locale %}<li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>{% endif %}
-      {% if task.project %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>{% endif %}
-      {% if task.batch %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}">&larr; all {{task.batch}}</a></li>{% endif %}
-      <li><a href="{% url todo.views.new %}">new task</a></li>
-    </ul>
-    <br/>
-  </div>
+{% block extra_menu_items %}
+  {% if task.locale %}<li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>{% endif %}
+  {% if task.project %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>{% endif %}
+  {% if task.batch %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}">&larr; all {{task.batch}}</a></li>{% endif %}
+{% endblock %}
+
+{% block view %}
 
   <div class="task {{task.get_status_display}}">
     <h3>
@@ -29,7 +25,7 @@
       {% for todo in todos %}
       
         <div class="todo {{todo.get_status_display}}">
-          {% ifequal todo.get_status_display "next" %}
+          {% if todo.is_next and perms.todo.change_todo %}
             <form action="{% url todo.views.resolve todo.id %}" method="post">
               <input type="hidden" name="task_id" value="{{task.id}}"/>
               {% if not todo.is_review %}
@@ -53,7 +49,7 @@
               {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
               {{todo.summary}} {% ifequal todo.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
             </span>
-          {% endifequal %}
+          {% endif %}
           {% recurse todo.children.all as todos %}
         </div>
 
