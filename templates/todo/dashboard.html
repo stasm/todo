@@ -30,11 +30,24 @@
 
             window.database = Exhibit.Database.create();
             window.database.loadDataLinks(fDone);
+            
         });
   </script>
 
   <style>
-    
+    .exhibit-collectionView-header {
+      opacity: 0.3;
+    }
+    span.exhibit-collectionSummaryWidget-count {
+      font-size: 100%;
+    }
+    .exhibit-collectionView-header-sortControls {
+      display: none !important;
+    }
+    ol.exhibit-tileView-body {
+      list-style-type: none;
+      padding: 0;
+    }
   </style>
 {% endblock %}
 
@@ -53,9 +66,11 @@
   <div ex:role="collection" ex:itemTypes="Task"></div>
   <div class="column wide left" 
     ex:role="view"
-    ex:possibleOrders=".project, .batch, .locale"
+    ex:possibleOrders=".project, .batch, .label"
     ex:orders="{{order}}"
-    ex:grouped="true">
+    ex:grouped="true"
+    ex:showDuplicates="false"
+    ex:showSummary="true">
   
     <div ex:role="lens" ex:itemTypes="Task">
       <div ex:class-content="concat('dashboard task ', .status)">
@@ -64,12 +79,14 @@
         <a ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug)" ex:content=".project" class="tag"></a>
         <a ex:if-exists=".batch" ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug, '&amp;batch=', .batch_slug)" ex:content=".batch" class="tag"></a>
         
-        <div class="todo" ex:content="!task">
-          <input type="checkbox" disabled="disabled"/>
-          <span>
-            <em ex:if-exists=".owner" ex:content="concat(.owner, ':')"></em>
-            <span ex:content=".label"></span>
-          </span>
+        <div ex:content="!task">
+          <div class="todo">
+            <input type="checkbox" disabled="disabled"/>
+            <span>
+              <em ex:if-exists=".owner" ex:content="concat(.owner, ':')"></em>
+              <span ex:content=".label"></span>
+            </span>
+          </div>
         </div>
         
       </div>
@@ -84,4 +101,5 @@
     <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" ex:height="3em"></div>
     <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" ex:height="3em"></div>
   </div>
+
 {% endblock %}

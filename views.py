@@ -67,7 +67,7 @@ def index(request):
 def dashboard(request):
     title = 'Tasks'
     subtitle = None
-    order = ['.project', '.batch', '.locale']
+    order = ['.project', '.batch', '.label']
     show_resolved = request.GET.get('show_resolved', 0)
     args = [('show_resolved', show_resolved)]
     if request.GET.has_key('locale'):
