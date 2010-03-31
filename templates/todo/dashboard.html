@@ -26,12 +26,23 @@
 
                 window.exhibit = Exhibit.create();
                 window.exhibit.configureFromDOM();
+                collapseFacets();
             };
 
             window.database = Exhibit.Database.create();
             window.database.loadDataLinks(fDone);
-            
         });
+
+        function collapseFacets() {
+          $(".exhibit-facet-header").click(
+            function() {
+              $(this).toggleClass("collapsed").next().toggle("fast");
+              return false;
+            }).toggleClass("collapsed").next().hide();
+          $(".exhibit-facet[defaultExpanded=true]").children()
+            .removeClass("collapsed").next().show();
+        }
+        
   </script>
 
   <style>
@@ -95,11 +106,11 @@
   </div>
   <div class="column narrow right">
     <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale"></div>
-    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" id="owner-facet"></div>
+    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project"></div>
+    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch"></div>
+    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" ex:height="6em" defaultExpanded="true" id="owner-facet"></div>
     <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action"></div>
-    <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" ex:height="3em"></div>
-    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" ex:height="3em"></div>
-    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" ex:height="3em"></div>
+    <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type"></div>
   </div>
 
 {% endblock %}
