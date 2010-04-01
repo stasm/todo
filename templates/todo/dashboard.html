@@ -1,10 +1,10 @@
 {% extends "todo/base.html" %}
 {% load simile %}
 
-{% block feed %}
+{% block extra_feeds %}
   {% for feed_name, feed_url in feeds %}
     <link rel="alternate" type="application/atom+xml" title="{{feed_name}}" href="{{feed_url}}" />
-  {% endfor %}
+    {% endfor %}
 {% endblock %}
 
 {% block extra_head_matter %}

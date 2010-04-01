@@ -1,7 +1,7 @@
 {% extends "todo/base.html" %}
 {% load recurse %}
 
-{% block feed %}
+{% block extra_feeds %}
   <link rel="alternate" type="application/atom+xml" title="Todo: next actions for {{task}}" href="{% url django.contrib.syndication.views.feed 'next' %}task:{{task.code}}" />
 {% endblock %}
 
