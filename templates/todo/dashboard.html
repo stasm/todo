@@ -1,6 +1,12 @@
 {% extends "todo/base.html" %}
 {% load simile %}
 
+{% block feed %}
+  {% for feed_name, feed_url in feeds %}
+    <link rel="alternate" type="application/atom+xml" title="{{feed_name}}" href="{{feed_url}}" />
+  {% endfor %}
+{% endblock %}
+
 {% block extra_head_matter %}
   <link href="{% url todo.views.tasks_json %}?{{ args }}" type="application/json" rel="exhibit/data" />
   {% exhibit autoCreate=false %}

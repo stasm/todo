@@ -73,12 +73,24 @@ def index(request):
                               context_instance=RequestContext(request))
     
 def dashboard(request, locale_code=None, project_slug=None):
+    
+    def _get_feeds(objs, filter_name, for_string):
+        feeds = []
+        for items in ('tasks', 'next'):
+            url = '%s/%s:%s' % (items, filter_name, ','.join(objs))
+            feed_url = reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
+            if items == 'tasks': feed_name = "Todo: all tasks" + for_string
+            if items == 'next': feed_name = "Todo: all next actions" + for_string
+            feeds.append((feed_name, feed_url))
+        return feeds
+    
     title = 'Tasks'
     order = ['.project', '.batch', '.label']
     show_resolved = request.GET.get('show_resolved', 0)
     query = request.GET.copy()
     query['show_resolved'] = 1
     args = [('show_resolved', show_resolved)]
+    feeds = []
     
     if locale_code is not None:
         locales = locale_code.split(',')
@@ -87,7 +99,9 @@ def dashboard(request, locale_code=None, project_slug=None):
         locales = locales.values_list('code', flat=True)
         if locales:
             args += [('locale', loc) for loc in locales]
-            title += ' for %s' % ', '.join(locale_names)
+            for_string = ' for %s' % ', '.join(locale_names)
+            title += for_string
+            feeds += _get_feeds(locales, 'locale', for_string)
     if project_slug is not None:
         projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)
@@ -95,11 +109,14 @@ def dashboard(request, locale_code=None, project_slug=None):
         projects = projects.values_list('slug', flat=True)
         if projects:
             args += [('project', project) for project in projects]
-            title += ' for %s' % ', '.join(projects_names)
+            for_string = ' for %s' % ', '.join(projects_names)
+            title += for_string
+            feeds += _get_feeds(projects, 'project', for_string)
             order.remove('.project')
     
     return render_to_response('todo/dashboard.html',
                               {'title' : title,
+                               'feeds' : feeds,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
                                'show_resolved_path' : request.path + '?' + query.urlencode()},

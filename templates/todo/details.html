@@ -1,6 +1,10 @@
 {% extends "todo/base.html" %}
 {% load recurse %}
 
+{% block feed %}
+  <link rel="alternate" type="application/atom+xml" title="Todo: next actions for {{task}}" href="{% url django.contrib.syndication.views.feed 'next' %}task:{{task.code}}" />
+{% endblock %}
+
 {% block extra_menu_items %}
   {% if task.locale %}<li><a href="{% url todo_locale_dashboard task.locale.code %}">&larr; all {{task.locale}}</a></li>{% endif %}
   {% if task.project %}<li><a href="{% url todo_project_dashboard task.project.slug %}">&larr; all {{task.project}}</a></li>{% endif %}

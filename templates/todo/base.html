@@ -2,6 +2,10 @@
 
 {% block title_matter %}todo dashboard{% endblock %}
 {% block head_matter %}
+{% block feed %}
+  <link rel="alternate" type="application/atom+xml" title="Todo: all tasks" href="{% url django.contrib.syndication.views.feed 'tasks' %}" />
+  <link rel="alternate" type="application/atom+xml" title="Todo: all next actions" href="{% url django.contrib.syndication.views.feed 'next' %}" />
+{% endblock %}
 <style>
   body {
      margin: 2em 7em 7em;
