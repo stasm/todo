@@ -2,7 +2,7 @@
 
 {% block menu_back %}{% endblock %}
 {% block extra_menu_items %}
-  <li><a href="{% url todo.views.dashboard %}">all tasks</a></li>
+  <li><a href="{% url todo_dashboard %}">all tasks</a></li>
 {% endblock %}
 
 {% block view %}
@@ -12,7 +12,7 @@
     <ul>
     {% for locale, open_count in locales %}
       <li {% ifequal open_count 0 %}class="no_tasks"{% endifequal %}>
-        <a href="{% url todo.views.dashboard %}?locale={{locale.code}}" 
+        <a href="{% url todo_locale_dashboard locale.code %}" 
            title="{{open_count}} open tasks">
           {{locale.code}}: {{locale.name}} ({{open_count}})
         </a>
@@ -32,7 +32,7 @@
               <div class="bar" title="{{info.percent}}% ({{info.open}} open tasks out of {{info.all}} total)">
                 <div class="progress" style="width: {{info.percent}}%;"></div>
               </div>
-              <a href="{% url todo.views.dashboard %}?project={{project.slug}}">{{project}}: {{info.percent}}%</a>
+              <a href="{% url todo_project_dashboard project.slug %}">{{project}}: {{info.percent}}%</a>
             {% else %}
               <span class="no_tasks" title="No tasks yet.">{{project}}</span>
             {% endif %}
@@ -44,7 +44,7 @@
                   <div class="batch bar" title="{{info.percent}}% ({{info.open}} open tasks out of {{info.all}} total)">
                     <div class="progress" style="width: {{info.percent}}%;"></div>
                   </div>
-                  <a href="{% url todo.views.dashboard %}?project={{project.slug}}&amp;batch={{batch.slug}}">{{batch}}: {{info.percent}}%</a>
+                  <a href="{% url todo_project_dashboard project.slug %}?batch={{batch}}">{{batch}}: {{info.percent}}%</a>
                 {% else %}
                   <span class="no_tasks" title="No tasks yet.">{{batch}}</span>
                 {% endif %}

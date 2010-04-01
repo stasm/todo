@@ -2,9 +2,9 @@
 {% load recurse %}
 
 {% block extra_menu_items %}
-  {% if task.locale %}<li><a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}">&larr; all {{task.locale}}</a></li>{% endif %}
-  {% if task.project %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}">&larr; all {{task.project}}</a></li>{% endif %}
-  {% if task.batch %}<li><a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}">&larr; all {{task.batch}}</a></li>{% endif %}
+  {% if task.locale %}<li><a href="{% url todo_locale_dashboard task.locale.code %}">&larr; all {{task.locale}}</a></li>{% endif %}
+  {% if task.project %}<li><a href="{% url todo_project_dashboard task.project.slug %}">&larr; all {{task.project}}</a></li>{% endif %}
+  {% if task.batch %}<li><a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}">&larr; all {{task.batch}}</a></li>{% endif %}
 {% endblock %}
 
 {% block view %}
@@ -16,9 +16,9 @@
       {% endifequal %}
       {{task}}
     </h3>
-    {% if task.locale %}<a href="{% url todo.views.dashboard %}?locale={{task.locale.code}}" class="tag">{{task.locale}}</a>{% endif %}
-    {% if task.project %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}" class="tag">{{task.project}}</a>{% endif %}
-    {% if task.batch %}<a href="{% url todo.views.dashboard %}?project={{task.project.slug}}&amp;batch={{task.batch.slug}}" class="tag">{{task.batch}}</a>{% endif %}
+    {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
+    {% if task.project %}<a href="{% url todo_project_dashboard task.project.slug %}" class="tag">{{task.project}}</a>{% endif %}
+    {% if task.batch %}<a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}" class="tag">{{task.batch}}</a>{% endif %}
     
     {% with task.children.all as todos %}
     {% recurse_children %}

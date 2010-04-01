@@ -8,14 +8,15 @@
         SimileAjax.jQuery(document).ready(function() {
             var fDone = function() {
                var params = SimileAjax.parseURLParameters();
-               var options = ["owner"];
+               var options = ["locale", "project", "batch", "owner"];
                {% block extra_query_options %}{% endblock %}
                 for ( var i in options ) {
                   var option = options[i];
                   if (option in params) {
                     if (params[option]) {
-                      document.getElementById(option +
-                        "-facet").setAttribute("ex:selection", params[option]);
+                      var facet = document.getElementById(option +"-facet");
+                      facet.setAttribute("ex:selection", params[option]);
+                      facet.setAttribute("defaultExpanded", "true");
                      }
                      else {
                       document.getElementById(option +
@@ -69,7 +70,6 @@
 {% block view %}
 
   <h1>{{title}}</h1>
-  {% if subtitle %}<h2>{{subtitle}}</h2>{% endif %}
   
   <div ex:role="collection" ex:itemTypes="Task"></div>
   <div class="column wide left" 
@@ -82,10 +82,10 @@
   
     <div ex:role="lens" ex:itemTypes="Task">
       <div ex:class-content="concat('dashboard task ', .status)">
-        <h3><a ex:href-content="concat('{% url todo.views.task 0 %}', .pk)" ex:content=".label"></a></h3>
-        <a ex:href-content="concat('{% url todo.views.dashboard %}', '?locale=', .locale_code)" ex:content=".locale" class="tag"></a>
-        <a ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug)" ex:content=".project" class="tag"></a>
-        <a ex:if-exists=".batch" ex:href-content="concat('{% url todo.views.dashboard %}', '?project=', .project_slug, '&amp;batch=', .batch_slug)" ex:content=".batch" class="tag"></a>
+        <h3><a ex:href-content="concat('{% url todo_task_exhibit %}', .pk)" ex:content=".label"></a></h3>
+        <a ex:href-content="concat('{% url todo_locale_dashboard_exhibit %}', .locale_code)" ex:content=".locale" class="tag"></a>
+        <a ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug)" ex:content=".project" class="tag"></a>
+        <a ex:if-exists=".batch" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?batch=', .batch)" ex:content=".batch" class="tag"></a>
         
         <div ex:content="!task">
           <div class="todo">
@@ -102,9 +102,9 @@
 
   </div>
   <div class="column narrow right">
-    <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale"></div>
-    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project"></div>
-    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch"></div>
+    <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale" id="locale-facet"></div>
+    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" id="project-facet"></div>
+    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" id="batch-facet"></div>
     <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" ex:height="6em" defaultExpanded="true" id="owner-facet"></div>
     <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action"></div>
     <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type"></div>

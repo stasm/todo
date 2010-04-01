@@ -72,22 +72,24 @@ def index(request):
                                'projects_by_type' : projects_by_type},
                               context_instance=RequestContext(request))
     
-def dashboard(request):
+def dashboard(request, locale_code=None, project_slug=None):
     title = 'Tasks'
-    subtitle = None
     order = ['.project', '.batch', '.label']
     show_resolved = request.GET.get('show_resolved', 0)
+    query = request.GET.copy()
+    query['show_resolved'] = 1
     args = [('show_resolved', show_resolved)]
-    if request.GET.has_key('locale'):
-        locales = request.GET.getlist('locale')
+    
+    if locale_code is not None:
+        locales = locale_code.split(',')
         locales = Locale.objects.filter(code__in=locales)
         locale_names = [unicode(locale) for locale in locales]
         locales = locales.values_list('code', flat=True)
         if locales:
             args += [('locale', loc) for loc in locales]
             title += ' for %s' % ', '.join(locale_names)
-    if request.GET.has_key('project'):
-        projects = request.GET.getlist('project')
+    if project_slug is not None:
+        projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)
         projects_names = [unicode(project) for project in projects]
         projects = projects.values_list('slug', flat=True)
@@ -95,21 +97,9 @@ def dashboard(request):
             args += [('project', project) for project in projects]
             title += ' for %s' % ', '.join(projects_names)
             order.remove('.project')
-            if request.GET.has_key('batch'):
-                batches = request.GET.getlist('batch')
-                batches = Batch.objects.filter(slug__in=batches, project__slug__in=projects)
-                batch_names = [unicode(batch) for batch in batches]
-                batches = batches.values_list('slug', flat=True)
-                if batches:
-                    args += [('batch', batch) for batch in batches]
-                    subtitle = 'Batch: %s' % ', '.join(batch_names)
-                    order.remove('.batch')
-
-    query = request.GET.copy()
-    query['show_resolved'] = 1       
+    
     return render_to_response('todo/dashboard.html',
                               {'title' : title,
-                               'subtitle' : subtitle,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
                                'show_resolved_path' : request.path + '?' + query.urlencode()},

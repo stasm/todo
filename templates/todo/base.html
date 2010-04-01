@@ -185,7 +185,8 @@
   <div id="menu">
     <div id="auth">
       {% if user.is_authenticated %}
-        Hi, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}. <a href="{% url django.contrib.auth.views.logout %}"><small>(log out)</small></a>
+        Hi, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}. 
+        <a href="{% url django.contrib.auth.views.logout %}"><small>(log out)</small></a>
       {% else %}
           <a href="{% url django.contrib.auth.views.login %}">Log in</a>
       {% endif %}
