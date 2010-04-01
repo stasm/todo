@@ -46,7 +46,7 @@ def index(request):
                     if tasks_by_batch.has_key(batch):
                         tasks = tasks_by_batch[batch]
                         all_tasks = len(tasks)
-                        open_tasks = len([task for task in tasks if task.status in (1, 2)])
+                        open_tasks = len([task for task in tasks if task.status == 2])
                         batches.append((batch, {'has_tasks': True,
                                                 'open': open_tasks,
                                                 'all': all_tasks,
@@ -56,7 +56,7 @@ def index(request):
             if tasks_by_project.has_key(project):
                 tasks = tasks_by_project[project]
                 all_tasks = len(tasks)
-                open_tasks = len([task for task in tasks if task.status in (1, 2)])
+                open_tasks = len([task for task in tasks if task.status == 2])
                 projects_of_type.append((project, {'batches': batches,
                                                    'has_tasks': True,
                                                    'open': open_tasks,
