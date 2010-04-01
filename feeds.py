@@ -1,28 +1,34 @@
 from django.contrib.syndication.feeds import Feed
 from django.utils.feedgenerator import Atom1Feed
+from django.core.urlresolvers import reverse
 
 from life.models import Locale
 from todo.models import Actor, Project, Todo
 
 class Lens(object):
-    def __init__(self, args, allowed=('locale', 'project')):
+    def __init__(self, kwargs, allowed=('locale', 'project')):
+        """
+        kwargs should be a dict with keys: locale, project, owner, task. The values of this dict
+        can either be a list of corresponding objects (e.g. locale=[<Locale>, <Locale>]) or
+        a comma-separated string of codes (slugs) (e.g. locale='fr,de').
+        """
         self.locale = None
         self.project = None
         self.owner = None
         self.task = None
         self._props = []
         
-        if 'owner' in allowed and args.has_key('owner'):
-            self.owner = Actor.objects.filter(slug__in=args['owner'].split(','))
+        if 'owner' in allowed and kwargs.has_key('owner'):
+            self.owner = kwargs['owner'] if not isinstance(kwargs['owner'], basestring) else Actor.objects.filter(slug__in=kwargs['owner'].split(','))
             self._props.append('owner')
-        if 'locale' in allowed and args.has_key('locale'):
-            self.locale = Locale.objects.filter(code__in=args['locale'].split(','))
+        if 'locale' in allowed and kwargs.has_key('locale'):
+            self.locale = kwargs['locale'] if not isinstance(kwargs['locale'], basestring) else Locale.objects.filter(code__in=kwargs['locale'].split(','))
             self._props.append('locale')
-        if 'project' in allowed and args.has_key('project'):
-            self.project = Project.objects.filter(slug__in=args['project'].split(','))
+        if 'project' in allowed and kwargs.has_key('project'):
+            self.project = kwargs['project'] if not isinstance(kwargs['project'], basestring) else Project.objects.filter(slug__in=kwargs['project'].split(','))
             self._props.append('project')
-        if 'task' in allowed and args.has_key('task'):
-            self.task = Todo.tasks.filter(pk__in=args['task'].split(','))
+        if 'task' in allowed and kwargs.has_key('task'):
+            self.task = kwargs['task'] if not isinstance(kwargs['task'], basestring) else Todo.tasks.filter(pk__in=kwargs['task'].split(','))
             self._props.append('task')
     
     def get_for_string(self):
@@ -32,10 +38,10 @@ class Lens(object):
         return string
         
     def get_url_string(self):
-        string = ''
+        strings = []
         for prop in self._props:
-            string += "%s:%s" % (prop, ','.join([v.code for v in getattr(self, prop)]))
-        return string
+            strings.append("%s:%s" % (prop, ','.join([v.code for v in getattr(self, prop)])))
+        return '/'.join(strings)
 
     def filter_queryset(self, q, rel_string='%s'):
         filter_dict = {}
@@ -48,10 +54,11 @@ class Lens(object):
         
 class NewTasksFeed(Feed):
     feed_type = Atom1Feed
+    slug = 'tasks'
     
     def get_object(self, bits):
-        args = dict( [bit.split(':') for bit in bits] )
-        return Lens(args, ('locale', 'project'))
+        kwargs = dict( [bit.split(':') for bit in bits] )
+        return Lens(kwargs, allowed=('locale', 'project'))
 
     def title(self, lens):
         title = "New tasks"
@@ -64,9 +71,8 @@ class NewTasksFeed(Feed):
         return subtitle
 
     def link(self, lens):
-        url = '/todo/feed/tasks/'
-        url += lens.get_url_string()
-        return url
+        url = '%s/%s' % (self.slug, lens.get_url_string)
+        return reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
 
     def item_link(self, task):
         return task.get_absolute_url()
@@ -77,10 +83,11 @@ class NewTasksFeed(Feed):
         return tasks.order_by('-pk')[:30]
 
 class NewNextActionsFeed(NewTasksFeed):
+    slug = 'next'
     
     def get_object(self, bits):
-        args = dict( [bit.split(':') for bit in bits] )
-        return Lens(args, ('owner', 'locale', 'project', 'task'))
+        kwargs = dict( [bit.split(':') for bit in bits] )
+        return Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
         
     def title(self, lens):
         title = "Next actions"
@@ -92,11 +99,6 @@ class NewNextActionsFeed(NewTasksFeed):
         subtitle += lens.get_for_string()
         return subtitle
 
-    def link(self, lens):
-        url = '/todo/feed/next/'
-        url += lens.get_url_string()
-        return url
-
     def item_link(self, todo):
         return todo.task.get_absolute_url()
 
@@ -104,3 +106,17 @@ class NewNextActionsFeed(NewTasksFeed):
         tasks = Todo.objects.next().select_related('task')
         tasks = lens.filter_queryset(tasks, 'task__%s')
         return tasks.order_by('-pk')[:30]
+
+def build_feed(items, kwargs, for_string=None):
+    lens = Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
+    url = '%s/%s' % (items, lens.get_url_string())
+    feed_url = reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
+    if for_string is None: for_string = lens.get_for_string
+    if items == 'tasks': 
+        feed_name = "Todo: new tasks" + for_string
+    elif items == 'next': 
+        feed_name = "Todo: new next actions" + for_string
+    else:
+        feed_name = "Todo: items" + for_string
+    return (feed_name, feed_url)
+    

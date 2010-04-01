@@ -13,6 +13,7 @@ from life.models import Locale
 from todo.models import Project, Batch, Todo
 from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm
 from todo.workflow import statuses
+from todo.feeds import build_feed
 
 from itertools import groupby
 
@@ -77,11 +78,7 @@ def dashboard(request, locale_code=None, project_slug=None):
     def _get_feeds(objs, filter_name, for_string):
         feeds = []
         for items in ('tasks', 'next'):
-            url = '%s/%s:%s' % (items, filter_name, ','.join(objs))
-            feed_url = reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
-            if items == 'tasks': feed_name = "Todo: all tasks" + for_string
-            if items == 'next': feed_name = "Todo: all next actions" + for_string
-            feeds.append((feed_name, feed_url))
+            feeds.append(build_feed(items, {filter_name: objs}, for_string=for_string))
         return feeds
     
     title = 'Tasks'
@@ -96,9 +93,9 @@ def dashboard(request, locale_code=None, project_slug=None):
         locales = locale_code.split(',')
         locales = Locale.objects.filter(code__in=locales)
         locale_names = [unicode(locale) for locale in locales]
-        locales = locales.values_list('code', flat=True)
+        locale_ids = locales.values_list('code', flat=True)
         if locales:
-            args += [('locale', loc) for loc in locales]
+            args += [('locale', loc_id) for loc_id in locale_ids]
             for_string = ' for %s' % ', '.join(locale_names)
             title += for_string
             feeds += _get_feeds(locales, 'locale', for_string)
@@ -106,9 +103,9 @@ def dashboard(request, locale_code=None, project_slug=None):
         projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)
         projects_names = [unicode(project) for project in projects]
-        projects = projects.values_list('slug', flat=True)
+        project_slugs = projects.values_list('slug', flat=True)
         if projects:
-            args += [('project', project) for project in projects]
+            args += [('project', project_slug) for project_slug in project_slugs]
             for_string = ' for %s' % ', '.join(projects_names)
             title += for_string
             feeds += _get_feeds(projects, 'project', for_string)
