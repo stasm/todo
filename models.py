@@ -160,3 +160,7 @@ class Todo(models.Model):
     @property
     def is_task(self):
         return self.task is None
+    
+    @property
+    def code(self):
+        return str(self.id)

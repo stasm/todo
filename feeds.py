@@ -9,6 +9,7 @@ class Lens(object):
         self.locale = None
         self.project = None
         self.owner = None
+        self.task = None
         self._props = []
         
         if 'owner' in allowed and args.has_key('owner'):
@@ -20,6 +21,9 @@ class Lens(object):
         if 'project' in allowed and args.has_key('project'):
             self.project = Project.objects.filter(slug__in=args['project'].split(','))
             self._props.append('project')
+        if 'task' in allowed and args.has_key('task'):
+            self.task = Todo.tasks.filter(pk__in=args['task'].split(','))
+            self._props.append('task')
     
     def get_for_string(self):
         string = ''
@@ -36,7 +40,7 @@ class Lens(object):
     def filter_queryset(self, q, rel_string='%s'):
         filter_dict = {}
         for prop in self._props:
-            if prop == 'owner':
+            if prop in ('owner', 'task'):
                 filter_dict.update({'%s__in' % prop: getattr(self, prop)})
             else:
                 filter_dict.update({'%s__in' % (rel_string % prop): getattr(self, prop)})
@@ -76,7 +80,7 @@ class NewNextActionsFeed(NewTasksFeed):
     
     def get_object(self, bits):
         args = dict( [bit.split(':') for bit in bits] )
-        return Lens(args, ('owner', 'locale', 'project'))
+        return Lens(args, ('owner', 'locale', 'project', 'task'))
         
     def title(self, lens):
         title = "Next actions"
