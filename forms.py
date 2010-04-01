@@ -1,6 +1,6 @@
 from django import forms
 from life.models import Locale
-from todo.models import Project, Batch, Todo
+from todo.models import Actor, Project, Batch, Todo
 from todo.proto.models import ProtoTask
 
 from itertools import groupby
@@ -67,3 +67,17 @@ class AddTodoFromProtoForm(forms.Form):
         except:
             raise forms.ValidationError("If given, batch must be a valid Batch object.")
         return batch
+
+class LocaleMultipleChoiceField(forms.ModelMultipleChoiceField):
+    def label_from_instance(self, locale):
+        return "%s / %s" % (locale.code, locale.name)
+
+class TasksFeedBuilderForm(forms.Form):
+    locale = LocaleMultipleChoiceField(queryset=Locale.objects.all(), required=False)
+    project = forms.ModelMultipleChoiceField(queryset=Project.objects.active(), required=False)
+
+class NextActionsFeedBuilderForm(forms.Form):
+    owner = forms.ModelMultipleChoiceField(queryset=Actor.objects.all(), required=False)
+    locale = LocaleMultipleChoiceField(queryset=Locale.objects.all(), required=False)
+    project = forms.ModelMultipleChoiceField(queryset=Project.objects.active(), required=False)
+    task = forms.ModelMultipleChoiceField(queryset=Todo.tasks.active(), required=False)

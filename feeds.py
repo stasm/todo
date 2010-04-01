@@ -12,24 +12,24 @@ class Lens(object):
         can either be a list of corresponding objects (e.g. locale=[<Locale>, <Locale>]) or
         a comma-separated string of codes (slugs) (e.g. locale='fr,de').
         """
-        self.locale = None
-        self.project = None
-        self.owner = None
-        self.task = None
+        self.locale = []
+        self.project = []
+        self.owner = []
+        self.task = []
         self._props = []
         
         if 'owner' in allowed and kwargs.has_key('owner'):
             self.owner = kwargs['owner'] if not isinstance(kwargs['owner'], basestring) else Actor.objects.filter(slug__in=kwargs['owner'].split(','))
-            self._props.append('owner')
+            if self.owner: self._props.append('owner')
         if 'locale' in allowed and kwargs.has_key('locale'):
             self.locale = kwargs['locale'] if not isinstance(kwargs['locale'], basestring) else Locale.objects.filter(code__in=kwargs['locale'].split(','))
-            self._props.append('locale')
+            if self.locale: self._props.append('locale')
         if 'project' in allowed and kwargs.has_key('project'):
             self.project = kwargs['project'] if not isinstance(kwargs['project'], basestring) else Project.objects.filter(slug__in=kwargs['project'].split(','))
-            self._props.append('project')
+            if self.project: self._props.append('project')
         if 'task' in allowed and kwargs.has_key('task'):
             self.task = kwargs['task'] if not isinstance(kwargs['task'], basestring) else Todo.tasks.filter(pk__in=kwargs['task'].split(','))
-            self._props.append('task')
+            if self.task: self._props.append('task')
     
     def get_for_string(self):
         string = ''
@@ -111,7 +111,7 @@ def build_feed(items, kwargs, for_string=None):
     lens = Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
     url = '%s/%s' % (items, lens.get_url_string())
     feed_url = reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
-    if for_string is None: for_string = lens.get_for_string
+    if for_string is None: for_string = lens.get_for_string()
     if items == 'tasks': 
         feed_name = "Todo: new tasks" + for_string
     elif items == 'next': 

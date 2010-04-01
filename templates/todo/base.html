@@ -172,8 +172,17 @@
     font-style: italic;
   }
   
-  #new td {
+  table td, p {
     padding: 10px;
+  }
+  
+  .feed h2 {
+    margin: 10px;
+    font-size: 1.3em;
+    font-style: italic;
+  }
+  .feed select {
+    height: 10em;
   }
   
   #auth {
@@ -200,6 +209,7 @@
         <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
       {% endblock %}
       <li><a href="{% url todo.views.new %}">new task</a></li>
+      <li><a href="{% url todo.views.feed_builder %}">feed builder</a></li>
       {% block extra_menu_items %}{% endblock %}
     </ul>
     <br/>
