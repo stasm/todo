@@ -71,7 +71,7 @@ class NewTasksFeed(Feed):
         return subtitle
 
     def link(self, lens):
-        url = '%s/%s' % (self.slug, lens.get_url_string)
+        url = '%s/%s' % (self.slug, lens.get_url_string())
         return reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
 
     def item_link(self, task):
@@ -103,9 +103,9 @@ class NewNextActionsFeed(NewTasksFeed):
         return todo.task.get_absolute_url()
 
     def items(self, lens):
-        tasks = Todo.objects.next().select_related('task')
-        tasks = lens.filter_queryset(tasks, 'task__%s')
-        return tasks.order_by('-pk')[:30]
+        next_actions = Todo.objects.next().select_related('task')
+        next_actions = lens.filter_queryset(next_actions, 'task__%s')
+        return next_actions.order_by('-pk')[:30]
 
 def build_feed(items, kwargs, for_string=None):
     lens = Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
