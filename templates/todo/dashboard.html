@@ -8,7 +8,7 @@
 {% endblock %}
 
 {% block extra_head_matter %}
-  <link href="{% url todo.views.tasks_json %}?{{ args }}" type="application/json" rel="exhibit/data" />
+  <link href="{% url todo.api.tasks %}?{{ args }}" type="application/json" rel="exhibit/data" />
   {% exhibit autoCreate=false %}
   <script type="text/javascript">
         SimileAjax.jQuery(document).ready(function() {

@@ -6,6 +6,16 @@ feeds = {
     'next': NewNextActionsFeed,
 }
 
+api_patterns = patterns('todo.api',
+    (r'^tasks$', 'tasks'),
+)
+
+feed_patterns = patterns('',
+    (r'^builder$', 'todo.views.feed_builder'),
+    (r'^show$', 'todo.views.redirect_to_feed'),
+    (r'^(?P<url>.*)/$', 'django.contrib.syndication.views.feed', {'feed_dict': feeds}),
+)
+
 urlpatterns = patterns('todo.views',
     (r'^$', 'index'),
     url(r'^all$', 'dashboard', name='todo_dashboard'),
@@ -15,16 +25,12 @@ urlpatterns = patterns('todo.views',
     (r'^(?P<todo_id>\d+)/resolve$', 'resolve'),
     (r'^new$', 'new'),
     (r'^new/create$', 'create'),
-    (r'^api/tasks$', 'tasks_json'),
+    (r'^api/', include(api_patterns)),
+    (r'^feed/', include(feed_patterns)),
+    
     
     # used by {% url %} for reverse look-ups in the exhibit
     url(r'^locale/$', 'dashboard', name='todo_locale_dashboard_exhibit'),
     url(r'^project/$', 'dashboard', name='todo_project_dashboard_exhibit'),
     url(r'^$', 'index', name='todo_task_exhibit'),
-)
-
-urlpatterns += patterns('',
-    (r'^feed/builder$', 'todo.views.feed_builder'),
-    (r'^feed/show$', 'todo.views.redirect_to_feed'),
-    (r'^feed/(?P<url>.*)/$', 'django.contrib.syndication.views.feed', {'feed_dict': feeds}),
 )
