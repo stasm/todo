@@ -133,6 +133,17 @@
   .task.resolved h3 {
     text-decoration: line-through;
   }
+  .task.outofdate {
+    border-right: 10px solid #E6A5A5;
+  }
+  .needs_update {
+    float: right;
+    display: none;
+  }
+  .task.outofdate .needs_update {
+    display: block;
+  }
+  
   .tag {
     font-family: Helvetica, Arial, sans-serif;
     font-size: x-small;

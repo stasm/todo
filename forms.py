@@ -24,6 +24,7 @@ class ResolveReviewTodoForm(forms.Form):
 class AddTodoFromProtoForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
     summary = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
+    bug = forms.IntegerField()
     locale = forms.ModelChoiceField(queryset=Locale.objects.all(), required=True)
     project = forms.ChoiceField(required=True)
     batch = forms.ChoiceField(required=False)

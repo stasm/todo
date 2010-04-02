@@ -14,13 +14,13 @@
         SimileAjax.jQuery(document).ready(function() {
             var fDone = function() {
                var params = SimileAjax.parseURLParameters();
-               var options = ["locale", "project", "batch", "owner"];
+               var options = ["locale", "project", "batch", "owner", "bug", "snapshot"];
                {% block extra_query_options %}{% endblock %}
                 for ( var i in options ) {
                   var option = options[i];
                   if (option in params) {
                     if (params[option]) {
-                      var facet = document.getElementById(option +"-facet");
+                      var facet = document.getElementById(option);
                       facet.setAttribute("ex:selection", params[option]);
                       facet.setAttribute("defaultExpanded", "true");
                      }
@@ -34,6 +34,10 @@
                 window.exhibit = Exhibit.create();
                 window.exhibit.configureFromDOM();
                 collapseFacets();
+                {% if not snapshot %}
+                BzAPI.checkSnapshots();
+                {% endif %}
+                
             };
 
             window.database = Exhibit.Database.create();
@@ -49,6 +53,45 @@
           $(".exhibit-facet[defaultExpanded=true]").children()
             .removeClass("collapsed").next().show();
         }
+        
+        {% if not snapshot %}
+        BzAPI = {
+          
+          apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
+          _bugs : {},
+          
+          updateItem : function updateItem(id, dict) {
+            var item = window.exhibit.getDatabase().getItem(id);
+            for (prop in dict) {
+              item[prop] = dict[prop];
+            }
+            window.exhibit.getDatabase().removeItem(id);
+            window.exhibit.getDatabase().addItem(item);
+          },
+          
+          markAsOutofdate : function markAsOutofdate(id) {
+            BzAPI.updateItem(id, {'snapshot': 'outofdate'});
+          },
+          
+          checkSnapshots : function checkSnapshots() {
+            var items = window.exhibit.getUIContext().getCollection().getAllItems()
+            var db = window.exhibit.getDatabase()
+            items.visit(function(id){
+              var item = db.getItem(id);
+              if (BzAPI._bugs[item.bug] && item.snapshot_ts < BzAPI._bugs[item.bug])
+                BzAPI.markAsOutofdate(id);
+              else {
+                $.getJSON(BzAPI.apibase+'bug/'+item.bug, function(data) {
+                  BzAPI._bugs[item.bug] = data['last_change_time'];
+                  if (item.snapshot_ts < data['last_change_time'])
+                    BzAPI.markAsOutofdate(id);
+                })
+              }
+            })
+          }
+          
+        }
+        {% endif %}
         
   </script>
 
@@ -94,11 +137,19 @@
     ex:showSummary="true">
   
     <div ex:role="lens" ex:itemTypes="Task">
-      <div ex:class-content="concat('dashboard task ', .status)">
+      <div 
+        ex:class-content="concat('dashboard task ', .status, ' ', .snapshot)" 
+        ex:data-id-content=".pk"
+        ex:data-snapshot-content=".snapshot_ts" 
+        ex:data-bug-content=".bug">
+        
+        <div class="needs_update"><small>Status of this task might be out of date.</small></div>
+        
         <h3><a ex:href-content="concat('{% url todo_task_exhibit %}', .pk)" ex:content=".label"></a></h3>
         <a ex:href-content="concat('{% url todo_locale_dashboard_exhibit %}', .locale_code)" ex:content=".locale" class="tag"></a>
         <a ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug)" ex:content=".project" class="tag"></a>
         <a ex:if-exists=".batch" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?batch=', .batch)" ex:content=".batch" class="tag"></a>
+        <a ex:if-exists=".bug" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?bug=', .bug)" ex:content=".bug" class="tag"></a>
         
         <div ex:content="!task">
           <div class="todo">
@@ -115,12 +166,16 @@
 
   </div>
   <div class="column narrow right">
-    <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale" id="locale-facet"></div>
-    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" id="project-facet"></div>
-    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" id="batch-facet"></div>
-    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" ex:height="6em" defaultExpanded="true" id="owner-facet"></div>
-    <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action"></div>
-    <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type"></div>
+    <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Locale" id="locale"></div>
+    <div ex:role="facet" ex:expression=".project" ex:facetLabel="Project" id="project"></div>
+    <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" id="batch"></div>
+    <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" ex:height="6em" defaultExpanded="true" id="owner"></div>
+    <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action" id="next_action"></div>
+    <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" id="type"></div>
+    <div ex:role="facet" ex:expression=".bug" ex:facetLabel="Bug" id="bug"></div>
+    {% if snapshot %}
+      <div ex:role="facet" ex:expression=".snapshot" ex:facetLabel="Snapshot" ex:height="4em" id="snapshot"></div>
+    {% endif %}
   </div>
 
 {% endblock %}

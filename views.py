@@ -80,15 +80,15 @@ def dashboard(request, locale_code=None, project_slug=None):
         for items in ('tasks', 'next'):
             feeds.append(build_feed(items, {filter_name: objs}, for_string=for_string))
         return feeds
-    
+    feeds = []
     title = 'Tasks'
     order = ['.project', '.batch', '.locale']
     show_resolved = request.GET.get('show_resolved', 0)
     query = request.GET.copy()
     query['show_resolved'] = 1
     args = [('show_resolved', show_resolved)]
-    feeds = []
-    
+    if request.GET.has_key('snapshot'):
+        args.append(('snapshot', 1))
     if locale_code is not None:
         locales = locale_code.split(',')
         locales = Locale.objects.filter(code__in=locales)
@@ -117,6 +117,7 @@ def dashboard(request, locale_code=None, project_slug=None):
                                'feeds' : feeds,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
+                               'snapshot' : request.GET.has_key('snapshot'),
                                'show_resolved_path' : request.path + '?' + query.urlencode()},
                               context_instance=RequestContext(request))
     

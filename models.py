@@ -63,7 +63,7 @@ class Todo(models.Model):
     # tasks only
     locale = models.ForeignKey(Locale, related_name='tasks', null=True, blank=True)
     bug = models.PositiveIntegerField(null=True, blank=True)
-    #move to Bug?
+    snapshot_ts = models.DateTimeField(null=True, blank=True)
     project = models.ForeignKey(Project, related_name='tasks', null=True, blank=True)
     batch = models.ForeignKey(Batch, related_name='tasks', null=True, blank=True)
     
@@ -156,11 +156,19 @@ class Todo(models.Model):
     @property
     def is_last(self):
         return self.next is None
-        
+
     @property
     def is_task(self):
         return self.task is None
-    
+
     @property
     def code(self):
         return str(self.id)
+
+    def is_uptodate(self, bug_last_modified_time):
+        if self.snapshot_ts is None:
+            return False
+        return self.snapshot_ts >= bug_last_modified_time
+
+    def snapshot_ts_iso(self):
+        return self.snapshot_ts.isoformat() if self.snapshot_ts is not None else '0'
