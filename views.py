@@ -82,7 +82,7 @@ def dashboard(request, locale_code=None, project_slug=None):
         return feeds
     
     title = 'Tasks'
-    order = ['.project', '.batch', '.label']
+    order = ['.project', '.batch', '.locale']
     show_resolved = request.GET.get('show_resolved', 0)
     query = request.GET.copy()
     query['show_resolved'] = 1
@@ -99,6 +99,7 @@ def dashboard(request, locale_code=None, project_slug=None):
             for_string = ' for %s' % ', '.join(locale_names)
             title += for_string
             feeds += _get_feeds(locales, 'locale', for_string)
+            order.remove('.locale')
     if project_slug is not None:
         projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)

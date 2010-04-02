@@ -50,6 +50,7 @@ def tasks(request):
     task_items = []
     for task in tasks:
         task_data = {'type': 'Task',
+                     'id': task.pk,
                      'pk': task.pk,
                      'label': unicode(task),
                      'status': task.get_status_display(),
@@ -69,7 +70,7 @@ def tasks(request):
     for action in next_actions:
         next_actions_items.append({'type': 'Next Action',
                                    'label': unicode(action),
-                                   'task': unicode(action.task),
+                                   'task': action.task.id,
                                    'owner': unicode(action.owner)})
 
     items += next_actions_items

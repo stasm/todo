@@ -66,6 +66,13 @@
       list-style-type: none;
       padding: 0;
     }
+    #exhibit-view h1, #exhibit-view h2, #exhibit-view h3 {
+      font-size: 1.5em;
+      font-weight: normal;
+    }
+    #exhibit-view h2, #exhibit-view h3 {
+      font-size: 1.3em;
+    }
   </style>
 {% endblock %}
 
@@ -78,7 +85,7 @@
   <h1>{{title}}</h1>
   
   <div ex:role="collection" ex:itemTypes="Task"></div>
-  <div class="column wide left" 
+  <div id="exhibit-view" class="column wide left"
     ex:role="view"
     ex:possibleOrders=".project, .batch, .label"
     ex:orders="{{order}}"
