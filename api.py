@@ -95,6 +95,7 @@ def tasks(request):
     next_actions_items = []
     for action in next_actions:
         next_actions_items.append({'type': 'Next Action',
+                                   'id': action.pk,
                                    'label': unicode(action),
                                    'task': action.task.id,
                                    'owner': unicode(action.owner)})
