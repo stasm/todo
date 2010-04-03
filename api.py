@@ -73,6 +73,7 @@ def tasks(request):
         task_data = {'type': 'Task',
                      'id': task.pk,
                      'pk': task.pk,
+                     'uri': 'http://%s%s' % (request.get_host(), task.get_absolute_url()),
                      'label': unicode(task),
                      'status': task.get_status_display(),
                      'bug': task.bug,
