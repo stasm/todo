@@ -14,6 +14,7 @@ from datetime import datetime
 
 class BzAPI(object):
     _baseurl = "https://api-dev.bugzilla.mozilla.org/stage/latest/"
+    time_format = r'%Y-%m-%dT%H:%M:%SZ'
     
     def __init__(self):
         self._bugs = {}
@@ -23,7 +24,7 @@ class BzAPI(object):
             return self._bugs[bugid]
         req = urllib2.Request("%s/bug/%s" % (self._baseurl, bugid))
         bugdata = json.load(urllib2.urlopen(req))
-        last_modified_time = datetime.strptime(bugdata['last_change_time'], r'%Y-%m-%dT%H:%M:%SZ')
+        last_modified_time = datetime.strptime(bugdata['last_change_time'], self.time_format)
         self._bugs.update({bugid: last_modified_time})
         return last_modified_time
 
@@ -56,7 +57,6 @@ def tasks(request):
     if request.GET.has_key('bug'):
         bugs = request.GET.getlist('bug')
         bugs = [int(bug) for bug in bugs]
-        print bugs
         tasks = tasks.filter(bug__in=bugs)
     if request.GET.has_key('locale'):
         locales = request.GET.getlist('locale')
@@ -108,4 +108,18 @@ def tasks(request):
     items += next_actions_items
     data = {'items': items}
     data.update(schema)
-    return HttpResponse(simplejson.dumps(data, indent=2))
+    return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
+
+@require_POST
+@permission_required('todo.change_todo')
+def update_snapshot(request, task_id):
+    new_snapshot_ts = datetime.strptime(request.POST.get('snapshot_ts'), BzAPI.time_format)
+    if not new_snapshot_ts:
+        data = {'status': 'error',
+                'message': 'Unknown timestamp (%s)' % request.POST.get('snapshot_ts')}
+        return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
+    task = Todo.objects.get(pk=task_id)
+    task.update_snapshot(new_snapshot_ts)
+    data = {'status': 'ok',
+            'message': 'Timestamp updated (%s)' % task.snapshot_ts_iso()}
+    return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')

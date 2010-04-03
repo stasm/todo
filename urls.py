@@ -8,6 +8,7 @@ feeds = {
 
 api_patterns = patterns('todo.api',
     (r'^tasks$', 'tasks'),
+    (r'^task/(?P<task_id>\d+)/update-snapshot$', 'update_snapshot'),
 )
 
 feed_patterns = patterns('',

@@ -55,7 +55,7 @@
   .column {
     width: 45%;
     float: left;
-    margin: 10px 0;
+    margin: 10px 0 7em;
   }
   .column.narrow {
     width: 30%;
@@ -121,12 +121,73 @@
     padding: 10px;
   }
   
-  .task h3 {
+  h3 {
     font-size: 1.3em;
     font-weight: normal;
     margin: 0 0 5px;
     padding: 0;
   } 
+  
+  #activity h3 {
+    margin-top: 10px;
+  }
+  #activity .comment {
+    margin-top: 1em;
+    border: 1px solid #ccc;
+  }
+  #activity .comment.obsolete {
+    opacity: 0.6 !important;
+  }
+  h4 {
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 10px 0 10px 3em;
+    background-color: #eee;
+    font-style: italic;
+  }
+  #activity .comment .meta {
+    float: left; 
+    margin: .6em; 
+  }
+  .comment .meta img, .comment.working .meta input {
+    display: none;
+    width: 1em;
+    height: 1em;
+  }
+  .comment.working .meta img {
+    display: inline;
+  }
+  .comment.working .meta input {
+    display: none;
+  }
+  
+  #activity .comment div, #activity .comment dl {
+    padding: 10px;
+    font-family: monospace;
+  }
+  #activity .comment dl {
+    margin: 0;
+    padding: 0 10px 10px;
+    border-top: 1px solid #eee;
+    color: #999;
+  }
+  #activity .comment dt {
+    margin-top: 10px;
+  }
+  #activity .comment dd {
+    margin: 0;
+    padding: 0 0 0 10px;
+  }
+  ins {
+    text-decoration: none;
+    background-color: #c1f6ac;
+  }
+  del {
+    text-decoration: none;
+    background-color: #ffcac1;
+  }
+  
   .edit {
     font-family: Helvetica, Arial, sans-serif;
     font-size: x-small;
@@ -141,7 +202,7 @@
     -o-transition: opacity .5s ease-in-out;
     transition: opacity .5s ease-in-out;
   }
-  .task h3:hover .edit {
+  h3:hover .edit {
     opacity: 1;
   }
   .edit:hover {

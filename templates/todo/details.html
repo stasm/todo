@@ -5,6 +5,169 @@
   <link rel="alternate" type="application/atom+xml" title="Todo: next actions for {{task}}" href="{% url django.contrib.syndication.views.feed 'next' %}task:{{task.code}}" />
 {% endblock %}
 
+{% block extra_head_matter %}
+  <script type="text/javascript" src="{% url static path='jquery.js' %}"></script>
+  <script type="text/javascript">
+      {% if task.bug %}
+        $(document).ready(function() {
+          BzAPI.getCommentsAndHistory();
+          $('#show_all').toggle(function(){
+            BzAPI.showAllActivity();
+          },function(){
+            BzAPI.hideObsolete();
+          })
+        });
+        
+        BzAPI = {
+          
+          apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
+          bugid : '{{ task.bug }}',
+          snapshot_ts : '{{ task.snapshot_ts_iso }}',
+          last_i : 0,
+          
+          getCommentsAndHistory : function getCommentsAndHistory() {
+            var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?comments=1&history=1';
+            $.getJSON(url, function(data) {
+                //BzAPI.attachments = data['attachments'];
+                BzAPI.activity = data['comments'].concat(data['history']);
+                BzAPI.activity.sort(BzAPI.sortTimestampStrings);
+                BzAPI.showActivity();
+            })
+          },
+          
+          sortTimestampStrings : function sortTimestampStrings(a, b) {
+            var a_ts = a.change_time || a.creation_time;
+            var b_ts = b.change_time || b.creation_time;
+            if (a_ts > b_ts) return 1;
+            if (a_ts == b_ts) return 0;
+            if (a_ts < b_ts) return -1;
+          },
+          
+          showActivity : function showActivity() {
+            var column = $('#activity');
+            var prev = '';
+            BzAPI.activity.forEach(function(a, i, arr) {
+              
+              var status = 'new', checked_disabled = '';
+              var time = a.change_time || a.creation_time;
+              if (time == prev) {
+                $('#comment-'+ --i +'').append($(BzAPI.getChangesText(a.changes)));
+                return;
+              }
+              
+              BzAPI.last_i = i;
+              prev = time;
+              if (time <= BzAPI.snapshot_ts)
+                status = 'obsolete';
+              var commenter = (a.changer) ? a.changer.name : a.author.real_name;
+              var when = time.split('T').join(' ').replace(/Z$/g, " UTC");
+              if (a.text) {
+                // it's a comment
+                var text = a.text.replace(/&/g, "&amp;")
+                                 .replace(/</g, "&lt;")
+                                 .replace(/>/g, "&gt;")
+                                 .replace(/\n/g, "<br/>");
+                text = '<div>' + text + '</div>';
+              } else {
+                // it's a history change
+                var text = BzAPI.getChangesText(a.changes);
+              }
+              var comment = $('<div id="comment-'+i+'" class="comment '+status+'"></div>');
+              comment.html('<h4>' + commenter + ' on ' + when + '</h4>' + text)
+                     .hide()
+                     .appendTo(column);
+              if (status == 'new') {
+                comment.fadeIn('slow');
+                $('#no_new').text('New');
+              }
+              else
+                checked_disabled = 'checked="checked" disabled="disabled"';
+              $('<span class="meta"></span>').html('<input type="checkbox" '+checked_disabled+'/><img src="{% url static path="throbber.gif" %}"/>')
+                                             .prependTo(comment)
+                                             .click(function(){
+                                               BzAPI.updateSnapshot(time, i);
+                                             });
+              
+            });
+          },
+          
+          getChangesText : function getChangesText(changes) {
+            var text = '<dl>';
+            var prev = '';
+            for (var j=0, change; change = changes[j]; j++) {
+              if (change.attachment_id) {
+                if (change.attachment_id == prev)
+                  text += '<dd><em>'+change.field_name+'</em>: ';
+                else
+                  text += '<dt>attachment '+change.attachment_id+'</dt><dd><em>'+change.field_name+'</em>: ';
+                prev = change.attachment_id;
+                if (change.removed && change.added)
+                  text += ' changed from <del>'+change.removed+'</del> to <ins>'+change.added+'</ins></dd>';
+                else {
+                  if (change.removed) text += 'removed <del>'+change.removed+'</del>';
+                  if (change.added) text += ' added <ins>'+change.added+'</ins>';
+                }
+                text += '</dd>';
+              }
+              else {
+                text += '<dt>'+change.field_name+'</dt>'; 
+                var field_is_list = change.field_name == 'cc' || 
+                                    change.field_name == 'keywords' ||
+                                    change.field_name == 'blocks' ||
+                                    change.field_name == 'depends_on';
+                if (!field_is_list && change.removed && change.added)
+                  text += '<dd>changed from <del>'+change.removed+'</del> to <ins>'+change.added+'</ins></dd>';
+                else {
+                  if (change.removed) text += '<dd>removed <del>'+change.removed+'</del></dd>';
+                  if (change.added) text += ' <dd>added <ins>'+change.added+'</ins></dd>';
+                }
+              }
+            }
+            text += '</dl>';
+            return text;
+          },
+          
+          updateSnapshot : function updateSnapshot(time, i) {
+            $('#comment-'+i).prevAll('div.new:visible').andSelf().fadeTo('normal', 0.4)
+                                                       .addClass('working')
+                                                       .find('input').attr('disabled', 'disabled')
+                                                                     .attr('checked', 'checked');
+            $.post("{% url todo.api.update_snapshot task.id %}",
+                   { snapshot_ts: time },
+                   function(data){
+                     BzAPI.markAsObsoleteUpTo(i);
+                     BzAPI.hideObsolete();
+                   }, 'json');
+          },
+          
+          markAsObsoleteUpTo : function markAsObsoleteUpTo(i) {
+            var comment = $('#comment-'+i);
+            comment.prevAll('div.new:visible').andSelf().removeClass('new')
+                                                        .addClass('obsolete');
+            if (i == BzAPI.last_i)
+              $('#no_new').text('No new');
+          },
+          
+          showAllActivity : function showAllActivity() {
+            $('.comment.obsolete').removeClass('working').slideDown('slow');
+            $('#show_all').text('hide obsolete');
+          },
+          
+          hideObsolete : function hideObsolete() {
+            $('.comment.obsolete').slideUp('slow');
+            $('#show_all').text('show all');
+          },
+          
+        }
+      {% endif %}
+        
+  </script>
+
+  <style>
+
+  </style>
+{% endblock %}
+
 {% block extra_menu_items %}
   {% if task.locale %}<li><a href="{% url todo_locale_dashboard task.locale.code %}">&larr; all {{task.locale}}</a></li>{% endif %}
   {% if task.project %}<li><a href="{% url todo_project_dashboard task.project.slug %}">&larr; all {{task.project}}</a></li>{% endif %}
@@ -14,7 +177,7 @@
 
 {% block view %}
 
-  <div class="task {{task.get_status_display}}">
+  <div class="task {{task.get_status_display}} {% if task.bug %}column left{% endif %}">
     <h3>
       {% ifequal task.get_status_display "resolved" %}
         <input type="checkbox" checked="checked" disabled="disabled"/>
@@ -70,5 +233,14 @@
     {% endrecurse %}
     {% endwith %}
   </div>
+  
+  {% if task.bug %}
+    <div id="activity" class="column right">
+      <h3>
+        <span id="no_new">No new</span> activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>
+        <a href="#" id="show_all" class="edit">show all</a>
+      </h3>
+    </div>
+  {% endif %}
 
 {% endblock %}

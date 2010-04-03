@@ -174,4 +174,8 @@ class Todo(models.Model):
         return self.snapshot_ts >= bug_last_modified_time
 
     def snapshot_ts_iso(self):
-        return self.snapshot_ts.isoformat() if self.snapshot_ts is not None else '0'
+        return '%sZ' % self.snapshot_ts.isoformat() if self.snapshot_ts is not None else '0'
+
+    def update_snapshot(self, new_snapshot_ts):
+        self.snapshot_ts = new_snapshot_ts
+        self.save()
