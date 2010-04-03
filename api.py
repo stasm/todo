@@ -68,15 +68,12 @@ def tasks(request):
     
     task_items = []
     for task in tasks:
-        if request.GET.has_key('snapshot'):
-            bug_ts = bzapi.last_modified(task.bug)
         task_data = {'type': 'Task',
                      'id': task.pk,
                      'pk': task.pk,
                      'uri': 'http://%s%s' % (request.get_host(), task.get_absolute_url()),
                      'label': unicode(task),
                      'status': task.get_status_display(),
-                     'bug': task.bug,
                      'snapshot_ts': task.snapshot_ts_iso(),
                      'locale': unicode(task.locale),
                      'locale_code': task.locale.code,
@@ -86,8 +83,11 @@ def tasks(request):
         if task.batch is not None:
             task_data.update({'batch': unicode(task.batch),
                               'batch_slug': task.batch.slug,})
-        if request.GET.has_key('snapshot'):
-            task_data.update({'snapshot': 'uptodate' if task.is_uptodate(bug_ts) else 'outofdate'})
+        if task.bug is not None:
+            task_data.update({'bug': task.bug})
+            if request.GET.has_key('snapshot'):
+                bug_ts = bzapi.last_modified(task.bug)
+                task_data.update({'snapshot': 'uptodate' if task.is_uptodate(bug_ts) else 'outofdate'})
         task_items.append(task_data)
     items += task_items
     

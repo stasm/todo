@@ -78,6 +78,7 @@
             var db = window.exhibit.getDatabase()
             items.visit(function(id){
               var item = db.getItem(id);
+              if (!item.bug) return;
               if (BzAPI._bugs[item.bug] && item.snapshot_ts < BzAPI._bugs[item.bug])
                 BzAPI.markAsOutofdate(id);
               else {
