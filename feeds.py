@@ -6,18 +6,22 @@ from life.models import Locale
 from todo.models import Actor, Project, Todo
 
 class Lens(object):
-    def __init__(self, kwargs, allowed=('locale', 'project')):
+    def __init__(self, kwargs, allowed=('bug', 'locale', 'project')):
         """
         kwargs should be a dict with keys: locale, project, owner, task. The values of this dict
         can either be a list of corresponding objects (e.g. locale=[<Locale>, <Locale>]) or
         a comma-separated string of codes (slugs) (e.g. locale='fr,de').
         """
+        self.bug = []
         self.locale = []
         self.project = []
         self.owner = []
         self.task = []
         self._props = []
         
+        if 'bug' in allowed and kwargs.has_key('bug'):
+            self.bug = kwargs['bug'] if not isinstance(kwargs['bug'], basestring) else [int(b) for b in kwargs['bug'].split(',')]
+            if self.bug: self._props.append('bug')
         if 'owner' in allowed and kwargs.has_key('owner'):
             self.owner = kwargs['owner'] if not isinstance(kwargs['owner'], basestring) else Actor.objects.filter(slug__in=kwargs['owner'].split(','))
             if self.owner: self._props.append('owner')
@@ -40,7 +44,10 @@ class Lens(object):
     def get_url_string(self):
         strings = []
         for prop in self._props:
-            strings.append("%s:%s" % (prop, ','.join([v.code for v in getattr(self, prop)])))
+            if prop in ('bug',):
+                strings.append("%s:%s" % (prop, ','.join([str(v) for v in getattr(self, prop)])))
+            else:
+                strings.append("%s:%s" % (prop, ','.join([v.code for v in getattr(self, prop)])))
         return '/'.join(strings)
 
     def filter_queryset(self, q, rel_string='%s'):
@@ -58,7 +65,7 @@ class NewTasksFeed(Feed):
     
     def get_object(self, bits):
         kwargs = dict( [bit.split(':') for bit in bits] )
-        return Lens(kwargs, allowed=('locale', 'project'))
+        return Lens(kwargs, allowed=('bug', 'locale', 'project'))
 
     def title(self, lens):
         title = "New tasks"
@@ -87,7 +94,7 @@ class NewNextActionsFeed(NewTasksFeed):
     
     def get_object(self, bits):
         kwargs = dict( [bit.split(':') for bit in bits] )
-        return Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
+        return Lens(kwargs, allowed=('bug', 'owner', 'locale', 'project', 'task'))
         
     def title(self, lens):
         title = "Next actions"
@@ -108,7 +115,7 @@ class NewNextActionsFeed(NewTasksFeed):
         return next_actions.order_by('-pk')[:30]
 
 def build_feed(items, kwargs, for_string=None):
-    lens = Lens(kwargs, allowed=('owner', 'locale', 'project', 'task'))
+    lens = Lens(kwargs, allowed=('bug', 'owner', 'locale', 'project', 'task'))
     url = '%s/%s' % (items, lens.get_url_string())
     feed_url = reverse('django.contrib.syndication.views.feed', kwargs={'url': url})
     if for_string is None: for_string = lens.get_for_string()

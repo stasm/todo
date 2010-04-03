@@ -53,6 +53,11 @@ def tasks(request):
         tasks = Todo.tasks.active()
     tasks = tasks.select_related('locale', 'project', 'batch', 'prototype')
     
+    if request.GET.has_key('bug'):
+        bugs = request.GET.getlist('bug')
+        bugs = [int(bug) for bug in bugs]
+        print bugs
+        tasks = tasks.filter(bug__in=bugs)
     if request.GET.has_key('locale'):
         locales = request.GET.getlist('locale')
         locales = Locale.objects.filter(code__in=locales)

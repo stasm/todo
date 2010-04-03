@@ -73,7 +73,7 @@ def index(request):
                                'projects_by_type' : projects_by_type},
                               context_instance=RequestContext(request))
     
-def dashboard(request, locale_code=None, project_slug=None):
+def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
     
     def _get_feeds(objs, filter_name, for_string):
         feeds = []
@@ -111,6 +111,15 @@ def dashboard(request, locale_code=None, project_slug=None):
             title += for_string
             feeds += _get_feeds(projects, 'project', for_string)
             order.remove('.project')
+    if bug_id is not None:
+        bug_ids = bug_id.split(',')
+        bugs = [int(b) for b in bug_ids]
+        if bugs:
+            args += [('bug', bug) for bug in bugs]
+            for_string = ' for bug %s' % ', '.join(bug_ids)
+            title += for_string
+            feeds += _get_feeds(bugs, 'bug', for_string)
+            order = ['.locale']
     
     return render_to_response('todo/dashboard.html',
                               {'title' : title,

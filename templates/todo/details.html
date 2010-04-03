@@ -9,6 +9,7 @@
   {% if task.locale %}<li><a href="{% url todo_locale_dashboard task.locale.code %}">&larr; all {{task.locale}}</a></li>{% endif %}
   {% if task.project %}<li><a href="{% url todo_project_dashboard task.project.slug %}">&larr; all {{task.project}}</a></li>{% endif %}
   {% if task.batch %}<li><a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}">&larr; all {{task.batch}}</a></li>{% endif %}
+  {% if task.bug %}<li><a href="{% url todo_bug_dashboard task.bug %}">&larr; bug {{task.bug}}</a></li>{% endif %}
 {% endblock %}
 
 {% block view %}
@@ -28,6 +29,7 @@
       {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
       {% if task.project %}<a href="{% url todo_project_dashboard task.project.slug %}" class="tag">{{task.project}}</a>{% endif %}
       {% if task.batch %}<a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}" class="tag">{{task.batch}}</a>{% endif %}
+      {% if task.bug %}<a href="{% url todo_bug_dashboard task.bug %}" class="tag">{{task.bug}}</a>{% endif %}
       
     </div>
     
