@@ -127,6 +127,26 @@
     margin: 0 0 5px;
     padding: 0;
   } 
+  .edit {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: x-small;
+    padding: 2px 3px;
+    position: relative;
+    top: -1em;
+    color: #666;
+    text-decoration: none;
+    opacity: 0;
+    -moz-transition: opacity .5s ease-in-out;
+    -webkit-transition: opacity .5s ease-in-out;
+    -o-transition: opacity .5s ease-in-out;
+    transition: opacity .5s ease-in-out;
+  }
+  .task h3:hover .edit {
+    opacity: 1;
+  }
+  .edit:hover {
+    background-color: #eee;
+  }
   .dashboard.task.resolved {
     opacity: .5;
   }
@@ -144,6 +164,9 @@
     display: block;
   }
   
+  .tags {
+    margin: .5em 0 1em;
+  }
   .tag {
     font-family: Helvetica, Arial, sans-serif;
     font-size: x-small;

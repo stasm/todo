@@ -19,10 +19,17 @@
         <input type="checkbox" checked="checked" disabled="disabled"/>
       {% endifequal %}
       {{task}}
+      {% if user.is_staff and perms.todo.change_todo %}
+        <a href="{{ task.get_admin_url }}" class="edit">edit task</a>
+      {% endif %}
     </h3>
-    {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
-    {% if task.project %}<a href="{% url todo_project_dashboard task.project.slug %}" class="tag">{{task.project}}</a>{% endif %}
-    {% if task.batch %}<a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}" class="tag">{{task.batch}}</a>{% endif %}
+    
+    <div class="tags">
+      {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
+      {% if task.project %}<a href="{% url todo_project_dashboard task.project.slug %}" class="tag">{{task.project}}</a>{% endif %}
+      {% if task.batch %}<a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}" class="tag">{{task.batch}}</a>{% endif %}
+      
+    </div>
     
     {% with task.children.all as todos %}
     {% recurse_children %}

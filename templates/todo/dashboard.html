@@ -152,11 +152,12 @@
         <div class="needs_update"><small>New activity in the bug; please review.</small></div>
         
         <h3><a ex:href-content="concat('{% url todo_task_exhibit %}', .pk)" ex:content=".label"></a></h3>
-        <a ex:href-content="concat('{% url todo_locale_dashboard_exhibit %}', .locale_code)" ex:content=".locale" class="tag"></a>
-        <a ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug)" ex:content=".project" class="tag"></a>
-        <a ex:if-exists=".batch" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?batch=', .batch)" ex:content=".batch" class="tag"></a>
-        <a ex:if-exists=".bug" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?bug=', .bug)" ex:content=".bug" class="tag"></a>
-        
+        <div class="tags">
+          <a ex:href-content="concat('{% url todo_locale_dashboard_exhibit %}', .locale_code)" ex:content=".locale" class="tag"></a>
+          <a ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug)" ex:content=".project" class="tag"></a>
+          <a ex:if-exists=".batch" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?batch=', .batch)" ex:content=".batch" class="tag"></a>
+          <a ex:if-exists=".bug" ex:href-content="concat('{% url todo_project_dashboard_exhibit %}', .project_slug, '?bug=', .bug)" ex:content=".bug" class="tag"></a>
+        </div>
         <div ex:content="!task">
           <div class="todo">
             <input type="checkbox" disabled="disabled"/>

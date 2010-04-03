@@ -141,8 +141,11 @@ class Todo(models.Model):
         
     @models.permalink
     def get_absolute_url(self):
-            return ('todo.views.task', [str(self.id)])
-    
+        return ('todo.views.task', [str(self.id)])
+
+    def get_admin_url(self):
+        return '/admin/todo/todo/%s' % str(self.id)
+
     @property
     def next(self):
         if self._next is None:

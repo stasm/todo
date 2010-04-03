@@ -36,7 +36,17 @@ class TodoAdmin(admin.ModelAdmin):
     list_editable = ('summary', 'status', 'resolution', 'owner', 'order', 'snapshot_ts', 'is_auto_activated', 'is_review', '_has_children', 'resolves_parent', 'locale', 'project')
     list_display = list_display_links + list_editable + ('prototype', 'task', 'parent',)
     fieldsets = [
-        (None, {'fields': ['prototype', 'summary', 'owner', 'status', 'resolution', 'task', 'parent', 'order', 'is_auto_activated', 'is_review', 'resolves_parent', 'locale', 'project']}),
+        (None, {
+            'fields': ('summary', 'owner', 'status', 'resolution', 'prototype', 'task', 'parent', 'order'),
+        }),
+        ('Tasks only', {
+            'classes': ('collapse',),
+            'fields': ('locale', 'project', 'snapshot_ts', 'bug'),
+        }),
+        ('Flags', {
+            'classes': ('collapse',),
+            'fields': ('is_auto_activated', 'is_review', 'resolves_parent'),
+        }),
     ]
     inlines = (TodoInline,)
 
