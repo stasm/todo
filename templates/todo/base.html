@@ -353,9 +353,9 @@
       {% block menu_back %}
         <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
       {% endblock %}
+      {% block extra_menu_items %}{% endblock %}
       <li><a href="{% url todo.views.new %}">new task</a></li>
       <li><a href="{% url todo.views.feed_builder %}">feed builder</a></li>
-      {% block extra_menu_items %}{% endblock %}
     </ul>
     <br/>
   </div>

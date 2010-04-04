@@ -238,13 +238,6 @@
   </style>
 {% endblock %}
 
-{% block extra_menu_items %}
-  {% if task.locale %}<li><a href="{% url todo_locale_dashboard task.locale.code %}">&larr; all {{task.locale}}</a></li>{% endif %}
-  {% if task.project %}<li><a href="{% url todo_project_dashboard task.project.slug %}">&larr; all {{task.project}}</a></li>{% endif %}
-  {% if task.batch %}<li><a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}">&larr; all {{task.batch}}</a></li>{% endif %}
-  {% if task.bug %}<li><a href="{% url todo_bug_dashboard task.bug %}">&larr; bug {{task.bug}}</a></li>{% endif %}
-{% endblock %}
-
 {% block view %}
 
   <div id="task" class="task {{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
