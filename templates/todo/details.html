@@ -77,7 +77,7 @@
                      .hide()
                      .appendTo(column);
             {% if perms.todo.change_todo %}
-              $('<span class="meta"></span>').html('<input type="checkbox" '+checked_disabled+'/><img src="{% url static path="throbber.gif" %}"/>')
+              $('<span class="meta"></span>').html('<input type="checkbox" '+checked_disabled+'/><img src="{% url static path="todo/throbber.gif" %}"/>')
                                              .prependTo(comment)
                                              .click(function(){
                                                BzAPI.updateSnapshot(time, i);
