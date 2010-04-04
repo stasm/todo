@@ -10,9 +10,40 @@
   <script type="text/javascript">
       {% if task.bug %}
         $(document).ready(function() {
+          Task.initResolvedStepsToggling();
           $('.show_all').hide().toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
           BzAPI.getCommentsAndHistory();
         });
+        
+        Task = {
+          
+          _resolved_steps : null,
+          _link : null,
+          
+          initResolvedStepsToggling : function initResolvedStepsToggling() {
+            Task._link = $('#show_resolved');
+            if ( ! Task.resolved_steps().length)
+              Task._link.hide();
+            Task._link.toggle(Task.show_resolved_steps, Task.hide_resolved_steps)
+          },
+          
+          show_resolved_steps : function show_resolved_steps() {
+            Task.resolved_steps().slideDown();
+            Task._link.text('hide resolved steps');
+          },
+          
+          hide_resolved_steps : function hide_resolved_steps() {
+            Task.resolved_steps().slideUp();
+            Task._link.text('show resolved steps');
+          },
+          
+          resolved_steps : function resolved_steps(force) {
+            if ( force || ! Task._resolved_steps)
+              Task._resolved_steps =  $('.todo.resolved.has_children');
+            return Task._resolved_steps;
+          },
+          
+        }
         
         BzAPI = {
           
@@ -246,6 +277,7 @@
         <input type="checkbox" checked="checked" disabled="disabled"/>
       {% endifequal %}
       {{task}}
+      <a href="#" id="show_resolved" class="edit">show resolved steps</a>
       {% if user.is_staff and perms.todo.change_todo %}
         <a href="{{ task.get_admin_url }}" class="edit">edit task</a>
       {% endif %}
@@ -263,7 +295,7 @@
     {% recurse_children %}
       {% for todo in todos %}
       
-        <div class="todo {{todo.get_status_display}}">
+        <div class="todo {{todo.get_status_display}} {% if todo.has_children %}has_children{% endif %}">
           {% if todo.is_next and perms.todo.change_todo %}
             <form action="{% url todo.views.resolve todo.id %}" method="post">
               <input type="hidden" name="task_id" value="{{task.id}}"/>
