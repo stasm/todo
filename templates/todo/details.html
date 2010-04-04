@@ -11,7 +11,7 @@
       {% if task.bug %}
         $(document).ready(function() {
           BzAPI.getCommentsAndHistory();
-          $('#show_all').toggle(function(){
+          $('.show_all').toggle(function(){
             BzAPI.showAllActivity();
           },function(){
             BzAPI.hideObsolete();
@@ -26,6 +26,7 @@
           last_i : 0,
           
           getCommentsAndHistory : function getCommentsAndHistory() {
+            $('#checking').fadeIn('slow');
             var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?comments=1&history=1';
             $.getJSON(url, function(data) {
                 //BzAPI.attachments = data['attachments'];
@@ -57,8 +58,10 @@
               
               BzAPI.last_i = i;
               prev = time;
-              if (time <= BzAPI.snapshot_ts)
+              if (time <= BzAPI.snapshot_ts) {
                 status = 'obsolete';
+                checked_disabled = 'checked="checked" disabled="disabled"';
+              }
               var commenter = (a.changer) ? a.changer.name : a.author.real_name;
               var when = time.split('T').join(' ').replace(/Z$/g, " UTC");
               if (a.text) {
@@ -76,13 +79,7 @@
               comment.html('<h4>' + commenter + ' on ' + when + '</h4>' + text)
                      .hide()
                      .appendTo(column);
-              if (status == 'new') {
-                comment.fadeIn('slow');
-                $('#no_new').text('New');
-              }
             {% if perms.todo.change_todo %}
-              else
-                checked_disabled = 'checked="checked" disabled="disabled"';
               $('<span class="meta"></span>').html('<input type="checkbox" '+checked_disabled+'/><img src="{% url static path="throbber.gif" %}"/>')
                                              .prependTo(comment)
                                              .click(function(){
@@ -91,6 +88,13 @@
             {% endif %}
               
             });
+            var new_activity = $('.comment.new');
+            if (new_activity.length) {
+              BzAPI.changeStatusToOutofdate();
+              new_activity.fadeIn('slow');
+            } else {
+              BzAPI.changeStatusToUptodate();
+            }
           },
           
           getChangesText : function getChangesText(changes) {
@@ -146,8 +150,7 @@
           
           markAsWorkingUpTo : function markAsWorkingUpTo(i, prev_and_self) {
             var prev_and_self = prev_and_self || $('#comment-'+i).prevAll('div.new:visible').andSelf();
-            prev_and_self.fadeTo('normal', 0.4)
-                         .addClass('working')
+            prev_and_self.addClass('working')
                          .find('input').attr('disabled', 'disabled')
                                        .attr('checked', 'checked');
             return prev_and_self;
@@ -158,7 +161,7 @@
             prev_and_self.removeClass('new')
                          .addClass('obsolete');
             if (i == BzAPI.last_i)
-              $('#no_new').text('No new');
+              BzAPI.changeStatusToUptodate();
             return prev_and_self;
           },
           
@@ -178,14 +181,26 @@
           
           showAllActivity : function showAllActivity() {
             $('.comment.obsolete').slideDown('slow');
-            $('#show_all').text('hide obsolete');
+            $('.show_all').text('hide obsolete');
           },
           
           hideObsolete : function hideObsolete() {
             $('.comment.obsolete').slideUp('slow', function(){
               $(this).removeClass('working');
             });
-            $('#show_all').text('show all');
+            $('.show_all').text('show all');
+          },
+          
+          changeStatusToOutofdate : function changeStatusToOutofdate() {
+            $('.status:visible').fadeOut('slow', function() {
+              $('.status#outofdate').fadeIn('slow');
+            });
+          },
+          
+          changeStatusToUptodate : function changeStatusToUptodate() {
+            $('.status:visible').fadeOut('slow', function() {
+              $('.status#uptodate').fadeIn('slow');
+            });
           },
           
         }
@@ -266,10 +281,23 @@
   
   {% if task.bug %}
     <div id="activity" class="column right">
-      <h3>
-        <span id="no_new">No new</span> activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>
-        <a href="#" id="show_all" class="edit">show all</a>
-      </h3>
+      <div class="status" id="checking">
+        <h3>Checking status <img src="{% url static path="throbber.gif" %}"/></h3>
+      </div>
+      <div class="status" id="uptodate">
+        <h3>Status of this task is up-to-date.</h3>
+        <h3>
+          No new activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>.
+          <a href="#" class="show_all edit">show all</a>
+        </h3>
+      </div>
+      <div class="status" id="outofdate">
+        <h3>Status of this task is <strong>out of date</strong>.</h3>
+        <h3>
+          New activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>:
+          <a href="#" class="show_all edit">show all</a>
+        </h3>
+      </div>
     </div>
   {% endif %}
 

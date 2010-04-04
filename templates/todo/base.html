@@ -131,15 +131,32 @@
   #activity h3 {
     margin-top: 10px;
   }
+  .status {
+    display: none;
+  }
+  .status img {
+    width: 1em;
+    height: 1em;
+  }
+  .status strong {
+    font-weight: normal;
+    font-style: italic;
+    font-size: 1.5em;
+  }
+  
   #activity .comment {
     margin-top: 1em;
     border: 1px solid #ccc;
   }
   #activity .comment.obsolete {
-    opacity: 0.6 !important;
+    opacity: 0.6;
   }  
   #activity .comment.new {
-    opacity: 1 !important;
+    opacity: 1;
+    -moz-transition: opacity .5s ease-in-out;
+  }
+  #activity .comment.working {
+    opacity: 0.4;
   }
   #activity .comment.error {
     padding: 10px;
