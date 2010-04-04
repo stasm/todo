@@ -110,16 +110,18 @@ def tasks(request):
     data.update(schema)
     return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
 
+def _status_response(status, message):
+    data = {'status': status,
+            'message': message}
+    return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
+
 @require_POST
-@permission_required('todo.change_todo')
 def update_snapshot(request, task_id):
+    if not request.user.has_perm('todo.change_todo'):
+        return _status_response('error', "You don't have permissions to update the snapshot timestamp.")
     new_snapshot_ts = datetime.strptime(request.POST.get('snapshot_ts'), BzAPI.time_format)
     if not new_snapshot_ts:
-        data = {'status': 'error',
-                'message': 'Unknown timestamp (%s)' % request.POST.get('snapshot_ts')}
-        return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
+        return _status_response('error', 'Unknown timestamp (%s)' % request.POST.get('snapshot_ts'))
     task = Todo.objects.get(pk=task_id)
     task.update_snapshot(new_snapshot_ts)
-    data = {'status': 'ok',
-            'message': 'Timestamp updated (%s)' % task.snapshot_ts_iso()}
-    return HttpResponse(simplejson.dumps(data, indent=2), mimetype='application/javascript')
+    return _status_response('ok', 'Timestamp updated (%s)' % task.snapshot_ts_iso())

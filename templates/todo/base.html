@@ -137,14 +137,26 @@
   }
   #activity .comment.obsolete {
     opacity: 0.6 !important;
+  }  
+  #activity .comment.new {
+    opacity: 1 !important;
+  }
+  #activity .comment.error {
+    padding: 10px;
+    border: 2px solid orange;
+    font-size: small;
+    font-style: italic;
   }
   h4 {
     font-size: 1em;
     font-weight: normal;
     margin: 0;
-    padding: 10px 0 10px 3em;
+    padding: 10px;
     background-color: #eee;
     font-style: italic;
+  }
+  input + h4 {
+    padding-left: 3em;
   }
   #activity .comment .meta {
     float: left; 
