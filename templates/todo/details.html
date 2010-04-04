@@ -85,13 +85,18 @@
             {% endif %}
               
             });
-            var new_activity = $('.comment.new');
+            var new_activity = BzAPI.new_activity();
             if (new_activity.length) {
+              BzAPI.widenActivityColumn();
               BzAPI.changeStatusToOutofdate();
               new_activity.fadeIn('slow');
             } else {
               BzAPI.changeStatusToUptodate();
             }
+          },
+          
+          new_activity : function new_activity() {
+            return $('.comment.new');
           },
           
           getChangesText : function getChangesText(changes) {
@@ -160,6 +165,7 @@
                          .addClass('obsolete');
             if (i == BzAPI.last_i)
               BzAPI.changeStatusToUptodate();
+             
             return prev_and_self;
           },
           
@@ -179,12 +185,15 @@
           
           showAllActivity : function showAllActivity() {
             BzAPI.showing_all = true;
+            BzAPI.widenActivityColumn();
             $('.comment.obsolete').slideDown('slow');
             $('.show_all').text('hide obsolete');
           },
           
           hideObsolete : function hideObsolete() {
             BzAPI.showing_all = false;
+            if ( ! BzAPI.new_activity().length) 
+              BzAPI.narrowActivityColumn();
             $('.comment.obsolete').slideUp('slow');
             $('.show_all').text('show all');
           },
@@ -199,6 +208,16 @@
             $('.status:visible').fadeOut('slow', function() {
               $('.status#uptodate').fadeIn('slow');
             });
+          },
+          
+          widenActivityColumn : function widenActivityColumn() {
+            $('#task').removeClass('wide');
+            $('#activity').removeClass('narrow');
+          },
+          
+          narrowActivityColumn : function narrowActivityColumn() {
+            $('#task').addClass('wide');
+            $('#activity').addClass('narrow');
           },
           
         }
@@ -220,7 +239,7 @@
 
 {% block view %}
 
-  <div class="task {{task.get_status_display}} {% if task.bug %}column left{% endif %}">
+  <div id="task" class="task {{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
     <h3>
       {% ifequal task.get_status_display "resolved" %}
         <input type="checkbox" checked="checked" disabled="disabled"/>
@@ -278,7 +297,7 @@
   </div>
   
   {% if task.bug %}
-    <div id="activity" class="column right">
+    <div id="activity" class="column right narrow">
       <div class="status" id="checking">
         <h3>Checking status <img src="{% url static path="throbber.gif" %}"/></h3>
       </div>
