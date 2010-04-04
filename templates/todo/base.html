@@ -134,15 +134,27 @@
   }
   .status {
     display: none;
+    min-height: 2em;
+    margin-left: -30px;
+    padding-left: 30px;
+    margin-top: -5px;
+    padding-top: 5px;
+    background-repeat: no-repeat;
+    background-position: 0 13px;
   }
-  .status img {
-    width: 1em;
-    height: 1em;
+  #outofdate {
+    background-image: url({% url static path="todo/warning.png" %});
   }
-  .status strong {
-    font-weight: normal;
+  #uptodate {
+    background-image: url({% url static path="todo/okay.png" %});
+  }
+  #checking div {
+    background: url({% url static path="loadingAnimation.gif" %}) no-repeat 0 13px;
+    width: 208px;
+    text-align: center;
+    padding-top: 30px;
+    font-size: small;
     font-style: italic;
-    font-size: 1.5em;
   }
   
   #activity .comment {

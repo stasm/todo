@@ -299,7 +299,7 @@
   {% if task.bug %}
     <div id="activity" class="column right narrow">
       <div class="status" id="checking">
-        <h3>Checking status <img src="{% url static path="throbber.gif" %}"/></h3>
+        <div>(checking status)</div>
       </div>
       <div class="status" id="uptodate">
         <h3>Status of this task is up-to-date.</h3>
@@ -309,9 +309,13 @@
         </h3>
       </div>
       <div class="status" id="outofdate">
-        <h3>Status of this task is <strong>out of date</strong>.</h3>
+        <h3>Status of this task is <em>out of date</em>.</h3>
         <h3>
-          New activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>:
+          {% if perms.todo.change_todo %}
+            Review the activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>:
+          {% else %}
+            New activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>:
+          {% endif %}
           <a href="#" class="show_all edit">show all</a>
         </h3>
       </div>
