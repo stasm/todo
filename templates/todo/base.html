@@ -113,7 +113,7 @@
   .bar .progress {
     width: 0;
     height: 10px;
-    background-color: #38AB03;
+    background-color: #38ab03;
   }
   .batch.bar {
     width: 100px;
@@ -258,11 +258,15 @@
     text-decoration: line-through;
   }
   .task.outofdate {
-    border-right: 10px solid #E6A5A5;
+    border-right: 10px solid #edbb45;
   }
   .needs_update {
     float: right;
     display: none;
+    background: url({% url static path="todo/warning16.png" %}) no-repeat scroll 0 0 transparent;
+    padding-left: 20px;
+    padding-top: 3px;
+    min-height: 16px;
   }
   .task.outofdate .needs_update {
     display: block;
@@ -298,7 +302,7 @@
     color: #999;
   }
   .todo.next {
-    background-color: #ff9;
+    background-color: #c1f6ac; /*pale yellow: #ff9*/;
   }
   .todo.resolved {
     color: #999;
