@@ -47,22 +47,24 @@ def index(request):
                     if tasks_by_batch.has_key(batch):
                         tasks = tasks_by_batch[batch]
                         all_tasks = len(tasks)
-                        open_tasks = len([task for task in tasks if task.status == 2])
+                        open_tasks = len([task for task in tasks if task.status_is('active')])
+                        resolved_tasks = len([task for task in tasks if task.status_is('resolved')])
                         batches.append((batch, {'has_tasks': True,
                                                 'open': open_tasks,
-                                                'all': all_tasks,
-                                                'percent': 100 * (all_tasks - open_tasks) / all_tasks}))
+                                                'resolved': resolved_tasks,
+                                                'percent': 100 * resolved_tasks / all_tasks}))
                     else:
                         batches.append((batch, {'has_tasks': False}))
             if tasks_by_project.has_key(project):
                 tasks = tasks_by_project[project]
                 all_tasks = len(tasks)
-                open_tasks = len([task for task in tasks if task.status == 2])
+                open_tasks = len([task for task in tasks if task.status_is('active')])
+                resolved_tasks = len([task for task in tasks if task.status_is('resolved')])
                 projects_of_type.append((project, {'batches': batches,
                                                    'has_tasks': True,
                                                    'open': open_tasks,
-                                                   'all': all_tasks,
-                                                   'percent': 100 * (all_tasks - open_tasks) / all_tasks}))
+                                                   'resolved': resolved_tasks,
+                                                   'percent': 100 * resolved_tasks / all_tasks}))
             else:
                 projects_of_type.append((project, {'batches': batches, 
                                                    'has_tasks': False}))

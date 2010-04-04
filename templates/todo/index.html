@@ -29,10 +29,10 @@
         {% for project, info in projects %}
           <li>
             {% if info.has_tasks %}
-              <div class="bar" title="{{info.percent}}% ({{info.open}} open tasks out of {{info.all}} total)">
+              <div class="bar" title="{{info.percent}}% complete ({{info.resolved}} resolved, {{info.open}} open)">
                 <div class="progress" style="width: {{info.percent}}%;"></div>
               </div>
-              <a href="{% url todo_project_dashboard project.slug %}">{{project}}: {{info.percent}}%</a>
+              <a href="{% url todo_project_dashboard project.slug %}" title="{{info.percent}}% complete ({{info.resolved}} resolved, {{info.open}} open)">{{project}}: {{info.percent}}%</a>
             {% else %}
               <span class="no_tasks" title="No tasks yet.">{{project}}</span>
             {% endif %}
@@ -41,10 +41,10 @@
             {% for batch, info in info.batches %}
               <li>
                 {% if info.has_tasks %}
-                  <div class="batch bar" title="{{info.percent}}% ({{info.open}} open tasks out of {{info.all}} total)">
+                  <div class="batch bar" title="{{info.percent}}% complete ({{info.resolved}} resolved, {{info.open}} open)">
                     <div class="progress" style="width: {{info.percent}}%;"></div>
                   </div>
-                  <a href="{% url todo_project_dashboard project.slug %}?batch={{batch}}">{{batch}}: {{info.percent}}%</a>
+                  <a href="{% url todo_project_dashboard project.slug %}?batch={{batch}}" title="{{info.percent}}% complete ({{info.resolved}} resolved, {{info.open}} open)">{{batch}}: {{info.percent}}%</a>
                 {% else %}
                   <span class="no_tasks" title="No tasks yet.">{{batch}}</span>
                 {% endif %}
