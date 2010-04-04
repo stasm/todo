@@ -10,8 +10,8 @@
   <script type="text/javascript">
       {% if task.bug %}
         $(document).ready(function() {
+          $('.show_all').hide().toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
           BzAPI.getCommentsAndHistory();
-          $('.show_all').toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
         });
         
         BzAPI = {
@@ -86,17 +86,23 @@
               
             });
             var new_activity = BzAPI.new_activity();
+            var obsolete_activity = BzAPI.obsolete_activity();
+            if (obsolete_activity.length)
+              $('.show_all').show();
             if (new_activity.length) {
               BzAPI.widenActivityColumn();
               BzAPI.changeStatusToOutofdate();
               new_activity.fadeIn('slow');
-            } else {
+            } else
               BzAPI.changeStatusToUptodate();
-            }
           },
           
           new_activity : function new_activity() {
             return $('.comment.new');
+          },
+          
+          obsolete_activity : function obsolete_activity() {
+            return $('.comment.obsolete');
           },
           
           getChangesText : function getChangesText(changes) {
@@ -163,6 +169,8 @@
             var prev_and_self = prev_and_self || $('#comment-'+i).prevAll('div.new:visible').andSelf();
             prev_and_self.removeClass('new working')
                          .addClass('obsolete');
+            
+            $('.show_all').show();
             if (i == BzAPI.last_i)
               BzAPI.changeStatusToUptodate();
              
@@ -195,7 +203,7 @@
             if ( ! BzAPI.new_activity().length) 
               BzAPI.narrowActivityColumn();
             $('.comment.obsolete').slideUp('slow');
-            $('.show_all').text('show all');
+            $('.show_all').text('show obsolete');
           },
           
           changeStatusToOutofdate : function changeStatusToOutofdate() {
@@ -305,7 +313,7 @@
         <h3>Status of this task is up-to-date.</h3>
         <h3>
           No new activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>.
-          <a href="#" class="show_all edit">show all</a>
+          <a href="#" class="show_all edit">show obsolete</a>
         </h3>
       </div>
       <div class="status" id="outofdate">
@@ -316,7 +324,7 @@
           {% else %}
             New activity in <a href="https://bugzilla.mozilla.org/show_bug.cgi?id={{ task.bug }}">bug {{ task.bug }}</a>:
           {% endif %}
-          <a href="#" class="show_all edit">show all</a>
+          <a href="#" class="show_all edit">show obsolete</a>
         </h3>
       </div>
     </div>
