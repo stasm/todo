@@ -11,11 +11,7 @@
       {% if task.bug %}
         $(document).ready(function() {
           BzAPI.getCommentsAndHistory();
-          $('.show_all').toggle(function(){
-            BzAPI.showAllActivity();
-          },function(){
-            BzAPI.hideObsolete();
-          })
+          $('.show_all').toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
         });
         
         BzAPI = {
