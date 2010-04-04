@@ -147,16 +147,11 @@
   #activity .comment {
     margin-top: 1em;
     border: 1px solid #ccc;
-  }
-  #activity .comment.obsolete {
-    opacity: 0.6;
-  }  
-  #activity .comment.new {
     opacity: 1;
     -moz-transition: opacity .5s ease-in-out;
   }
-  #activity .comment.working {
-    opacity: 0.4;
+  #activity .comment.obsolete, #activity .comment.working {
+    opacity: 0.5;
   }
   #activity .comment.error {
     padding: 10px;
