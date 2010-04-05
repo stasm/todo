@@ -1,0 +1,9 @@
+{% extends "todo/base.html" %}
+
+{% block extra_menu_items %}
+  <li><a href="{% url todo_dashboard %}">all tasks</a></li>
+{% endblock %}
+
+{% block view %}
+  <h1>Not found</h1>
+{% endblock %}
