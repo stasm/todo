@@ -39,7 +39,7 @@
           
           resolved_steps : function resolved_steps(force) {
             if ( force || ! Task._resolved_steps)
-              Task._resolved_steps =  $('.todo.resolved.has_children');
+              Task._resolved_steps =  $('.todo.resolved.has_children').add('#task > .todo.resolved');
             return Task._resolved_steps;
           },
           
