@@ -10,7 +10,6 @@
   
   <div class="groups column left wide">
     
-    <h3>Batches</h3>
     <ul>
     {% if batches %}
       {% for batch in batches %}
@@ -45,7 +44,7 @@
               </li>
            </ul>
          {% else %}
-           <span class="no_tasks" title="No tasks yet.">{{batch.name}}</span>
+           <h4><span class="no_tasks" title="No tasks yet.">{{batch.name}}</span></h4>
          {% endif %}
        </li>
       {% endfor %}
@@ -92,7 +91,7 @@
   
   <div id="project_summary" class="column right narrow">
     
-    <h3>Total progress: {{percent}}%</h3>
+    <h3>Total progress: <strong>{{percent}}%</strong></h3>
     
     <div class="bar" title="{{percent}}% complete ({{resolved|length}} resolved, {{open|length}} open)">
       <div class="progress" style="width: {{percent}}%;"></div>
