@@ -16,10 +16,12 @@
       {% for batch in batches %}
         <li>
           {% if batch.has_tasks %}
-            <div class="batch bar" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
-              <div class="progress" style="width: {{batch.percent}}%;"></div>
-            </div>
-            <a href="{% url todo_project_dashboard project.slug %}?batch={{batch.name}}" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">{{batch.name}}: {{batch.percent}}%</a>
+            <h4>
+              <div class="batch bar" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
+                <div class="progress" style="width: {{batch.percent}}%;"></div>
+              </div>
+              <a href="{% url todo_project_dashboard project.slug %}?batch={{batch.name}}" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">{{batch.name}}: {{batch.percent}}%</a>
+            </h4>
             <ul>
               <li class="done">
                 <dl>
@@ -51,7 +53,7 @@
     
     {% if other.total %}
         <li>
-          <a href="{% url todo_project_dashboard project.slug %}?batch=Uncategorized tasks">Uncategorized tasks</a>
+          <h4><a href="{% url todo_project_dashboard project.slug %}?batch=Uncategorized tasks">Uncategorized tasks</a></h4>
           <ul>
             <li class="done">
               <dl>
