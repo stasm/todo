@@ -125,6 +125,11 @@
 {% endblock %}
 
 {% block extra_menu_items %}
+  {% ifequal view 'project' %}
+    {% for project in requested %}
+      <li><a href="{% url todo_project_summary project.slug %}">{{project.name}} summary</a></li>
+    {% endfor %}
+  {% endifequal %}
   <li><a href="{{show_resolved_path}}">show resolved</a></li>
 {% endblock %}
 
