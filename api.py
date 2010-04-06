@@ -84,10 +84,8 @@ def tasks(request):
                      'locale_code': task.locale.code,
                      'project': unicode(task.project),
                      'project_slug': task.project.slug,
+                     'batch': unicode(task.batch) if task.batch is not None else 'Other',
                      'prototype': unicode(task.prototype)}
-        if task.batch is not None:
-            task_data.update({'batch': unicode(task.batch),
-                              'batch_slug': task.batch.slug,})
         if task.bug is not None:
             task_data.update({'bug': task.bug})
             if request.GET.has_key('snapshot'):
