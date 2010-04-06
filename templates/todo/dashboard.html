@@ -57,6 +57,7 @@
         BzAPI = {
           
           apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
+          _bugs : {},
           
           updateItem : function updateItem(id, dict) {
             var item = window.exhibit.getDatabase().getItem(id);
@@ -81,14 +82,19 @@
             items.visit(function(id){
               var item = db.getItem(id);
               if (!item.bug) return;
-              
-              $.getJSON(BzAPI.apibase+'bug/'+item.bug, function(data) {
-                if (item.snapshot_ts < data['last_change_time'])
-                  BzAPI.markAsOutofdate(id);
-                else
-                  BzAPI.markAsUptodate(id);
-              })
-              
+              if (BzAPI._bugs[item.bug] && item.snapshot_ts < BzAPI._bugs[item.bug])
+                BzAPI.markAsOutofdate(id);
+              else if (BzAPI._bugs[item.bug])
+                BzAPI.markAsUptodate(id);
+              else {
+                $.getJSON(BzAPI.apibase+'bug/'+item.bug, function(data) {
+                  BzAPI._bugs[item.bug] = data['last_change_time'];
+                  if (item.snapshot_ts < data['last_change_time'])
+                    BzAPI.markAsOutofdate(id);
+                  else
+                    BzAPI.markAsUptodate(id);
+                })
+              }
             })
           }
           
