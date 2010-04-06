@@ -291,19 +291,36 @@
   .task.resolved h3 {
     text-decoration: line-through;
   }
+  .task.has_bug {
+    border-right: 10px solid #ccc;
+  }
   .task.outofdate {
     border-right: 10px solid #edbb45;
   }
-  .needs_update {
+  .task.uptodate {
+    border-right: 10px solid #98E879;
+  }
+  .snapshot_status {
     float: right;
     display: none;
-    background: url({% url static path="todo/warning16.png" %}) no-repeat scroll 0 0 transparent;
     padding-left: 20px;
     padding-top: 3px;
     min-height: 16px;
   }
-  .task.outofdate .needs_update {
+  .task.has_bug .snapshot_status.checking {
     display: block;
+    background: url({% url static path="todo/throbber.gif" %}) no-repeat scroll 0 0 transparent;
+  }
+  .task.outofdate .snapshot_status.checking, .task.uptodate .snapshot_status.checking {
+    display: none;
+  }
+  .task.outofdate .snapshot_status.outofdate {
+    display: block;
+    background: url({% url static path="todo/warning16.png" %}) no-repeat scroll 0 0 transparent;
+  }
+  .task.uptodate .snapshot_status.uptodate {
+    display: block;
+    background: url({% url static path="todo/okay16.png" %}) no-repeat scroll 0 0 transparent;
   }
   
   .tags {
