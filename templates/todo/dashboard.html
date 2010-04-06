@@ -16,7 +16,7 @@
                var params = SimileAjax.parseURLParameters();
                var options = ["locale", "project", "batch", "owner", "bug", "snapshot"];
                {% block extra_query_options %}{% endblock %}
-                for ( var i in options ) {
+               for ( var i in options ) {
                   var option = options[i];
                   if (option in params) {
                     if (params[option]) {
@@ -25,8 +25,7 @@
                       facet.setAttribute("defaultExpanded", "true");
                      }
                      else {
-                      document.getElementById(option +
-                        "-facet").setAttribute("ex:selectMissing", "true");
+                      document.getElementById(option).setAttribute("ex:selectMissing", "true");
                      }
                   }
                 }
