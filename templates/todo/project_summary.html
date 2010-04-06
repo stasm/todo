@@ -10,9 +10,9 @@
   
   <div class="groups column left wide">
     
+    <h3>Batches</h3>
+    <ul>
     {% if batches %}
-      <h3>Batches</h3>
-      <ul>
       {% for batch in batches %}
         <li>
           {% if batch.has_tasks %}
@@ -47,14 +47,11 @@
          {% endif %}
        </li>
       {% endfor %}
-      </ul>
     {% endif %}
     
     {% if other.total %}
-      <h3>Other tasks</h3>
-      <ul>
         <li>
-          <a href="{% url todo_project_dashboard project.slug %}?batch=">Other tasks</a>
+          <a href="{% url todo_project_dashboard project.slug %}?batch=Uncategorized tasks">Uncategorized tasks</a>
           <ul>
             <li class="done">
               <dl>
@@ -86,9 +83,9 @@
             </li>
           </ul>
         </li>
-      </ul>
     {% endif %}
     
+    </ul>
   </div>
   
   <div id="project_summary" class="column right narrow">

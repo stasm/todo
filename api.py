@@ -84,7 +84,7 @@ def tasks(request):
                      'locale_code': task.locale.code,
                      'project': unicode(task.project),
                      'project_slug': task.project.slug,
-                     'batch': unicode(task.batch) if task.batch is not None else 'Other',
+                     'batch': unicode(task.batch) if task.batch is not None else 'Uncategorized tasks',
                      'prototype': unicode(task.prototype)}
         if task.bug is not None:
             task_data.update({'bug': task.bug})
