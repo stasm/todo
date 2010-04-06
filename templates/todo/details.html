@@ -269,6 +269,12 @@
   </style>
 {% endblock %}
 
+{% block extra_menu_items %}
+  {% if task.project %}
+    <li><a href="{% url todo_project_summary task.project.slug %}">{{task.project.name}} summary</a></li>
+  {% endif %}
+{% endblock %}
+
 {% block view %}
 
   <div id="task" class="task {{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">

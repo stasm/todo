@@ -1,4 +1,4 @@
-from django.shortcuts import render_to_response
+from django.shortcuts import render_to_response, get_object_or_404
 from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import login_required, permission_required
 from django.core.urlresolvers import reverse
@@ -20,7 +20,7 @@ from itertools import groupby
 
 def index(request):
     tasks_orderby_locale = Todo.tasks.active().select_related('locale').order_by('locale__code')
-    tasks_by_locale = dict([ (loc, len(list(tasks))) for loc, tasks in groupby(tasks_orderby_locale, lambda t: t.locale)])
+    tasks_by_locale = dict([ (loc, list(tasks)) for loc, tasks in groupby(tasks_orderby_locale, lambda t: t.locale)])
     locales = []
     for locale in Locale.objects.all().order_by('code'):
         try:
@@ -29,52 +29,87 @@ def index(request):
             locales.append((locale, 0))
 
     active_projects= Project.objects.active().order_by('type')
-    active_batches= Batch.objects.active().select_related('project').order_by('project')
-    batches_by_project = dict([ (project, list(batches)) for project, batches in groupby(active_batches, lambda t: t.project)])
 
-    ordered_tasks = Todo.tasks.select_related('project', 'batch').filter(project__in=active_projects).order_by('project', 'batch')
+    ordered_tasks = Todo.tasks.select_related('project').filter(project__in=active_projects).order_by('project')
     tasks_by_project = dict([ (p, list(tasks)) for p, tasks in groupby(ordered_tasks, lambda t: t.project)])
-    tasks_by_batch = dict([ (p, list(tasks)) for p, tasks in groupby(ordered_tasks, lambda t: t.batch)])
     
     projects_by_type = []
     for t, projects in groupby(active_projects, lambda p: p.type):
         projects_of_type = []
         type = dict(Project._meta.get_field('type').flatchoices)[t]
         for project in projects:
-            batches = []
-            if batches_by_project.has_key(project):
-                for batch in batches_by_project[project]:
-                    if tasks_by_batch.has_key(batch):
-                        tasks = tasks_by_batch[batch]
-                        all_tasks = len(tasks)
-                        open_tasks = len([task for task in tasks if task.status_is('active')])
-                        resolved_tasks = len([task for task in tasks if task.status_is('resolved')])
-                        batches.append((batch, {'has_tasks': True,
-                                                'open': open_tasks,
-                                                'resolved': resolved_tasks,
-                                                'percent': 100 * resolved_tasks / all_tasks}))
-                    else:
-                        batches.append((batch, {'has_tasks': False}))
             if tasks_by_project.has_key(project):
                 tasks = tasks_by_project[project]
-                all_tasks = len(tasks)
-                open_tasks = len([task for task in tasks if task.status_is('active')])
-                resolved_tasks = len([task for task in tasks if task.status_is('resolved')])
-                projects_of_type.append((project, {'batches': batches,
-                                                   'has_tasks': True,
-                                                   'open': open_tasks,
-                                                   'resolved': resolved_tasks,
-                                                   'percent': 100 * resolved_tasks / all_tasks}))
+                open_tasks = [task for task in tasks if task.status_is('active')]
+                resolved_tasks = [task for task in tasks if task.status_is('resolved')]
+                projects_of_type.append({'name': project.name,
+                                         'project': project,
+                                         'has_tasks': True,
+                                         'open': open_tasks,
+                                         'resolved': resolved_tasks,
+                                         'percent': 100 * len(resolved_tasks) / len(tasks)})
             else:
-                projects_of_type.append((project, {'batches': batches, 
-                                                   'has_tasks': False}))
+                projects_of_type.append({'name': project.name,
+                                         'project': project,
+                                         'has_tasks': False})
         projects_by_type.append((type, projects_of_type))
 
     return render_to_response('todo/index.html',
                               {'locales' : locales,
                                'projects_by_type' : projects_by_type},
                               context_instance=RequestContext(request))
+
+def project_summary(request, project_slug):
+    project = get_object_or_404(Project, slug=project_slug)
+    project_tasks = project.tasks.select_related('batch', 'locale').order_by('batch', 'locale')
     
+    if not project_tasks:
+        return render_to_response('todo/project_summary_empty.html',
+                                  {'project' : project})
+    
+    open_tasks = [task for task in project_tasks if task.status_is('active')]
+    resolved_tasks = [task for task in project_tasks if task.status_is('resolved')]
+    
+    tasks_by_batch = dict([ (b, list(tasks)) for b, tasks in groupby(project_tasks, lambda t: t.batch)])
+    batches = []
+    for batch in project.batches.all():
+        if not tasks_by_batch.has_key(batch):
+            batches.append({'name': batch.name,
+                            'batch': batch,
+                            'has_tasks': False})
+            continue
+        batch_tasks = tasks_by_batch[batch]
+        batch_open_tasks = [task for task in batch_tasks if task.status_is('active')]
+        batch_resolved_tasks = [task for task in batch_tasks if task.status_is('resolved')]
+        batches.append({'name': batch.name,
+                        'batch': batch,
+                        'has_tasks': True,
+                        'total': batch_tasks,
+                        'open': batch_open_tasks,
+                        'resolved': batch_resolved_tasks,
+                        'percent': 100 * len(batch_resolved_tasks) / len(batch_tasks)})
+
+    other_tasks = tasks_by_batch[None]
+    other_open_tasks = [task for task in other_tasks if task.status_is('active')]
+    other_resolved_tasks = [task for task in other_tasks if task.status_is('resolved')]
+    other = {
+        'total': other_tasks,
+        'open': other_open_tasks,
+        'resolved': other_resolved_tasks,
+        'open_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_open_tasks, lambda t: t.locale)]),
+        'resolved_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_resolved_tasks, lambda t: t.locale)]),
+    }
+
+    return render_to_response('todo/project_summary.html',
+                              {'project' : project,
+                               'batches': batches,
+                               'other': other,
+                               'total': project_tasks,
+                               'open': open_tasks,
+                               'resolved': resolved_tasks,
+                               'percent': 100 * len(resolved_tasks) / len(project_tasks)},
+                              context_instance=RequestContext(request))
+
 def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
     
     def _get_feeds(objs, filter_name, for_string):
@@ -82,6 +117,9 @@ def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
         for items in ('tasks', 'next'):
             feeds.append(build_feed(items, {filter_name: objs}, for_string=for_string))
         return feeds
+
+    view = 'all'
+    requested = []
     feeds = []
     title = 'Tasks'
     order = ['.project', '.batch', '.locale']
@@ -92,39 +130,47 @@ def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
     if request.GET.has_key('snapshot'):
         args.append(('snapshot', 1))
     if locale_code is not None:
+        view = 'locale'
         locales = locale_code.split(',')
         locales = Locale.objects.filter(code__in=locales)
         locale_names = [unicode(locale) for locale in locales]
         locale_ids = locales.values_list('code', flat=True)
         if locales:
+            requested = locales
             args += [('locale', loc_id) for loc_id in locale_ids]
             for_string = ' for %s' % ', '.join(locale_names)
             title += for_string
             feeds += _get_feeds(locales, 'locale', for_string)
             order.remove('.locale')
-    if project_slug is not None:
+    elif project_slug is not None:
+        view = 'project'
         projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)
         projects_names = [unicode(project) for project in projects]
         project_slugs = projects.values_list('slug', flat=True)
         if projects:
+            requested = projects
             args += [('project', project_slug) for project_slug in project_slugs]
             for_string = ' for %s' % ', '.join(projects_names)
             title += for_string
             feeds += _get_feeds(projects, 'project', for_string)
             order.remove('.project')
-    if bug_id is not None:
+    elif bug_id is not None:
+        view = 'bug'
         bug_ids = bug_id.split(',')
         bugs = [int(b) for b in bug_ids]
         if bugs:
+            requested = bugs
             args += [('bug', bug) for bug in bugs]
             for_string = ' for bug %s' % ', '.join(bug_ids)
             title += for_string
             feeds += _get_feeds(bugs, 'bug', for_string)
             order = ['.locale']
-    
+
     return render_to_response('todo/dashboard.html',
                               {'title' : title,
+                               'view' : view,
+                               'requested' : requested,
                                'feeds' : feeds,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),

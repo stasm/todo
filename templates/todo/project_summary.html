@@ -1,0 +1,109 @@
+{% extends "todo/base.html" %}
+
+{% block extra_menu_items %}
+  <li><a href="{% url todo_dashboard %}">all tasks</a></li>
+{% endblock %}
+
+{% block view %}
+
+  <h1>Project summary: {{project.name}}</h1>
+  
+  <div class="groups column left wide">
+    
+    {% if batches %}
+      <h3>Batches</h3>
+      <ul>
+      {% for batch in batches %}
+        <li>
+          {% if batch.has_tasks %}
+            <div class="batch bar" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
+              <div class="progress" style="width: {{batch.percent}}%;"></div>
+            </div>
+            <a href="{% url todo_project_dashboard project.slug %}?batch={{batch.name}}" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">{{batch.name}}: {{batch.percent}}%</a>
+            <ul>
+              <li class="done">
+                <dl>
+                  <dt>{{batch.resolved|length}} Done</dt>
+                  <dd>
+                  {% for task in batch.resolved %}
+                    <a href="{% url todo.views.task task.pk %}">{{task.locale.code}}</a>,
+                  {% endfor %}
+                  </dd>
+                </dl>
+              </li>
+              <li class="open">
+                <dl>
+                  <dt>{{batch.open|length}} Open</dt>
+                  <dd>
+                  {% for task in batch.open %}
+                    <a href="{% url todo.views.task task.pk %}">{{task.locale.code}}</a>,
+                  {% endfor %}
+                  </dd>
+                </dt>
+              </li>
+           </ul>
+         {% else %}
+           <span class="no_tasks" title="No tasks yet.">{{batch.name}}</span>
+         {% endif %}
+       </li>
+      {% endfor %}
+      </ul>
+    {% endif %}
+    
+    {% if other.total %}
+      <h3>Other tasks</h3>
+      <ul>
+        <li>
+          <a href="{% url todo_project_dashboard project.slug %}?batch=">Other tasks</a>
+          <ul>
+            <li class="done">
+              <dl>
+                <dt>{{other.resolved|length}} Done</dt>
+                <dd>
+                {% for locale, tasks in other.resolved_by_locale.iteritems %}
+                  {% if tasks|length_is:'1' %}
+                    <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
+                  {% else %}
+                    {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch=">{{tasks|length}}</a>),
+                  {% endif %}
+                {% endfor %}
+                </dd>
+              </dl>
+            </li>
+            <li class="open">
+              <dl>
+                <dt>{{other.open|length}} Open</dt>
+                <dd>
+                {% for locale, tasks in other.open_by_locale.iteritems %}
+                  {% if tasks|length_is:'1' %}
+                    <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
+                  {% else %}
+                    {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch=">{{tasks|length}}</a>),
+                  {% endif %}
+                {% endfor %}
+              </dd>
+            </dl>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    {% endif %}
+    
+  </div>
+  
+  <div id="project_summary" class="column right narrow">
+    
+    <h3>Total progress: {{percent}}%</h3>
+    
+    <div class="bar" title="{{percent}}% complete ({{resolved|length}} resolved, {{open|length}} open)">
+      <div class="progress" style="width: {{percent}}%;"></div>
+    </div>
+    
+    <p>Total done: {{resolved|length}}<br/>
+    Total open: {{open|length}}</p>
+    
+    <a href="{% url todo_project_dashboard project.slug %}" class="button">View all open tasks &rarr;</a>
+    
+  </div>
+ 
+{% endblock %}
