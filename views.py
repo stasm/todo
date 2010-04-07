@@ -227,11 +227,15 @@ def create(request):
     form = AddTodoFromProtoForm(request.POST)
     if form.is_valid():
         prototype = form.cleaned_data.pop('prototype')
-        custom_fields = form.cleaned_data
-        task = Todo.proto.create(prototype, **custom_fields)
-        task.activate()
-        return HttpResponseRedirect(reverse('todo.views.task', 
-                                            args=(task.id,)))
+        locales = form.cleaned_data.pop('locale')
+        for locale in locales:
+            task = Todo.proto.create(prototype, locale=locale, **form.cleaned_data)
+            task.activate()
+        if type(locales) is Locale:
+            redir = reverse('todo.views.task', args=(task.id,))
+        else:
+            redir = form.cleaned_data['batch'].get_absolute_url()
+        return HttpResponseRedirect(redir)
     else:
         error_message = "Incorrect data"
         return render_to_response('todo/new.html', {'form' : form,

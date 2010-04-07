@@ -1,4 +1,5 @@
 from django.db import models
+from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from life.models import Locale
@@ -39,6 +40,10 @@ class Project(models.Model):
     @property
     def code(self):
         return self.slug
+    
+    @models.permalink
+    def get_absolute_url(self):
+        return ('todo_project_dashboard', (self.project.slug,))
         
 class Batch(models.Model):
     name = models.CharField(max_length=200)
@@ -51,6 +56,9 @@ class Batch(models.Model):
     def __unicode__(self):
         return self.name
 
+    def get_absolute_url(self):
+        project_dashboard = reverse('todo_project_dashboard', args=(self.project.slug,))
+        return "%s?batch=%s" % (project_dashboard, self.name)
 
 class Todo(models.Model):
     prototype = models.ForeignKey(Prototype, related_name='instances', null=True, blank=True)
