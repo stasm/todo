@@ -53,6 +53,9 @@ class Batch(models.Model):
     
     objects = StatusManager()
     
+    class Meta:
+        verbose_name_plural = "Batches"
+
     def __unicode__(self):
         return self.name
 

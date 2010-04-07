@@ -22,7 +22,7 @@ class ProjectAdmin(admin.ModelAdmin):
     
 class BatchAdmin(admin.ModelAdmin):
     list_display_links = ('id',)
-    list_editable = ('name', 'status')
+    list_editable = ('name', 'status', 'project')
     list_display = list_display_links + list_editable
     prepopulated_fields = {'slug': ('name',)}
     
@@ -52,4 +52,5 @@ class TodoAdmin(admin.ModelAdmin):
 
 admin.site.register(Actor, ActorAdmin)
 admin.site.register(Project, ProjectAdmin)
+admin.site.register(Batch, BatchAdmin)
 admin.site.register(Todo, TodoAdmin)
