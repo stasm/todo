@@ -89,16 +89,18 @@ def project_summary(request, project_slug):
                         'resolved': batch_resolved_tasks,
                         'percent': 100 * len(batch_resolved_tasks) / len(batch_tasks)})
 
-    other_tasks = tasks_by_batch[None]
-    other_open_tasks = [task for task in other_tasks if task.status_is('active')]
-    other_resolved_tasks = [task for task in other_tasks if task.status_is('resolved')]
-    other = {
-        'total': other_tasks,
-        'open': other_open_tasks,
-        'resolved': other_resolved_tasks,
-        'open_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_open_tasks, lambda t: t.locale)]),
-        'resolved_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_resolved_tasks, lambda t: t.locale)]),
-    }
+    other = {}
+    if tasks_by_batch.has_key(None):
+        other_tasks = tasks_by_batch[None]
+        other_open_tasks = [task for task in other_tasks if task.status_is('active')]
+        other_resolved_tasks = [task for task in other_tasks if task.status_is('resolved')]
+        other = {
+            'total': other_tasks,
+            'open': other_open_tasks,
+            'resolved': other_resolved_tasks,
+            'open_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_open_tasks, lambda t: t.locale)]),
+            'resolved_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_resolved_tasks, lambda t: t.locale)]),
+        }
 
     return render_to_response('todo/project_summary.html',
                               {'project' : project,
