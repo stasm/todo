@@ -25,12 +25,14 @@ class TaskManager(StatusManager):
 
 class ProtoManager(models.Manager):
     def _create(self, prototype, **custom_fields):
-        fields = custom_fields
+        fields = {}
         if prototype is not None:
             for f in self.model._meta.fields:
                 if f.name == 'id':
                     continue
-                if not custom_fields.has_key(f.name) or custom_fields[f.name] is None or custom_fields[f.name] == '':
+                if custom_fields.has_key(f.name) and custom_fields[f.name]:
+                    fields[f.name] = custom_fields[f.name]
+                else:
                     try:
                         fields[f.name] = getattr(prototype, f.name)
                     except AttributeError:
