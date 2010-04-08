@@ -4,6 +4,7 @@ from todo.proto.models import Prototype, Nesting
 
 class StatusManager(models.Manager):
     use_for_related_fields = True
+    requestable_for_task = ('active', 'resolved', 'all', 'open')
     def open(self):
         return self.filter(status__in=(1, 2, 3))
     def new(self):

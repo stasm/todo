@@ -133,17 +133,23 @@
 {% endblock %}
 
 {% block extra_menu_items %}
+  {% ifequal view 'locale' %}
+    <li><a href="{% url todo_locale_dashboard_status requested_codes 'all' %}">show resolved</a></li>
+  {% endifequal %}
   {% ifequal view 'project' %}
     {% for project in requested %}
       <li><a href="{% url todo_project_summary project.slug %}">{{project.name}} summary</a></li>
     {% endfor %}
+    <li><a href="{% url todo_project_dashboard_status requested_codes 'all' %}">show resolved</a></li>
   {% endifequal %}
-  <li><a href="{{show_resolved_path}}">show resolved</a></li>
+  {% ifequal view 'bug' %}
+    <li><a href="{% url todo_bug_dashboard_status requested_codes 'all' %}">show resolved</a></li>
+  {% endifequal %}
 {% endblock %}
 
 {% block view %}
 
-  <h1>{{title}}</h1>
+  <h1>{{status|title}} tasks for {{requested|join:", "}}</h1>
   
   <div ex:role="collection" ex:itemTypes="Task"></div>
   <div id="exhibit-view" class="column wide left"
@@ -189,6 +195,7 @@
     <div ex:role="facet" ex:expression=".batch" ex:facetLabel="Batch" id="batch"></div>
     <div ex:role="facet" ex:expression="!task.owner" ex:facetLabel="Next Action's Owner" ex:height="6em" defaultExpanded="true" id="owner"></div>
     <div ex:role="facet" ex:expression="!task" ex:facetLabel="Next Action" id="next_action"></div>
+    <div ex:role="facet" ex:expression=".status" ex:facetLabel="Status" id="status"></div>
     <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" id="type"></div>
     <div ex:role="facet" ex:expression=".bug" ex:facetLabel="Bug" id="bug"></div>
     {% if snapshot %}

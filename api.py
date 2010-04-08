@@ -7,6 +7,7 @@ from django.utils.safestring import mark_safe
 
 from life.models import Locale
 from todo.models import Project, Batch, Todo
+from todo.managers import StatusManager
 
 import urllib2
 import json
@@ -47,11 +48,9 @@ schema = {
 def tasks(request):
     bzapi = BzAPI()
     items = []
-    show_resolved = request.GET.get('show_resolved', 0)
-    if int(show_resolved) == 1:
-        tasks = Todo.tasks.all()
-    else:
-        tasks = Todo.tasks.active()
+    status = request.GET.get('status', 'open')
+    if status in StatusManager.requestable_for_task:
+        tasks = getattr(Todo.tasks, status)()
     tasks = tasks.select_related('locale', 'project', 'batch', 'prototype')
     
     if request.GET.has_key('bug'):

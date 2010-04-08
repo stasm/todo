@@ -13,6 +13,7 @@ from life.models import Locale
 from todo.models import Project, Batch, Todo
 from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm, TasksFeedBuilderForm, NextActionsFeedBuilderForm
 from todo.workflow import statuses
+from todo.managers import StatusManager
 from todo.feeds import build_feed
 
 from itertools import groupby
@@ -112,50 +113,46 @@ def project_summary(request, project_slug):
                                'percent': 100 * len(resolved_tasks) / len(project_tasks)},
                               context_instance=RequestContext(request))
 
-def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
+def dashboard(request, locale_code=None, project_slug=None, bug_id=None, status=None):
     
-    def _get_feeds(objs, filter_name, for_string):
+    def _get_feeds(objs, filter_name):
         feeds = []
         for items in ('tasks', 'next'):
-            feeds.append(build_feed(items, {filter_name: objs}, for_string=for_string))
+            feeds.append(build_feed(items, {filter_name: objs}))
         return feeds
 
-    view = 'all'
+    view = 'everything'
     requested = []
     feeds = []
-    title = 'Tasks'
     order = ['.project', '.batch', '.locale']
-    show_resolved = request.GET.get('show_resolved', 0)
-    query = request.GET.copy()
-    query['show_resolved'] = 1
-    args = [('show_resolved', show_resolved)]
+    if status in StatusManager.requestable_for_task:
+        args = [('status', status)]
+    else:
+        status = 'open'
+        args = []
     if request.GET.has_key('snapshot'):
         args.append(('snapshot', 1))
     if locale_code is not None:
         view = 'locale'
         locales = locale_code.split(',')
         locales = Locale.objects.filter(code__in=locales)
-        locale_names = [unicode(locale) for locale in locales]
         locale_ids = locales.values_list('code', flat=True)
         if locales:
             requested = locales
+            requested_codes = ','.join(locale_ids)
             args += [('locale', loc_id) for loc_id in locale_ids]
-            for_string = ' for %s' % ', '.join(locale_names)
-            title += for_string
-            feeds += _get_feeds(locales, 'locale', for_string)
+            feeds += _get_feeds(locales, 'locale')
             order.remove('.locale')
     elif project_slug is not None:
         view = 'project'
         projects = project_slug.split(',')
         projects = Project.objects.filter(slug__in=projects)
-        projects_names = [unicode(project) for project in projects]
         project_slugs = projects.values_list('slug', flat=True)
         if projects:
             requested = projects
+            requested_codes = ','.join(project_slugs)
             args += [('project', project_slug) for project_slug in project_slugs]
-            for_string = ' for %s' % ', '.join(projects_names)
-            title += for_string
-            feeds += _get_feeds(projects, 'project', for_string)
+            feeds += _get_feeds(projects, 'project')
             order.remove('.project')
     elif bug_id is not None:
         view = 'bug'
@@ -163,21 +160,20 @@ def dashboard(request, locale_code=None, project_slug=None, bug_id=None):
         bugs = [int(b) for b in bug_ids]
         if bugs:
             requested = bugs
+            requested_codes = ','.join(bug_ids)
             args += [('bug', bug) for bug in bugs]
-            for_string = ' for bug %s' % ', '.join(bug_ids)
-            title += for_string
-            feeds += _get_feeds(bugs, 'bug', for_string)
+            feeds += _get_feeds(bugs, 'bug')
             order = ['.locale']
 
     return render_to_response('todo/dashboard.html',
-                              {'title' : title,
-                               'view' : view,
+                              {'view' : view,
                                'requested' : requested,
+                               'requested_codes' : requested_codes,
+                               'status' : status,
                                'feeds' : feeds,
                                'order' : ', '.join(order),
                                'args' : mark_safe(urlencode(args)),
-                               'snapshot' : request.GET.has_key('snapshot'),
-                               'show_resolved_path' : request.path + '?' + query.urlencode()},
+                               'snapshot' : request.GET.has_key('snapshot')},
                               context_instance=RequestContext(request))
     
 def task(request, task_id):
