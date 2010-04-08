@@ -17,7 +17,7 @@
           {% if batch.has_tasks %}
             <h4>
               {% if batch.batch %}
-              <div class="batch percent">{{batch.percent}}%</div>
+              <div class="batch percent">{{batch.percent}}<small>%</small></div>
               <div class="batch bar" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
                 <div class="progress" style="width: {{batch.percent}}%;"></div>
               </div>
@@ -68,7 +68,7 @@
   
   <div id="project_summary" class="column right narrow">
     
-    <h3>Total progress: <strong>{{percent}}%</strong></h3>
+    <h3>Total progress: <strong>{{percent}}<small>%</small></strong></h3>
     
     <div class="bar" title="{{percent}}% complete ({{resolved|length}} resolved, {{open|length}} open)">
       <div class="progress" style="width: {{percent}}%;"></div>
