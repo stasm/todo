@@ -16,19 +16,28 @@
         <li>
           {% if batch.has_tasks %}
             <h4>
+              {% if batch.batch %}
+              <div class="batch percent">{{batch.percent}}%</div>
               <div class="batch bar" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
                 <div class="progress" style="width: {{batch.percent}}%;"></div>
               </div>
-              <a href="{% url todo_project_dashboard project.slug %}?batch={{batch.name}}" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">{{batch.name}}: {{batch.percent}}%</a>
+              {% endif %}
+              <a href="{% url todo_project_dashboard project.slug %}?batch={{batch.name}}" title="{{batch.percent}}% complete ({{batch.resolved|length}} resolved, {{batch.open|length}} open)">
+                {{batch.name}}
+              </a>
             </h4>
             <ul>
               <li class="done">
                 <dl>
                   <dt>{{batch.resolved|length}} Done</dt>
                   <dd>
-                  {% for task in batch.resolved %}
-                    <a href="{% url todo.views.task task.pk %}">{{task.locale.code}}</a>,
-                  {% endfor %}
+                    {% for locale, tasks in batch.resolved_by_locale.iteritems %}
+                      {% if tasks|length_is:'1' %}
+                        <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
+                      {% else %}
+                        {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch={{batch.name}}">{{tasks|length}}</a>),
+                      {% endif %}
+                    {% endfor %}
                   </dd>
                 </dl>
               </li>
@@ -36,9 +45,13 @@
                 <dl>
                   <dt>{{batch.open|length}} Open</dt>
                   <dd>
-                  {% for task in batch.open %}
-                    <a href="{% url todo.views.task task.pk %}">{{task.locale.code}}</a>,
-                  {% endfor %}
+                    {% for locale, tasks in batch.open_by_locale.iteritems %}
+                      {% if tasks|length_is:'1' %}
+                        <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
+                      {% else %}
+                        {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch={{batch.name}}">{{tasks|length}}</a>),
+                      {% endif %}
+                    {% endfor %}
                   </dd>
                 </dt>
               </li>
@@ -48,42 +61,6 @@
          {% endif %}
        </li>
       {% endfor %}
-    {% endif %}
-    
-    {% if other.total %}
-        <li>
-          <h4><a href="{% url todo_project_dashboard project.slug %}?batch=Uncategorized tasks">Uncategorized tasks</a></h4>
-          <ul>
-            <li class="done">
-              <dl>
-                <dt>{{other.resolved|length}} Done</dt>
-                <dd>
-                {% for locale, tasks in other.resolved_by_locale.iteritems %}
-                  {% if tasks|length_is:'1' %}
-                    <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
-                  {% else %}
-                    {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch=">{{tasks|length}}</a>),
-                  {% endif %}
-                {% endfor %}
-                </dd>
-              </dl>
-            </li>
-            <li class="open">
-              <dl>
-                <dt>{{other.open|length}} Open</dt>
-                <dd>
-                {% for locale, tasks in other.open_by_locale.iteritems %}
-                  {% if tasks|length_is:'1' %}
-                    <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
-                  {% else %}
-                    {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch=">{{tasks|length}}</a>),
-                  {% endif %}
-                {% endfor %}
-              </dd>
-            </dl>
-            </li>
-          </ul>
-        </li>
     {% endif %}
     
     </ul>

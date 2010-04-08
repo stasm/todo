@@ -88,25 +88,29 @@ def project_summary(request, project_slug):
                         'total': batch_tasks,
                         'open': batch_open_tasks,
                         'resolved': batch_resolved_tasks,
+                        'open_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(batch_open_tasks, lambda t: t.locale)]),
+                        'resolved_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(batch_resolved_tasks, lambda t: t.locale)]),
                         'percent': 100 * len(batch_resolved_tasks) / len(batch_tasks)})
 
-    other = {}
     if tasks_by_batch.has_key(None):
         other_tasks = tasks_by_batch[None]
         other_open_tasks = [task for task in other_tasks if task.status_is('active')]
         other_resolved_tasks = [task for task in other_tasks if task.status_is('resolved')]
         other = {
+            'name': 'Uncategorized tasks',
+            'batch': None,
+            'has_tasks': True,
             'total': other_tasks,
             'open': other_open_tasks,
             'resolved': other_resolved_tasks,
             'open_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_open_tasks, lambda t: t.locale)]),
             'resolved_by_locale' : dict([ (l, list(tasks)) for l, tasks in groupby(other_resolved_tasks, lambda t: t.locale)]),
         }
+        batches.append(other)
 
     return render_to_response('todo/project_summary.html',
                               {'project' : project,
                                'batches': batches,
-                               'other': other,
                                'total': project_tasks,
                                'open': open_tasks,
                                'resolved': resolved_tasks,
