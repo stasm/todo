@@ -345,18 +345,22 @@
   
   .todo {
     margin: 10px 20px;
+    color: #999;
   }
   
-  .todo input {
+  .task input, .todo input {
     float: left;
     margin-right: 10px;
     margin-left: 0;
   }
-  .todo.new {
-    color: #999;
+  .task input {
+    margin-top: 5px;
   }
-  .todo.next {
-    background-color: #c1f6ac; /*pale yellow: #ff9*/;
+  .task.active .todo.active, .task.active .todo.next {
+    color: #000;
+  }
+  .task.active .todo.next {
+    background-color: #c1f6ac;
   }
   .todo.resolved {
     color: #999;
@@ -364,6 +368,9 @@
   }
   .todo.resolved.has_children, #task > .todo.resolved {
     display: none;
+  }
+  #task.resolved .todo.resolved {
+    display: block;
   }
   
   .empty {

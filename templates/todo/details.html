@@ -18,13 +18,20 @@
         Task = {
           
           _resolved_steps : null,
+          _task : null,
           _link : null,
           
           initResolvedStepsToggling : function initResolvedStepsToggling() {
+            Task._task = $('#task');
             Task._link = $('#show_resolved');
-            if ( ! Task.resolved_steps().length)
-              Task._link.hide();
-            Task._link.toggle(Task.show_resolved_steps, Task.hide_resolved_steps)
+            if ( Task._task.hasClass('resolved')) {
+              Task.show_resolved_steps()
+              Task._link.toggle(Task.hide_resolved_steps, Task.show_resolved_steps)
+            } else {
+              if ( ! Task.resolved_steps().length)
+                Task._link.hide();
+              Task._link.toggle(Task.show_resolved_steps, Task.hide_resolved_steps)
+            }
           },
           
           show_resolved_steps : function show_resolved_steps() {
@@ -281,6 +288,15 @@
     <h3>
       {% ifequal task.get_status_display "resolved" %}
         <input type="checkbox" checked="checked" disabled="disabled"/>
+      {% else %}
+        {% if perms.todo.change_todo %}
+          <form action="{% url todo.views.resolve task.id %}" method="post">
+            <input type="hidden" name="task_id" value="{{task.id}}"/>
+            <input type="checkbox" onclick="this.form.submit()"/>
+          </form>
+        {% else %}
+          <input type="checkbox" disabled="disabled"/>
+        {% endif %}
       {% endifequal %}
       <span>{{task}}</span>
       <a href="#" id="show_resolved" class="edit">show resolved steps</a>
@@ -302,7 +318,7 @@
       {% for todo in todos %}
       
         <div class="todo {{todo.get_status_display}} {% if todo.has_children %}has_children{% endif %}">
-          {% if todo.is_next and perms.todo.change_todo %}
+          {% if task.is_open and todo.is_next and perms.todo.change_todo %}
             <form action="{% url todo.views.resolve todo.id %}" method="post">
               <input type="hidden" name="task_id" value="{{task.id}}"/>
               {% if not todo.is_review %}

@@ -146,10 +146,13 @@ class Todo(models.Model):
         
     def status_is(self, status_adj):
         return self.get_status_display() == status_adj
-        
+
     def is_next(self):
         return self.status == 3
-        
+
+    def is_open(self):
+        return self.status != 5
+
     @models.permalink
     def get_absolute_url(self):
         return ('todo.views.task', [str(self.id)])
