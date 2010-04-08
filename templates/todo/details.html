@@ -282,7 +282,7 @@
       {% ifequal task.get_status_display "resolved" %}
         <input type="checkbox" checked="checked" disabled="disabled"/>
       {% endifequal %}
-      {{task}}
+      <span>{{task}}</span>
       <a href="#" id="show_resolved" class="edit">show resolved steps</a>
       {% if user.is_staff and perms.todo.change_todo %}
         <a href="{{ task.get_admin_url }}" class="edit">edit task</a>
