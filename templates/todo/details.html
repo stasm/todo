@@ -8,11 +8,12 @@
 {% block extra_head_matter %}
   <script type="text/javascript" src="{% url static path='jquery.js' %}"></script>
   <script type="text/javascript">
-      {% if task.bug %}
+      
         $(document).ready(function() {
           Task.initResolvedStepsToggling();
-          $('.show_all').hide().toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
-          BzAPI.getCommentsAndHistory();
+          {% if task.bug %}
+            BzAPI.init();
+          {% endif %}
         });
         
         Task = {
@@ -52,6 +53,7 @@
           
         }
         
+      {% if task.bug %}
         BzAPI = {
           
           apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
@@ -59,6 +61,11 @@
           snapshot_ts : '{{ task.snapshot_ts_iso }}',
           last_i : 0,
           showing_all : false,
+          
+          init : function init() {
+            $('.show_all').hide().toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
+            BzAPI.getCommentsAndHistory();
+          },
           
           getCommentsAndHistory : function getCommentsAndHistory() {
             $('#checking').fadeIn('slow');
