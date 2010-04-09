@@ -233,7 +233,7 @@ def create(request):
         for locale in locales:
             task = Todo.proto.create(prototype, locale=locale, **form.cleaned_data)
             task.activate()
-        if type(locales) is Locale:
+        if len(locales) == 1:
             redir = reverse('todo.views.task', args=(task.id,))
         else:
             redir = form.cleaned_data['batch'].get_absolute_url()
