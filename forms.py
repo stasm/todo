@@ -107,8 +107,6 @@ class AddTodoFromProtoForm(forms.Form):
         batch = cleaned_data.get('batch', None)
         new_batch_name = cleaned_data.get('new_batch_name', None)
         new_batch_slug = cleaned_data.get('new_batch_slug', None)
-        print cleaned_data
-        print project, batch, new_batch_name, new_batch_slug
         
         if not project:
             raise forms.ValidationError("You must choose a project.")
