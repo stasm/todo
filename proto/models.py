@@ -15,6 +15,8 @@ class Prototype(models.Model):
                                        symmetrical=False,
                                        related_name='parents',
                                        through="Nesting")
+    class Meta:
+        ordering = ('summary',)
 
     def __unicode__(self):
         if self.owner is not None:
