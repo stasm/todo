@@ -125,7 +125,8 @@ class Todo(models.Model):
                     cascade = False
                     clone = self.parent.clone()
                     clone.activate()
-                self.parent.resolve(self.resolution, cascade)
+                if not self.any_sibling_is('active'):
+                    self.parent.resolve(self.resolution, cascade)
             elif self.resolution == 1 and self.next.status_is('new'):
                 self.next.activate()
 
@@ -143,7 +144,10 @@ class Todo(models.Model):
             auto_activated_children = (self.children.get(order=1),)
         for child in auto_activated_children:
             child.activate()
-        
+
+    def any_sibling_is(self, method):
+        return bool(getattr(self.parent.children, method)())
+
     def status_is(self, status_adj):
         return self.get_status_display() == status_adj
 
