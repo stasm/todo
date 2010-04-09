@@ -35,7 +35,7 @@
                       {% if tasks|length_is:'1' %}
                         <a href="{% url todo.views.task tasks.0.pk %}">{{locale.code}}</a>,
                       {% else %}
-                        {{locale.code}} (<a href="{% url todo_project_dashboard project.slug %}?locale={{locale.name}} ({{locale.code}})&amp;batch={{batch.name}}">{{tasks|length}}</a>),
+                        {{locale.code}} (<a href="{% url todo_project_dashboard_status project.slug 'resolved' %}?locale={{locale.name}} ({{locale.code}})&amp;batch={{batch.name}}">{{tasks|length}}</a>),
                       {% endif %}
                     {% endfor %}
                   </dd>
