@@ -13,8 +13,12 @@
     {% for locale, open in locales %}
       <li {% if not open %}class="no_tasks"{% endif %}>
         <a href="{% url todo_locale_dashboard locale.code %}" 
-           title="{{open|length}} open tasks">
-          {{locale.code}}: {{locale.name}} ({{open|length}})
+        {% if open %}
+          title="{{open|length}} open task{{open|pluralize}}"
+        {% else %}
+          title="No open tasks"
+        {% endif %}>
+          {{locale.code}}: {{locale.name}} {% if open %}({{open|length}}){% endif %}
         </a>
       </li>
     {% endfor %}
