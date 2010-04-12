@@ -4,7 +4,7 @@
 {% block extra_feeds %}
   {% for feed_name, feed_url in feeds %}
     <link rel="alternate" type="application/atom+xml" title="{{feed_name}}" href="{{feed_url}}" />
-    {% endfor %}
+  {% endfor %}
 {% endblock %}
 
 {% block extra_head_matter %}
@@ -54,11 +54,8 @@
         }
         
         {% if not snapshot %}
-        BzAPI = {
-          
-          apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
-          _bugs : {},
-          
+        
+        Ex = {
           updateItem : function updateItem(id, dict) {
             var item = window.exhibit.getDatabase().getItem(id);
             for (prop in dict) {
@@ -67,13 +64,19 @@
             window.exhibit.getDatabase().removeItem(id);
             window.exhibit.getDatabase().addItem(item);
           },
+        }
+        
+        BzAPI = {
+          
+          apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
+          _bugs : {},
           
           markAsOutofdate : function markAsOutofdate(id) {
-            BzAPI.updateItem(id, {'snapshot': 'outofdate'});
+            Ex.updateItem(id, {'snapshot': 'outofdate'});
           },
           
           markAsUptodate : function markAsOutofdate(id) {
-            BzAPI.updateItem(id, {'snapshot': 'uptodate'});
+            Ex.updateItem(id, {'snapshot': 'uptodate'});
           },
           
           checkSnapshots : function checkSnapshots() {

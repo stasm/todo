@@ -1,0 +1,357 @@
+{% extends "todo/base.html" %}
+{% load simile %}
+
+{% block extra_head_matter %}
+  {% exhibit autoCreate=false %}
+  <script type="text/javascript">
+  
+        $(document).ready(function(){
+          var params = SimileAjax.parseURLParameters();
+          window.database = Exhibit.Database.create();
+          if (params.qs) {
+            bugzillaQuickSearch(params.qs);
+            $('.select-all').click(function(){
+              $('.check input').attr('checked', 'checked')
+            });
+            $('.select-none').click(function(){
+              $('.check input').removeAttr('checked')
+            });
+          } else {
+            $("#results").hide();
+            $("#query").show();
+          }
+        });
+        
+        locales = [
+          {% for locale in locales %}
+          "{{locale.code}}",
+          {% endfor %}
+        ]
+        
+        function createLocaleSelect(div) {
+          var div = $(div);
+          var current_locale = div.attr('data-locale');
+          var select = $('<select></select>');
+          for (var i=0, locale; locale = locales[i]; i++) {
+            var option = $('<option></option>')
+            option.text(locale)
+                  .attr('name', locale)
+            if (current_locale == locale)
+              option.attr('selected', 'selected')
+            option.appendTo(select);
+          }
+          select.change(updateLocale)
+          div.after(select).remove();
+        }
+        
+        function updateLocale() {
+          var select = $(this);
+          var id = select.parents('tr').attr('ex:itemid');
+          Ex.updateItem(id, {'locale': select.val()});
+        }
+        
+        Ex = {
+          updateItem : function updateItem(id, dict) {
+            var item = window.exhibit.getDatabase().getItem(id);
+            for (prop in dict) {
+              item[prop] = dict[prop];
+            }
+            window.exhibit.getDatabase().removeItem(id);
+            window.exhibit.getDatabase().addItem(item);
+          },
+        }
+
+        // this comes from using ctype=js
+        var columns = ["priority","changeddate","keywords","bug_severity","opendate",
+                       "resolution","classification","alias","reporter",
+                       "short_short_desc","status_whiteboard","bug_status","version",
+                       "component","reporter_realname","product","target_milestone"];
+
+        /**
+         * Split a string, returning only non-empty values.
+         *
+         * Examples using /[[\]]+/:
+         * "" => []
+         * "[foo][bar]" => ["foo", "bar"]
+         * "[foo bar]" => ["foo bar"]
+         */
+        function splitIgnoreEmpty(bstr, pat) {
+          if (!bstr)
+            return [];
+
+          var bits = bstr.toLowerCase().split(pat);
+          var result = [];
+          // filter out empty entries
+          for (var i = 0; i < bits.length; i++) {
+            var trimmed = $.trim(bits[i]);
+            if (trimmed)
+              result.push(trimmed);
+          }
+          return result;
+        }
+
+        function makeDateExhibitFriendly(aDate) {
+          var ys = aDate.getFullYear().toString();
+          var ms = (aDate.getMonth() + 1).toString();
+          var ds = aDate.getDate().toString();
+          var r = ys + "-" +
+                 (ms.length == 1 ? ("0" + ms) : ms) + "-" +
+                 (ds.length == 1 ? ("0" + ds) : ds);
+          return r;
+        }
+        
+        function guessLocale(summary) {
+          var brackets = /\[([a-zA-Z\-]+)\]/.exec(summary)
+          if (brackets)
+            return brackets[1];
+          else
+            return "--";
+        }
+
+        function bugzillaConverter() {
+          var data = {items: [],
+                      types: {
+                        Bug: {
+                          pluralLabel: "Bugs"
+                        }
+                      },
+                      properties: {
+                        num: {valueType: "number"},
+                        patchCount: {valueType: "number"},
+                        votes: {valueType: "number"},
+                        opendate: {valueType: "date"},
+                        changeddate: {valueType: "date"}
+                        }
+                      };
+          var items = data.items;
+          var rawBug, goodBug, iCol;
+
+          for (var key in bugs) {
+            if (parseInt(key) == NaN)
+              continue;
+            rawBug = bugs[key];
+            goodBug = {num: key, type: "Bug"};
+            items.push(goodBug);
+
+            for (iCol = 0; iCol < rawBug.length; iCol++) {
+              goodBug[columns[iCol]] = rawBug[iCol];
+            }
+
+            goodBug.id = key;
+            goodBug.label = key + ": " + goodBug.short_short_desc;
+            goodBug.bugid = key;
+            goodBug.summary = goodBug.short_short_desc;
+            goodBug.locale = guessLocale(goodBug.short_short_desc);
+            goodBug.whiteboard_bits = splitIgnoreEmpty(goodBug.status_whiteboard, /[[\],]+/);
+            goodBug.keyword_bits = splitIgnoreEmpty(goodBug.keywords, /[, ]+/);
+            goodBug.resolution = goodBug.resolution || "--";
+            goodBug.reporter = goodBug.reporter_realname || goodBug.reporter;
+
+            //goodBug.changeddate = makeDateExhibitFriendly(goodBug.changeddate);
+            //goodBug.opendate = makeDateExhibitFriendly(goodBug.opendate);
+          }
+          return data;
+        }
+
+        var buglistCallbackToCall = null;
+        function buglistCallback() {
+          buglistCallbackToCall();
+        }
+
+        // SimileAjax is messing with us, need a helper function to fight it off
+        function setSearchTitle(aTitle) {
+          document.title = aTitle;
+          SimileAjax.History._plainDocumentTitle = aTitle;
+        }
+
+        function bugzillaQuickSearch(aQueryString) {
+          var url = "https://bugzilla.mozilla.org/buglist.cgi?quicksearch=";
+          url += aQueryString;
+          url += "&ctype=js&columnlist="+columns.join(',');
+
+          setSearchTitle("Search for bugs: " + aQueryString);
+
+          Exhibit.JSONPImporter.load(url, window.database, setupExhibit,
+                                     bugzillaConverter, "buglistCallbackToCall");
+        }
+
+        function setupExhibit() {
+          window.exhibit = Exhibit.create();
+          window.exhibit.configureFromDOM();
+          collapseFacets();
+        }
+        
+        function collapseFacets() {
+          $(".stripe .exhibit-facet-header").click(
+            function() {
+              $(this).parents('.stripe')
+                     .toggleClass('collapsed')
+                     .find('.exhibit-facet-body-frame')
+                       .toggle("fast");
+            }).next().hide();
+          $('.stripe').toggleClass('collapsed');
+        }
+        
+  </script>
+
+  <style>
+    table, tr {
+      border: none !important;
+      border-collapse: collapse;
+    }
+    td, th {
+      border: 1px solid #ccc !important;
+    }
+    span.exhibit-collectionSummaryWidget-results {
+      padding: 10px;
+      display: block;
+    }
+    span.exhibit-collectionSummaryWidget-count {
+      font-size: 100%;
+    }
+    .exhibit-collectionView-header-sortControls {
+      display: none !important;
+    }
+    #exhibit-view h1, #exhibit-view h2, #exhibit-view h3 {
+      font-size: 1.5em;
+      font-weight: normal;
+    }
+    #exhibit-view h2, #exhibit-view h3 {
+      font-size: 1.3em;
+    }
+    .exhibit-toolboxWidget-popup {
+      top: 14em !important;
+      right: auto !important;
+      left: 5em;
+    }
+    #facets span.exhibit-facet-header-title {
+      font-weight: normal;
+    }
+    
+    #facets {
+      background-color: #ffc;
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-bottom: 1.5em;
+    }
+    #facets br {
+      clear: both;
+    }
+    #facets .collapsed {
+      color: #666;
+    }
+    .stripe {
+      clear: both;
+    }
+    .stripe > div {
+      width: 20%;
+      float: left;
+    }
+    #text-search {
+      margin-bottom: 1em;
+    }
+    #text-search .exhibit-facet-header {
+      float: left;
+      margin-right: 1em;
+    }
+    #text-search .exhibit-text-facet input {
+      width: 40%;
+    }
+    .controls {
+      margin: 10px 0 0 10px;
+      font-size: small;
+    }
+    .controls span {
+      color: blue;
+      cursor: pointer;
+    }
+    #exhibit-view {
+      clear: both;
+    }
+    #query {
+      display: none;
+    }
+    #query p {
+      margin-bottom: 10px;
+    }
+    #search-string {
+      width: 50%;
+      padding: 5px;
+    }
+    .locale-select:hover {
+      background-color: #ff9 !important;
+    }
+  </style>
+{% endblock %}
+
+{% block extra_menu_items %}
+  
+{% endblock %}
+
+{% block view %}
+
+  <h1>Search for bugs</h1>
+  
+  <div id="query">
+      <p>Enter something to (quick) search for:</p>
+      <form>
+        <input id="search-string" type="text" name="qs" />
+        <input type="submit" value="Search Bugzilla &rarr;" />
+      </form>
+  </div>
+  
+  <div id="results">
+  
+    <div id="facets">
+      <div id="text-search">
+        <div ex:role="facet" ex:facetLabel="Text Search" ex:facetClass="TextSearch"></div>
+      </div>
+      <div class="stripe">
+        <div ex:role="facet" ex:expression=".product" ex:facetLabel="Product"></div>
+        <div ex:role="facet" ex:expression=".component" ex:facetLabel="Component"></div>
+        <div ex:role="facet" ex:expression=".reporter" ex:facetLabel="Reporter"></div>
+        <div ex:role="facet" ex:expression=".whiteboard_bits" ex:facetLabel="Whiteboard Flags"></div>
+        <div ex:role="facet" ex:expression=".keyword_bits" ex:facetLabel="Keywords"></div>
+      </div>
+      <div class="stripe">
+        <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Guessed locale"></div>
+        <div ex:role="facet" ex:expression=".bug_status" ex:facetLabel="Status"></div>
+        <div ex:role="facet" ex:expression=".priority" ex:facetLabel="Priority"></div>
+        <div ex:role="facet" ex:expression=".target_milestone" ex:facetLabel="Target Milestone"></div>
+        <div ex:role="facet" ex:expression=".version" ex:facetLabel="Version"></div>
+      </div>
+      <br />
+    </div>
+    <div class="controls">
+      Select: <span class="select-all">all</span>, <span class="select-none">none</span>.
+    </div>
+  
+    <div ex:role="collection" ex:itemTypes="Bug"></div>
+    <div id="exhibit-view"
+        ex:role="view"
+        ex:viewClass="Tabular"
+        ex:sortColumn="1"
+        ex:columnLabels="Choose?, Bug, Locale, Summary"
+        ex:columns=".bugid, .bugid, .summary, .bugid"
+        ex:cellSpacing="0">
+      <table>
+      <tr>
+        <td class="check"><input type="checkbox"/></td>
+        <td class="" ex:content=".bugid"></td>
+        <td>
+          <div class="locale-select" onclick="createLocaleSelect(this);" ex:data-locale-content=".locale">
+            <span ex:content=".locale"></span>
+          </div>
+        </td>
+        <td class="" ex:content=".summary"></td>
+      </tr>
+      </table>
+    </div>
+  
+    <div class="controls">
+      Select: <span class="select-all">all</span>, <span class="select-none">none</span>.
+    </div>
+    
+  </div>
+
+{% endblock %}

@@ -223,6 +223,12 @@ def new(request):
                                'error_message' : error_message},
                               context_instance=RequestContext(request))
 
+@login_required
+def from_bugs(request):
+    locales = Locale.objects.all()
+    return render_to_response('todo/from_bugs.html',
+                              {'locales': locales})
+
 @require_POST
 @login_required
 def create(request):
