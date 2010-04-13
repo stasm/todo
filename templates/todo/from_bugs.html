@@ -179,10 +179,8 @@
           $(".stripe .exhibit-facet-header").click(
             function() {
               $(this).parents('.stripe')
-                     .toggleClass('collapsed')
-                     .find('.exhibit-facet-body-frame')
-                       .toggle("fast");
-            }).next().hide();
+                       .toggleClass('collapsed')
+            });
           $('.stripe').toggleClass('collapsed');
         }
         
@@ -203,7 +201,7 @@
     td, th {
       border: 1px solid #ccc !important;
     }
-    span.exhibit-collectionSummaryWidget-results {
+    #exhibit-view > div > span {
       padding: 10px;
       display: block;
     }
@@ -248,6 +246,19 @@
       width: 20%;
       float: left;
     }
+    
+    .stripe .exhibit-resizableDivWidget-resizer {
+      display: none;
+    }
+    .stripe .exhibit-facet-body-frame {
+      overflow: hidden;
+      height: 11em;
+      -moz-transition: height 0.5s ease-in-out;
+    }
+    .stripe.collapsed .exhibit-facet-body-frame {
+      height: 0;
+    }
+
     #text-search {
       margin-bottom: 1em;
     }
