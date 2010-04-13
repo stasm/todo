@@ -46,25 +46,13 @@
         function collapseFacets() {
           $(".exhibit-facet-header").click(
             function() {
-              $(this).toggleClass("collapsed").next().toggle("fast");
-              return false;
-            }).toggleClass("collapsed").next().hide();
-          $(".exhibit-facet[defaultExpanded=true]").children()
-            .removeClass("collapsed").next().show();
+              $(this).parents('.exhibit-facet')
+                       .toggleClass('collapsed')
+            });
+          $(".exhibit-facet[defaultExpanded!=true]").toggleClass('collapsed');
         }
         
         {% if not snapshot %}
-        
-        Ex = {
-          updateItem : function updateItem(id, dict) {
-            var item = window.exhibit.getDatabase().getItem(id);
-            for (prop in dict) {
-              item[prop] = dict[prop];
-            }
-            window.exhibit.getDatabase().removeItem(id);
-            window.exhibit.getDatabase().addItem(item);
-          },
-        }
         
         BzAPI = {
           
@@ -72,11 +60,11 @@
           _bugs : {},
           
           markAsOutofdate : function markAsOutofdate(id) {
-            Ex.updateItem(id, {'snapshot': 'outofdate'});
+            window.exhibit.getDatabase().editItem(id, 'snapshot', 'outofdate');
           },
           
           markAsUptodate : function markAsOutofdate(id) {
-            Ex.updateItem(id, {'snapshot': 'uptodate'});
+            window.exhibit.getDatabase().editItem(id, 'snapshot', 'uptodate');
           },
           
           checkSnapshots : function checkSnapshots() {
@@ -132,6 +120,28 @@
       right: auto !important;
       left: 5em;
     }
+    
+    .exhibit-facet {
+      margin-bottom: 0;
+    }
+    .exhibit-facet.collapsed {
+      margin-bottom: -1em;
+    }
+    .exhibit-facet-body-frame {
+      visibility: visible;
+      -moz-transition: visibility 0.5s ease-in-out;
+    }
+    .exhibit-facet.collapsed .exhibit-facet-body-frame {
+      visibility: hidden;
+    }
+    .exhibit-facet-body {
+      height: 10em;
+      -moz-transition: height 0.5s ease-in-out;
+    }
+    .exhibit-facet.collapsed .exhibit-facet-body {
+      height: 0 !important;
+    }
+    
   </style>
 {% endblock %}
 
@@ -201,9 +211,7 @@
     <div ex:role="facet" ex:expression=".status" ex:facetLabel="Status" id="status"></div>
     <div ex:role="facet" ex:expression=".prototype" ex:facetLabel="Type" id="type"></div>
     <div ex:role="facet" ex:expression=".bug" ex:facetLabel="Bug" id="bug"></div>
-    {% if snapshot %}
-      <div ex:role="facet" ex:expression=".snapshot" ex:facetLabel="Snapshot" ex:height="4em" id="snapshot"></div>
-    {% endif %}
+    <div ex:role="facet" ex:expression=".snapshot" ex:facetLabel="Snapshot" ex:height="4em" id="snapshot"></div>
   </div>
 
 {% endblock %}
