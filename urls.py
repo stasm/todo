@@ -9,6 +9,7 @@ feeds = {
 api_patterns = patterns('todo.api',
     (r'^tasks$', 'tasks'),
     (r'^task/(?P<task_id>\d+)/update-snapshot$', 'update_snapshot'),
+    (r'^existing-bugs$', 'existing_bugs'),
 )
 
 feed_patterns = patterns('',

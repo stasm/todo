@@ -65,7 +65,8 @@
         var columns = ["priority","changeddate","keywords","bug_severity","opendate",
                        "resolution","classification","alias","reporter",
                        "short_short_desc","status_whiteboard","bug_status","version",
-                       "component","reporter_realname","product","target_milestone"];
+                       "component","reporter_realname","product","target_milestone",
+                       "exists"];
 
         /**
          * Split a string, returning only non-empty values.
@@ -130,18 +131,16 @@
             if (parseInt(key) == NaN)
               continue;
             rawBug = bugs[key];
-            goodBug = {num: key, type: "Bug"};
+            goodBug = {id: key, bugid: key, type: "Bug"};
             items.push(goodBug);
 
             for (iCol = 0; iCol < rawBug.length; iCol++) {
               goodBug[columns[iCol]] = rawBug[iCol];
             }
 
-            goodBug.id = key;
-            goodBug.label = key + ": " + goodBug.short_short_desc;
-            goodBug.bugid = key;
-            goodBug.summary = goodBug.short_short_desc;
+            goodBug.label = goodBug.short_short_desc;
             goodBug.locale = guessLocale(goodBug.short_short_desc);
+            goodBug.exists = goodBug.exists || 'no';
             goodBug.whiteboard_bits = splitIgnoreEmpty(goodBug.status_whiteboard, /[[\],]+/);
             goodBug.keyword_bits = splitIgnoreEmpty(goodBug.keywords, /[, ]+/);
             goodBug.resolution = goodBug.resolution || "--";
@@ -155,7 +154,17 @@
 
         var buglistCallbackToCall = null;
         function buglistCallback() {
-          buglistCallbackToCall();
+          var bugids = []
+          for (bugid in bugs) {
+            bugids.push(bugid)
+          }
+          var url = 'http://127.0.0.1:8000/todo/api/existing-bugs?bug=' + bugids.join('&bug=');
+          $.getJSON(url, function(data){
+            for (var i=0, bug; bug = data[i]; i++) {
+              bugs[bug].push('yes');
+            }
+            buglistCallbackToCall();
+          })
         }
 
         // SimileAjax is messing with us, need a helper function to fight it off
@@ -190,6 +199,13 @@
                        .toggle("fast");
             }).next().hide();
           $('.stripe').toggleClass('collapsed');
+        }
+        
+        function existsStyler(itemid, db, tr) {
+          var item = window.exhibit.getDatabase().getItem(itemid);
+          if (item.exists == 'yes') {
+            $(tr).addClass('exists');
+          }
         }
         
   </script>
@@ -281,6 +297,9 @@
     .locale-select:hover {
       background-color: #ff9 !important;
     }
+    tr.exists {
+      color: #999;
+    }
   </style>
 {% endblock %}
 
@@ -317,8 +336,7 @@
         <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Guessed locale"></div>
         <div ex:role="facet" ex:expression=".bug_status" ex:facetLabel="Status"></div>
         <div ex:role="facet" ex:expression=".priority" ex:facetLabel="Priority"></div>
-        <div ex:role="facet" ex:expression=".target_milestone" ex:facetLabel="Target Milestone"></div>
-        <div ex:role="facet" ex:expression=".version" ex:facetLabel="Version"></div>
+        <div ex:role="facet" ex:expression=".exists" ex:facetLabel="Tasks already exist?"></div>
       </div>
       <br />
     </div>
@@ -331,8 +349,9 @@
         ex:role="view"
         ex:viewClass="Tabular"
         ex:sortColumn="1"
+        ex:rowStyler="existsStyler"
         ex:columnLabels="Choose?, Bug, Locale, Summary"
-        ex:columns=".bugid, .bugid, .summary, .bugid"
+        ex:columns=".bugid, .bugid, .label, .bugid"
         ex:cellSpacing="0">
       <table>
       <tr>
@@ -343,7 +362,7 @@
             <span ex:content=".locale"></span>
           </div>
         </td>
-        <td class="" ex:content=".summary"></td>
+        <td class="" ex:content=".label"></td>
       </tr>
       </table>
     </div>
