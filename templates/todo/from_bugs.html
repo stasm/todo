@@ -11,10 +11,10 @@
           if (params.qs) {
             bugzillaQuickSearch(params.qs);
             $('.select-all').click(function(){
-              $('.check input').attr('checked', 'checked')
+              $('.check input').attr('checked', 'checked').change();
             });
             $('.select-none').click(function(){
-              $('.check input').removeAttr('checked')
+              $('.check input').removeAttr('checked').change();
             });
           } else {
             $("#results").hide();
@@ -47,18 +47,15 @@
         function updateLocale() {
           var select = $(this);
           var id = select.parents('tr').attr('ex:itemid');
-          Ex.updateItem(id, {'locale': select.val()});
+          window.exhibit.getDatabase().editItem(id, 'locale', select.val());
         }
         
-        Ex = {
-          updateItem : function updateItem(id, dict) {
-            var item = window.exhibit.getDatabase().getItem(id);
-            for (prop in dict) {
-              item[prop] = dict[prop];
-            }
-            window.exhibit.getDatabase().removeItem(id);
-            window.exhibit.getDatabase().addItem(item);
-          },
+        function updateSelection(checkbox) {
+          var checkbox = $(checkbox);
+          var is_checked = checkbox.is(':checked');
+          var selected = (is_checked) ? 'yes' : 'no';
+          var id = checkbox.parents('tr').attr('ex:itemid');
+          window.exhibit.getDatabase().editItem(id, 'selected', selected);
         }
 
         // this comes from using ctype=js
@@ -89,16 +86,6 @@
               result.push(trimmed);
           }
           return result;
-        }
-
-        function makeDateExhibitFriendly(aDate) {
-          var ys = aDate.getFullYear().toString();
-          var ms = (aDate.getMonth() + 1).toString();
-          var ds = aDate.getDate().toString();
-          var r = ys + "-" +
-                 (ms.length == 1 ? ("0" + ms) : ms) + "-" +
-                 (ds.length == 1 ? ("0" + ds) : ds);
-          return r;
         }
         
         function guessLocale(summary) {
@@ -141,13 +128,12 @@
             goodBug.label = goodBug.short_short_desc;
             goodBug.locale = guessLocale(goodBug.short_short_desc);
             goodBug.exists = goodBug.exists || 'no';
+            goodBug.selected = 'no';
             goodBug.whiteboard_bits = splitIgnoreEmpty(goodBug.status_whiteboard, /[[\],]+/);
             goodBug.keyword_bits = splitIgnoreEmpty(goodBug.keywords, /[, ]+/);
             goodBug.resolution = goodBug.resolution || "--";
             goodBug.reporter = goodBug.reporter_realname || goodBug.reporter;
-
-            //goodBug.changeddate = makeDateExhibitFriendly(goodBug.changeddate);
-            //goodBug.opendate = makeDateExhibitFriendly(goodBug.opendate);
+            
           }
           return data;
         }
@@ -167,7 +153,6 @@
           })
         }
 
-        // SimileAjax is messing with us, need a helper function to fight it off
         function setSearchTitle(aTitle) {
           document.title = aTitle;
           SimileAjax.History._plainDocumentTitle = aTitle;
@@ -334,9 +319,10 @@
       </div>
       <div class="stripe">
         <div ex:role="facet" ex:expression=".locale" ex:facetLabel="Guessed locale"></div>
-        <div ex:role="facet" ex:expression=".bug_status" ex:facetLabel="Status"></div>
-        <div ex:role="facet" ex:expression=".priority" ex:facetLabel="Priority"></div>
+        <div ex:role="facet" ex:expression=".selected" ex:facetLabel="Selected?"></div>
         <div ex:role="facet" ex:expression=".exists" ex:facetLabel="Tasks already exist?"></div>
+        <div ex:role="facet" ex:expression=".priority" ex:facetLabel="Priority"></div>
+        <div ex:role="facet" ex:expression=".bug_status" ex:facetLabel="Status"></div>
       </div>
       <br />
     </div>
@@ -350,12 +336,19 @@
         ex:viewClass="Tabular"
         ex:sortColumn="1"
         ex:rowStyler="existsStyler"
-        ex:columnLabels="Choose?, Bug, Locale, Summary"
+        ex:columnLabels="Select?, Bug, Locale, Summary"
         ex:columns=".bugid, .bugid, .label, .bugid"
         ex:cellSpacing="0">
       <table>
       <tr>
-        <td class="check"><input type="checkbox"/></td>
+        <td class="check">
+          <span ex:select=".selected">
+            <span ex:case="yes">
+              <input type="checkbox" checked="checked" onchange="updateSelection(this);"/>
+            </span>
+            <input type="checkbox" onchange="updateSelection(this);"/>
+          </span>
+        </td>
         <td class="" ex:content=".bugid"></td>
         <td>
           <div class="locale-select" onclick="createLocaleSelect(this);" ex:data-locale-content=".locale">
