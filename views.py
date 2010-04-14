@@ -11,7 +11,7 @@ from django.utils.safestring import mark_safe
 from life.models import Locale
 
 from todo.models import Project, Batch, Todo
-from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm, TasksFeedBuilderForm, NextActionsFeedBuilderForm
+from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTodoFromProtoForm, AddMultipleTasksFromBugsForm, TasksFeedBuilderForm, NextActionsFeedBuilderForm
 from todo.workflow import statuses
 from todo.managers import StatusManager
 from todo.feeds import build_feed
@@ -248,6 +248,19 @@ def create(request):
         error_message = "Incorrect data"
         return render_to_response('todo/new.html', {'form' : form,
                                                     'error_message' : error_message})
+
+@require_POST
+@login_required
+def create_from_bugs(request):
+    number_of_tasks = int(request.POST.get('number_of_tasks'))
+    form = AddMultipleTasksFromBugsForm(number_of_tasks, request.POST)
+    if form.is_valid():
+        return HttpResponseRedirect(reverse('todo.views.create_from_bugs'))
+    else:
+        error_message = "Incorrect data"
+        return render_to_response('todo/new.html', {'form' : form,
+                                                    'error_message' : error_message})
+
 def feed_builder(request):
     task_form = TasksFeedBuilderForm()
     next_form = NextActionsFeedBuilderForm()

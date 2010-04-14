@@ -3,6 +3,7 @@
 
 {% block extra_head_matter %}
   {% exhibit autoCreate=false %}
+  <script type="text/javascript" src="{% url static path='jquery.js' %}"></script>
   <script type="text/javascript">
   
         $(document).ready(function(){
@@ -16,38 +17,63 @@
             $('.select-none').click(function(){
               $('.check input').removeAttr('checked').change();
             });
+            $('#continue input').click(function(){
+              continueWithSelected();
+            });
           } else {
             $("#results").hide();
             $("#query").show();
           }
         });
         
-        locales = [
+        locales = {
           {% for locale in locales %}
-          "{{locale.code}}",
+          "{{locale.pk}}" : "{{locale.code}}",
           {% endfor %}
-        ]
+          "--" : "--"
+        }
         
-        function createLocaleSelect(div) {
-          var div = $(div);
-          var current_locale = div.attr('data-locale');
-          var select = $('<select></select>');
-          for (var i=0, locale; locale = locales[i]; i++) {
-            var option = $('<option></option>')
-            option.text(locale)
-                  .attr('name', locale)
-            if (current_locale == locale)
-              option.attr('selected', 'selected')
+        function is_supported(locale) {
+          for (var id in locales) {
+            if (locales[id] == locale)
+              return true;
+          }
+          return false;
+        }
+        
+        function createLocaleSelect(current_locales, multiple, name) {
+          var name = name || '';
+          var multiple = multiple ? 'multiple="multiple"' : '';
+          var select = $('<select '+multiple+' name="'+name+'"></select>');
+          for (var id in locales) {
+            var locale = locales[id];
+            var option = $('<option></option>');
+            option.text(locale).val(id);
+            if (current_locales.indexOf(locale) != -1)
+              option.attr('selected', 'selected');
             option.appendTo(select);
           }
-          select.change(updateLocale)
+          return select;
+        }
+        
+        function insertLocaleSelect(div) {
+          var div = $(div);
+          var current_locale = div.attr('data-locale');
+          var select = createLocaleSelect([current_locale]);
+          select.change(updateLocale);
           div.after(select).remove();
+        }
+        
+        function insertLocaleMultipleSelect(span, current_locales, name) {
+          var span = $(span);
+          var select = createLocaleSelect(current_locales, true, name);
+          span.parent().empty().append(select);
         }
         
         function updateLocale() {
           var select = $(this);
           var id = select.parents('tr').attr('ex:itemid');
-          window.exhibit.getDatabase().editItem(id, 'locale', select.val());
+          window.exhibit.getDatabase().editItem(id, 'locale', locales[select.val()]);
         }
         
         function updateSelection(checkbox) {
@@ -90,10 +116,20 @@
         
         function guessLocale(summary) {
           var brackets = /\[([a-zA-Z\-]+)\]/.exec(summary)
-          if (brackets)
-            return brackets[1];
+          if (brackets) {
+            var locale = brackets[1];
+            if (is_supported(locale))
+              return locale;
+          }
+          return "--";
+        }
+        
+        function extractSummary(label) {
+          var pattern = /(?:\[[a-zA-Z\-]+\])+ ?(.+)/.exec(label)
+          if (pattern)
+            return pattern[1];
           else
-            return "--";
+            return label;
         }
 
         function bugzillaConverter() {
@@ -191,9 +227,51 @@
           }
         }
         
+        function continueWithSelected() {
+          var db = window.exhibit.getDatabase();
+          var selected = []
+          var items = db.getAllItems();
+          items.visit(function(id){
+            if (db.getObject(id, 'selected') == 'yes') {
+              var item = {
+                'bugid' : id,
+                'locale' : db.getObject(id, 'locale'),
+                'summary' : extractSummary(db.getObject(id, 'label'))
+              }
+              selected.push(item);
+            }
+          });
+          var review = buildReview(selected);
+          $("#number_of_tasks").val(selected.length);
+          $("#results").slideUp();
+          $("#review table").append(review);
+          $("#review").fadeIn();
+        }
+        
+        function escapeDoubleQuotes(str) {
+          return str.replace(/"/g, '&quot;');
+        }
+        
+        function buildReview(selected) {
+          var review = $("<tbody></tbody>");
+          for (var i in selected) {
+            var item = selected[i];
+            var localeCell = $('<td class="locale"><small onclick="insertLocaleMultipleSelect(this, [\''+item.locale+'\']);">more</small></td>').prepend(createLocaleSelect([item.locale], false, 'task-'+i+'-locale'))
+            var row = $("<tr></tr>")
+            row.append('<td class="summary"><input name="task-'+i+'-summary" type="text" value="'+escapeDoubleQuotes(item.summary)+'"/></td>')
+               .append(localeCell)
+               .append('<td class="bugid"><input name="task-'+i+'-bugid" type="text" value="'+escapeDoubleQuotes(item.bugid)+'"/></td>')
+            row.appendTo(review);
+          }
+          return review;
+        }
+        
   </script>
 
   <style>
+    #review {
+      display: none;
+    }
     table, tr {
       border: none !important;
       border-collapse: collapse;
@@ -273,9 +351,12 @@
       margin: 10px 0 0 10px;
       font-size: small;
     }
-    .controls span {
+    .controls span, #review small {
       color: blue;
       cursor: pointer;
+    }
+    #review small {
+      margin-left: 1em;
     }
     #exhibit-view {
       clear: both;
@@ -295,6 +376,37 @@
     }
     tr.exists {
       color: #999;
+    }
+    
+    #continue {
+      margin-top: 2em;
+    }
+    #review table {
+      width: 100%;
+      margin: 2em 0;
+    }
+    #review td, #review th {
+      border: none !important;
+    }
+    #review table input {
+      width: 100%;
+    }
+    #review select[multiple] {
+      width: 100%;
+      height: 2em;
+      -moz-transition: height 0.5s ease-in-out;
+    }
+    #review select[multiple]:hover {
+      height: 15em;
+    }
+    #review .summary  {
+      width: 70%;
+    }
+    #review .summary input {
+      font-size: 12px;
+    }
+    #review .locale {
+      width: 20%;
     }
   </style>
 {% endblock %}
@@ -362,7 +474,7 @@
         </td>
         <td class="" ex:content=".bugid"></td>
         <td>
-          <div class="locale-select" onclick="createLocaleSelect(this);" ex:data-locale-content=".locale">
+          <div class="locale-select" onclick="insertLocaleSelect(this);" ex:data-locale-content=".locale">
             <span ex:content=".locale"></span>
           </div>
         </td>
@@ -370,11 +482,32 @@
       </tr>
       </table>
     </div>
-  
+    
     <div class="controls">
       Select: <span class="select-all">all</span>, <span class="select-none">none</span>.
     </div>
     
+    <div id="continue">
+      <input type="submit" value="Continue with selected "/>
+    </div>
+    
+  </div>
+  
+  <div id="review">
+    <p>Review the tasks that will be created.</p>
+    <form action="{% url todo.views.create_from_bugs %}" method="post">
+      <input id="number_of_tasks" type="hidden" name="number_of_tasks" value="0"/>
+      <table>
+        <thead>
+          <tr>
+            <th>Task's summary</th>
+            <th>Locale</th>
+            <th>Bug</th>
+          </tr>
+        </thead>
+      </table>  
+      <input id="create" type="submit" value="Create tasks" />
+    </form>
   </div>
 
 {% endblock %}

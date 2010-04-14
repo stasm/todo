@@ -128,6 +128,18 @@ class AddTodoFromProtoForm(forms.Form):
                                                project=project)
         return cleaned_data
 
+class AddMultipleTasksFromBugsForm(AddTodoFromProtoForm):
+    
+    locale = None
+    
+    def __init__(self, number_of_tasks, *args, **kwargs):
+        super(AddMultipleTasksFromBugsForm, self).__init__(*args, **kwargs)
+        for i in xrange(number_of_tasks):
+            self.fields['task-%i-summary' % i] = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
+            self.fields['task-%i-locale' % i] = forms.ModelChoiceField(queryset=Locale.objects.all(), required=False)
+            self.fields['task-%i-bugid' % i] = forms.IntegerField(required=False)
+    
+
 class TasksFeedBuilderForm(forms.Form):
     locale = LocaleMultipleChoiceField(queryset=Locale.objects.all(), required=False)
     project = forms.ModelMultipleChoiceField(queryset=Project.objects.active(), required=False)
