@@ -227,7 +227,8 @@ def new(request):
 def from_bugs(request):
     locales = Locale.objects.all()
     return render_to_response('todo/from_bugs.html',
-                              {'locales': locales})
+                              {'locales': locales},
+                              context_instance=RequestContext(request))
 
 @require_POST
 @login_required
