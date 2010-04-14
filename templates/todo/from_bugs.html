@@ -144,7 +144,7 @@
           for (bugid in bugs) {
             bugids.push(bugid)
           }
-          var url = 'http://127.0.0.1:8000/todo/api/existing-bugs?bug=' + bugids.join('&bug=');
+          var url = '{% url todo.api.existing_bugs %}?bug=' + bugids.join('&bug=');
           $.getJSON(url, function(data){
             for (var i=0, bug; bug = data[i]; i++) {
               bugs[bug].push('yes');
