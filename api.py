@@ -84,7 +84,7 @@ def tasks(request):
                      'project': unicode(task.project),
                      'project_slug': task.project.slug,
                      'batch': unicode(task.batch) if task.batch is not None else 'Uncategorized tasks',
-                     'prototype': unicode(task.prototype)}
+                     'prototype': unicode(task.prototype),}
         if task.bug is not None:
             task_data.update({'bug': task.bug})
             if request.GET.has_key('snapshot'):
@@ -100,7 +100,8 @@ def tasks(request):
                                    'id': action.pk,
                                    'label': unicode(action),
                                    'task': action.task.id,
-                                   'owner': unicode(action.owner)})
+                                   'owner': unicode(action.owner),
+                                   'summary': action.summary,})
 
     items += next_actions_items
     data = {'items': items}
