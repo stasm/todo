@@ -409,6 +409,7 @@
 {% endblock %}
 
 {% block content %}
+<div class="{% block bodyclass %}{% endblock %}">
   {% block menu %}
   <div id="menu">
     <div id="auth">
@@ -431,4 +432,5 @@
   </div>
   {% endblock %}
   {% block view %}{% endblock %}
+</div>
 {% endblock %}
