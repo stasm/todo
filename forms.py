@@ -28,8 +28,8 @@ class ResolveReviewTodoForm(forms.Form):
 class AddTasksForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
     project = forms.ChoiceField(required=True)
-    batch = forms.ChoiceField(required=False)  
-    new_batch_name = forms.CharField(label="Or create a new batch",
+    batch = forms.ChoiceField(label="Existing batch", required=False)  
+    new_batch_name = forms.CharField(label="New batch's name",
                                      max_length=200,
                                      required=False,
                                      help_text="Type a name of a new batch to create it. (Leave empty if you don't want to create a new batch.)",

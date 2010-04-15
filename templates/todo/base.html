@@ -387,7 +387,7 @@
     font-style: italic;
   }
   
-  table td {
+  table td, table th {
     padding: 10px;
   }
   
@@ -403,7 +403,35 @@
   #auth {
     float: right;
   }
-
+  
+  /* ==================
+   * New 
+   * ==================
+   */
+  .new h2 {
+    font-size: 1.3em;
+    padding: 10px;
+    margin: .5em 0;
+    border: 1px solid #ccc;
+    cursor: pointer;
+  }
+  .new h2 + div {
+    margin: 1em 0 2em;
+  }
+  #choose-batch {
+    display: none;
+    padding: 10px;
+    background-color: #ffc;
+    border: 1px solid #ccc;
+  }
+  #choose-batch div {
+    width: 50%;
+    float: left;
+  }
+  #create-tasks {
+    margin: 1em 10px 0;
+  }
+  
 </style>
 {% block extra_head_matter %}{% endblock %}
 {% endblock %}
@@ -417,7 +445,7 @@
         Hi, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}. 
         <a href="{% url django.contrib.auth.views.logout %}"><small>(log out)</small></a>
       {% else %}
-          <a href="{% url django.contrib.auth.views.login %}">Log in</a>
+        <a href="{% url django.contrib.auth.views.login %}">Log in</a>
       {% endif %}
     </div>  
     <ul>

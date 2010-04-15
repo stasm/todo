@@ -125,7 +125,6 @@ def update_snapshot(request, task_id):
 
 def existing_bugs(request):
     bugs_to_check = [int(bug) for bug in request.GET.getlist('bug')]
-    print bugs_to_check
     tasks = Todo.tasks.filter(bug__in=bugs_to_check)
     bugs = tasks.values_list('bug', flat=True)
     return HttpResponse(simplejson.dumps(list(bugs), indent=2), mimetype='application/javascript')
