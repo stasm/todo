@@ -25,11 +25,8 @@ class ResolveReviewTodoForm(forms.Form):
             raise forms.ValidationError("A resolution needs to be specified for review todos.")
         return cleaned_data
         
-class AddTodoFromProtoForm(forms.Form):
+class AddTasksForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
-    summary = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
-    bug = forms.IntegerField(required=False)
-    locale = LocaleMultipleChoiceField(queryset=Locale.objects.all(), required=True)
     project = forms.ChoiceField(required=True)
     batch = forms.ChoiceField(required=False)  
     new_batch_name = forms.CharField(label="Or create a new batch",
@@ -42,11 +39,16 @@ class AddTodoFromProtoForm(forms.Form):
                                      required=False,
                                      help_text="Slugs can only contain letters, numbers, and hyphens.",
                                      widget=forms.TextInput(attrs={'class':'batch slug'}))
-    
-    def __init__(self, *args, **kwargs):
-        super(AddTodoFromProtoForm, self).__init__(*args, **kwargs)
+            
+    def __init__(self, number_of_bugs=0, *args, **kwargs):
+        super(AddTasksForm, self).__init__(*args, **kwargs)
+        self.number_of_bugs = number_of_bugs
         self.fields['project'].choices = self.projects_as_choices()
         self.fields['batch'].choices = self.batches_as_choices()
+        for i in xrange(number_of_bugs):
+            self.fields['bug-%i-summary' % i] = forms.CharField(label='Summary', max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
+            self.fields['bug-%i-locales' % i] = LocaleMultipleChoiceField(label='Locales', queryset=Locale.objects.all(), required=False)
+            self.fields['bug-%i-bugid' % i] = forms.IntegerField(label='Bug id', required=False)
 
     def projects_as_choices(self):
         choices = [('', '---------')]
@@ -138,18 +140,10 @@ class AddTodoFromProtoForm(forms.Form):
         
         return cleaned_data
 
-class AddMultipleTasksFromBugsForm(AddTodoFromProtoForm):
+class AddTasksManuallyForm(AddTasksForm):
         
-    def __init__(self, number_of_bugs=0, *args, **kwargs):
-        super(AddMultipleTasksFromBugsForm, self).__init__(*args, **kwargs)
-        self.number_of_bugs = number_of_bugs
-        del self.fields['summary']
-        del self.fields['locale']
-        del self.fields['bug']
-        for i in xrange(number_of_bugs):
-            self.fields['bug-%i-summary' % i] = forms.CharField(max_length=200, required=False, help_text="Leave empty to use the prototype's summary.")
-            self.fields['bug-%i-locales' % i] = LocaleMultipleChoiceField(queryset=Locale.objects.all(), required=False)
-            self.fields['bug-%i-bugid' % i] = forms.IntegerField(required=False)
+    def __init__(self, *args, **kwargs):
+        super(AddTasksManuallyForm, self).__init__(1, *args, **kwargs)
     
 
 class TasksFeedBuilderForm(forms.Form):

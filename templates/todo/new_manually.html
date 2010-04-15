@@ -1,0 +1,41 @@
+{% extends "todo/base.html" %}
+
+{% block extra_head_matter %}
+  <script type="text/javascript" src="{% url static path='jquery.js' %}"></script>
+  <script type="text/javascript">
+
+  $.fn.slugify = function(obj) {
+      jQuery(this).data('obj', jQuery(obj));
+      jQuery(this).keyup(function() {
+          var obj = jQuery(this).data('obj');
+          var slug = jQuery(this).val().replace(/\-+/g,'-')
+                                       .replace(/\s+/g,'-')
+                                       .replace(/[^a-zA-Z0-9\-]/g,'')
+                                       .toLowerCase();
+          obj.val(slug);
+      });
+  }
+  
+  $(document).ready(function() {
+    $('.batch.name').slugify('.batch.slug');
+  })
+  
+  </script>
+
+{% endblock %}
+
+{% block view %}
+  <h1>Create a new task</h1>
+  {% if error_message %}
+    <div>{{error_message}}</div>
+  {% endif %}
+  <div class="task">
+    <form action="{% url todo.views.create %}" method="post">
+      <input id="number_of_bugs" type="hidden" name="number_of_bugs" value="1"/>
+      <table id="new">  
+      {{form.as_table}}
+      <tr><td></td><td><input type="submit" value="Create" /></td></tr>
+      </table>
+    </form>
+  </div>
+{% endblock %}

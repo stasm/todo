@@ -32,11 +32,10 @@ urlpatterns = patterns('todo.views',
     # single task
     (r'^(?P<task_id>\d+)$', 'task'),
     (r'^(?P<todo_id>\d+)/resolve$', 'resolve'),
-    # new task
+    # new tasks
     (r'^new$', 'new'),
+    (r'^new/manually$', 'new_manually'),
     (r'^new/create$', 'create'),
-    (r'^new/from-bugs$', 'from_bugs'),
-    (r'^new/from-bugs/create$', 'create_from_bugs'),
     # includes
     (r'^api/', include(api_patterns)),
     (r'^feed/', include(feed_patterns)),
