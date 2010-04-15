@@ -20,11 +20,24 @@
             $('#continue input').click(function(){
               continueWithSelected();
             });
+            $('.batch.name').slugify('.batch.slug');
           } else {
             $("#results").hide();
             $("#query").show();
           }
         });
+        
+        $.fn.slugify = function(obj) {
+            jQuery(this).data('obj', jQuery(obj));
+            jQuery(this).keyup(function() {
+                var obj = jQuery(this).data('obj');
+                var slug = jQuery(this).val().replace(/\-+/g,'-')
+                                             .replace(/\s+/g,'-')
+                                             .replace(/[^a-zA-Z0-9\-]/g,'')
+                                             .toLowerCase();
+                obj.val(slug);
+            });
+        }
         
         locales = {
           {% for locale in locales %}
@@ -242,7 +255,7 @@
             }
           });
           var review = buildReview(selected);
-          $("#number_of_tasks").val(selected.length);
+          $("#number_of_bugs").val(selected.length);
           $("#results").slideUp();
           $("#review table").append(review);
           $("#review").fadeIn();
@@ -256,11 +269,11 @@
           var review = $("<tbody></tbody>");
           for (var i in selected) {
             var item = selected[i];
-            var localeCell = $('<td class="locale"><small onclick="insertLocaleMultipleSelect(this, [\''+item.locale+'\']);">more</small></td>').prepend(createLocaleSelect([item.locale], false, 'task-'+i+'-locale'))
+            var localeCell = $('<td class="locale"><small onclick="insertLocaleMultipleSelect(this, [\''+item.locale+'\'], \'bug-'+i+'-locales\');">more</small></td>').prepend(createLocaleSelect([item.locale], false, 'bug-'+i+'-locales'))
             var row = $("<tr></tr>")
-            row.append('<td class="summary"><input name="task-'+i+'-summary" type="text" value="'+escapeDoubleQuotes(item.summary)+'"/></td>')
+            row.append('<td class="summary"><input name="bug-'+i+'-summary" type="text" value="'+escapeDoubleQuotes(item.summary)+'"/></td>')
                .append(localeCell)
-               .append('<td class="bugid"><input name="task-'+i+'-bugid" type="text" value="'+escapeDoubleQuotes(item.bugid)+'"/></td>')
+               .append('<td class="bugid"><input name="bug-'+i+'-bugid" type="text" value="'+escapeDoubleQuotes(item.bugid)+'"/></td>')
             row.appendTo(review);
           }
           return review;
@@ -496,7 +509,7 @@
   <div id="review">
     <p>Review the tasks that will be created.</p>
     <form action="{% url todo.views.create_from_bugs %}" method="post">
-      <input id="number_of_tasks" type="hidden" name="number_of_tasks" value="0"/>
+      <input id="number_of_bugs" type="hidden" name="number_of_bugs" value="0"/>
       <table>
         <thead>
           <tr>
@@ -505,7 +518,12 @@
             <th>Bug</th>
           </tr>
         </thead>
-      </table>  
+      </table>
+      {{form.prototype.label_tag}} {{form.prototype}}<br/>
+      {{form.project.label_tag}} {{form.project}}<br/>
+      {{form.batch.label_tag}} {{form.batch}}<br/>
+      {{form.new_batch_name.label_tag}} {{form.new_batch_name}} {{form.new_batch_name.help_text}}<br/>
+      {{form.new_batch_slug.label_tag}} {{form.new_batch_slug}} {{form.new_batch_slug.help_text}}<br/>
       <input id="create" type="submit" value="Create tasks" />
     </form>
   </div>

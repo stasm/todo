@@ -226,8 +226,10 @@ def new(request):
 @login_required
 def from_bugs(request):
     locales = Locale.objects.all()
+    form = AddMultipleTasksFromBugsForm()
     return render_to_response('todo/from_bugs.html',
-                              {'locales': locales},
+                              {'locales': locales,
+                               'form': form},
                               context_instance=RequestContext(request))
 
 @require_POST
@@ -253,14 +255,26 @@ def create(request):
 @require_POST
 @login_required
 def create_from_bugs(request):
-    number_of_tasks = int(request.POST.get('number_of_tasks'))
-    form = AddMultipleTasksFromBugsForm(number_of_tasks, request.POST)
+    number_of_bugs = int(request.POST.get('number_of_bugs'))
+    form = AddMultipleTasksFromBugsForm(number_of_bugs, request.POST)
     if form.is_valid():
-        return HttpResponseRedirect(reverse('todo.views.create_from_bugs'))
+        created_tasks = 0
+        prototype = form.cleaned_data.pop('prototype')
+        bugs = form.cleaned_data.pop('bugs')
+        print bugs
+        for bug in bugs:
+            for locale in bug['locales']:
+                task = Todo.proto.create(prototype, summary=bug['summary'], locale=locale, bug=bug['bugid'], **form.cleaned_data)
+                created_tasks += 1
+                task.activate()
+        if created_tasks == 1:
+            redir = reverse('todo.views.task', args=(task.id,))
+        else:
+            redir = form.cleaned_data['batch'].get_absolute_url()
+        return HttpResponseRedirect(redir)
     else:
-        error_message = "Incorrect data"
-        return render_to_response('todo/new.html', {'form' : form,
-                                                    'error_message' : error_message})
+        print form.errors
+        return HttpResponse("bu")
 
 def feed_builder(request):
     task_form = TasksFeedBuilderForm()
