@@ -44,7 +44,19 @@
           $('#continue input').click(function(){
             continueWithSelected();
           });
-          $('.batch.name').slugify('.batch.slug');
+          $('.batch.name').slugify('.batch.slug')
+                          .keyup(function(){
+                            var existing = $('#id_batch');
+                            var slug = $('#id_new_batch_slug');
+                            if ($(this).val() != "") {
+                              existing.attr('disabled', 'disabled');
+                              slug.removeAttr('disabled');
+                            } else {
+                              existing.removeAttr('disabled');
+                              slug.attr('disabled', 'disabled');
+                            }
+                          });
+          $('#id_new_batch_slug').attr('disabled', 'disabled');
           
           if (params.qs) {
             bugzillaQuickSearch(params.qs);
@@ -55,8 +67,8 @@
         });
         
         $.fn.slugify = function(obj) {
-            jQuery(this).data('obj', jQuery(obj));
-            jQuery(this).keyup(function() {
+            $(this).data('obj', jQuery(obj));
+            $(this).keyup(function() {
                 var obj = jQuery(this).data('obj');
                 var slug = jQuery(this).val().replace(/\-+/g,'-')
                                              .replace(/\s+/g,'-')
@@ -64,6 +76,7 @@
                                              .toLowerCase();
                 obj.val(slug);
             });
+            return $(this);
         }
         
         locales = {
@@ -240,8 +253,6 @@
           url += "&ctype=js&columnlist="+columns.join(',');
 
           setSearchTitle("Search for bugs: " + aQueryString);
-          
-          url = "/todo/api/offline";
 
           Exhibit.JSONPImporter.load(url, window.database, setupExhibit,
                                      bugzillaConverter, "buglistCallbackToCall");
@@ -435,37 +446,7 @@
     #continue {
       margin-top: 2em;
     }
-    #selected-bugs {
-      width: 100%;
-      margin: 2em 0;
-    }
-    #review td, #review th {
-      border: none !important;
-      text-align: left;
-    }
-    #selected-bugs small {
-      margin-left: 1em;
-    }
-    #selected-bugs input {
-      width: 100%;
-    }
-    #selected-bugs select[multiple] {
-      width: 100%;
-      height: 2em;
-      -moz-transition: height 0.5s ease-in-out;
-    }
-    #selected-bugs select[multiple]:hover {
-      height: 15em;
-    }
-    #selected-bugs .summary  {
-      width: 70%;
-    }
-    #selected-bugs .summary input {
-      font-size: 12px;
-    }
-    #selected-bugs .locale {
-      width: 20%;
-    }
+
   </style>
 {% endblock %}
 
@@ -567,35 +548,41 @@
           </tr>
         </thead>
       </table>
-      <p>Choose properties common to all the tasks to be created:</p>
-      <table>
-        <tr><td>{{form.project.label_tag}}</td><td>{{form.project}}</td></tr>
-        <tr><td>{{form.prototype.label_tag}}</td><td>{{form.prototype}}</td></tr>
-        <tr>
-          <td>Batch</td>
-          <td>
-            <p id="choose-batch-suggestion">Optionally, you can <span class="click" onclick="showBatchChooser();">group the tasks into a batch</span>.</p>
-            <div id="choose-batch">
-              <p>You can choose an existing batch or create a new one.</p>
-              <table>
-                <tr>
-                  <td rowspan="2">{{form.batch.label_tag}}</td>
-                  <td rowspan="2">{{form.batch}}</td>
-                  <td rowspan="2">&mdash;&nbsp;OR&nbsp;&mdash;</td>
-                  <td>{{form.new_batch_name.label_tag}}</td>
-                  <td>{{form.new_batch_name}}</td>
-                </tr>
-                <tr>
-                  <td>{{form.new_batch_slug.label_tag}}</td>
-                  <td>{{form.new_batch_slug}}</td>
-                </tr>
-              </table>
-              <p>Changed your mind? <span class="click" onclick="hideBatchChooser();">Cancel</span> <small>(The tasks will be put under <em>Uncategorized tasks</em>.)</small></p>
-            </div>
-          </td>
-        </tr>
-      </table>
-      <input id="create-tasks" type="submit" value="Create tasks" disabled="disabled" />
+      <div id="common-props">
+        <p>Choose properties common to all the tasks to be created:</p>
+        <table>
+          <tr><th>{{form.project.label_tag}}</th><td>{{form.project}}</td></tr>
+          <tr><th>{{form.prototype.label_tag}}</th><td>{{form.prototype}}</td></tr>
+          <tr>
+            <th>Batch</th>
+            <td>
+              <p id="choose-batch-suggestion">Optionally, you can <span class="click" onclick="showBatchChooser();">group the tasks into a batch</span>.</p>
+              <div id="choose-batch">
+                <p>You can choose an existing batch or create a new one.</p>
+                <table>
+                  <tr>
+                    <th>An existing batch</th>
+                    <th rowspan="3">&mdash;&nbsp;OR&nbsp;&mdash;</th>
+                    <th colspan="2">A new batch</th>
+                  </tr>
+                  <tr>
+                    <td>{{form.batch}}</td>
+                    <td>Name</td>
+                    <td>{{form.new_batch_name}}</td>
+                  </tr>
+                  <tr>
+                    <td></td>
+                    <td>Slug</td>
+                    <td>{{form.new_batch_slug}}</td>
+                  </tr>
+                </table>
+                <p>Changed your mind? <span class="click" onclick="hideBatchChooser();">Cancel</span>. <small>(The tasks will be put under <em>Uncategorized tasks</em>.)</small></p>
+              </div>
+            </td>
+          </tr>
+        </table>
+        <input id="create-tasks" type="submit" value="Create tasks" disabled="disabled" />
+      </div>
     </form>
   </div>
 
