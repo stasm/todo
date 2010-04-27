@@ -56,7 +56,7 @@
       {% if task.bug %}
         BzAPI = {
           
-          apibase : 'https://api-dev.bugzilla.mozilla.org/stage/latest/',
+          apibase : 'https://api-dev.bugzilla.mozilla.org/latest/',
           bugid : '{{ task.bug }}',
           snapshot_ts : '{{ task.snapshot_ts_iso }}',
           last_i : 0,
