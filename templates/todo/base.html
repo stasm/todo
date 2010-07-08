@@ -14,25 +14,26 @@
     font-size: 80%;
     color: #666;
   }
-  #menu {
-    margin: 0 0 6em;
+  #submenu {
+    margin: -2em 0 3em;
     padding: 10px;
     font-size: small;
     font-style: italic;
     line-height: 1em;
-    background-color: #eee;
+    background-color: #f6f6f6;
+    -moz-border-radius: 0 0 .5em .5em;
   }
-  #menu ul {
+  #submenu ul {
     list-style: none;
     float: left;
     margin: 0;
     padding: 0;
   }
-  #menu li {
+  #submenu li {
     float: left;
     margin: 0 10px;
   }
-  #menu br {
+  #submenu br {
     clear: both;
   }
   
@@ -469,7 +470,7 @@
 {% block content %}
 <div class="{% block bodyclass %}{% endblock %}">
   {% block menu %}
-  <div id="menu">
+  <div id="submenu">
     <ul>
       {% block menu_back %}
         <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
