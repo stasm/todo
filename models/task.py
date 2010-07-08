@@ -3,7 +3,9 @@ from django.core.urlresolvers import reverse
 
 from life.models import Locale
 
-from todo.models import ProtoTask, Todo, Tracker
+from .base import Todo
+from .proto import ProtoTask
+from .tracker import Tracker
 from todo.managers import StatusManager
 from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
     

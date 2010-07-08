@@ -1,7 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
-from todo.models import Actor
+from .actor import Actor
 
 PROTO_TYPE_CHOICES = (
     (1, 'tracker'),

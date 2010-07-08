@@ -1,7 +1,10 @@
 from django.db import models
 from django.core.urlresolvers import reverse
 
-from todo.models import Actor, Protostep, Todo, Task
+from .base import Todo
+from .actor import Actor
+from .proto import ProtoStep
+from .task import Task
 from todo.managers import StatusManager
 from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
     
