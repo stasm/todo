@@ -293,7 +293,7 @@
         <input type="checkbox" checked="checked" disabled="disabled"/>
       {% else %}
         {% if perms.todo.change_task %}
-          <form action="{% url todo.views.resolve_task task.id %}" method="post">
+          <form action="{% url todo.views.actions.resolve_task task.id %}" method="post">
             <input type="hidden" name="task_id" value="{{task.id}}"/>
             <input type="checkbox" onclick="this.form.submit()"/>
           </form>
@@ -320,7 +320,7 @@
       
         <div class="step {{step.get_status_display}} {% if step.has_children %}has_children{% endif %}">
           {% if task.is_open and step.is_next and perms.todo.change_step %}
-            <form action="{% url todo.views.resolve_step step.id %}" method="post">
+            <form action="{% url todo.views.actions.resolve_step step.id %}" method="post">
               <input type="hidden" name="task_id" value="{{task.id}}"/>
               {% if not step.is_review %}
                 <input type="checkbox" onclick="this.form.submit()"/>
