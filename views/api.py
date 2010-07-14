@@ -14,7 +14,7 @@ import json
 from datetime import datetime
 
 class BzAPI(object):
-    _baseurl = "https://api-dev.bugzilla.mozilla.org/0.5/"
+    _baseurl = "https://api-dev.bugzilla.mozilla.org/latest/"
     time_format = r'%Y-%m-%dT%H:%M:%SZ'
     
     def __init__(self):

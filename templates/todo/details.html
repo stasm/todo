@@ -52,7 +52,7 @@
       {% if task.bug %}
         BzAPI = {
           
-          apibase : 'https://api-dev.bugzilla.mozilla.org/0.5/',
+          apibase : 'https://api-dev.bugzilla.mozilla.org/latest/',
           bugid : '{{ task.bug }}',
           snapshot_ts : '{{ task.snapshot_ts_iso }}',
           last_i : 0,
@@ -65,7 +65,7 @@
           
           getCommentsAndHistory : function getCommentsAndHistory() {
             $('#checking').fadeIn('slow');
-            var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?comments=1&history=1';
+            var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?include_fields=_default,comments,history';
             $.getJSON(url, function(data) {
                 //BzAPI.attachments = data['attachments'];
                 BzAPI.activity = data['comments'].concat(data['history']);
@@ -184,7 +184,7 @@
           
           updateSnapshot : function updateSnapshot(time, i) {
             var prev_and_self = BzAPI.markAsWorkingUpTo(i);
-            $.post("{% url todo.api.update_snapshot task.id %}",
+            $.post("{% url todo.views.api.update_snapshot task.id %}",
                    { snapshot_ts: time },
                    function(data){
                      if (data.status == 'ok') {
