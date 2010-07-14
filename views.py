@@ -10,11 +10,10 @@ from django.utils.safestring import mark_safe
 
 from life.models import Locale
 
-from todo.models import Project, Batch, Todo
-from todo.forms import ResolveTodoForm, ResolveReviewTodoForm, AddTasksForm, AddTasksManuallyForm, TasksFeedBuilderForm, NextActionsFeedBuilderForm
+from todo.models import *
+from todo.forms import ResolveTodoForm, ResolveReviewTodoForm
 from todo.workflow import statuses
 from todo.managers import StatusManager
-from todo.feeds import build_feed
 
 from itertools import groupby
 
@@ -181,25 +180,40 @@ def dashboard(request, locale_code=None, project_slug=None, bug_id=None, status=
                               context_instance=RequestContext(request))
     
 def task(request, task_id):
-    task = Todo.objects.get(pk=task_id)
+    task = Task.objects.get(pk=task_id)
     return render_to_response('todo/details.html',
                               {'task' : task},
                               context_instance=RequestContext(request))
                         
 @require_POST
-@permission_required('todo.change_todo')
-def resolve(request, todo_id):
+@permission_required('todo.change_task')
+def resolve_task(request, task_id):
     error_message = "Incorrect data"
     try:
-        todo = Todo.objects.get(pk=todo_id)
+        task = Task.objects.get(pk=task_id)
     except KeyError:
-        error_message = "Todo %s doesn't exist." % todo_id
+        error_message = "Task %s doesn't exist." % task_id
     else:
-        if not todo.is_review:
+        task.resolve()
+        return HttpResponseRedirect(reverse('todo.views.task', 
+                                            args=(task_id,)))
+        
+    return HttpResponse("%s" % error_message)
+
+@require_POST
+@permission_required('todo.change_step')
+def resolve_step(request, step_id):
+    error_message = "Incorrect data"
+    try:
+        step = Step.objects.get(pk=step_id)
+    except KeyError:
+        error_message = "Step %s doesn't exist." % step_id
+    else:
+        if not step.is_review:
             form = ResolveTodoForm(request.POST)
             if form.is_valid():
                 task_id = form.cleaned_data['task_id']
-                todo.resolve()
+                step.resolve()
                 return HttpResponseRedirect(reverse('todo.views.task', 
                                                     args=(task_id,)))
         else:
@@ -208,7 +222,7 @@ def resolve(request, todo_id):
                 task_id = form.cleaned_data['task_id']
                 success = form.cleaned_data['success']
                 resolution = 1 if success else 2
-                todo.resolve(resolution)
+                step.resolve(resolution)
                 return HttpResponseRedirect(reverse('todo.views.task', 
                                                     args=(task_id,)))
         

@@ -37,28 +37,27 @@ class Task(models.Model, Todo):
         return ('todo.views.task', [str(self.id)])
 
     def get_admin_url(self):
-        return '/admin/todo/todo/%s' % str(self.id)
+        return '/admin/todo/task/%s' % str(self.id)
 
     def clone(self):
-        return self.prototype.spawn(task=self.task, parent=self.parent,
-                                    order=self.order)
+        return self.prototype.spawn(summary=self.summary, parent=self.parent,
+                                    locale=self.locale, bug=self.bug)
+
+    @property
+    def children(self):
+        """Get the immediate children of the task.
+        
+        Note the this is different from self.steps which is a manager returning
+        all steps under the task, no matter how deep they are in the steps
+        hierarchy.
+        
+        """
+        return self.steps.filter(parent=None)
 
     def resolve(self, resolution=1):
         self.status = 5
         self.resolution = resolution
         self.save()
-
-    def activate(self):
-        self.activate_children()
-        self.status = 2
-        self.save()
-
-    def activate_children(self):
-        auto_activated_children = self.children.filter(is_auto_activated=True)
-        if len(auto_activated_children) == 0:
-            auto_activated_children = (self.children.get(order=1),)
-        for child in auto_activated_children:
-            child.activate()
 
     def is_uptodate(self, bug_last_modified_time):
         if self.snapshot_ts is None:

@@ -6,7 +6,7 @@ from django.utils.http import urlencode
 from django.utils.safestring import mark_safe
 
 from life.models import Locale
-from todo.models import Project, Batch, Todo
+from todo.models import *
 from todo.managers import StatusManager
 
 import urllib2

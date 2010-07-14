@@ -14,9 +14,9 @@ class Step(models.Model, Todo):
     prototype = models.ForeignKey(ProtoStep, related_name='steps', null=True, blank=True)
     summary = models.CharField(max_length=200, blank=True)
     parent = models.ForeignKey('self', related_name='children', null=True, blank=True)
-    task = models.ForeignKey(Task, related_name='steps', null=True, blank=True)
+    task = models.ForeignKey(Task, related_name='steps')
     owner = models.ForeignKey(Actor, null=True, blank=True)
-    order = models.PositiveIntegerField(null=True, blank=True)
+    order = models.PositiveIntegerField()
     
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES, null=True, blank=True)
@@ -30,20 +30,6 @@ class Step(models.Model, Todo):
     
     _next = None
 
-    class Meta:
-        app_label = 'todo'
-        ordering = ('order',)
-
-    def __unicode__(self):
-        return self.summary
-
-    @models.permalink
-    def get_absolute_url(self):
-        return ('todo.views.task', [str(self.id)])
-
-    def get_admin_url(self):
-        return '/admin/todo/todo/%s' % str(self.id)
-
     def get_has_children(self):
         if self._has_children is None:
             self._has_children = len(self.children.all()) > 0
@@ -54,57 +40,41 @@ class Step(models.Model, Todo):
 
     has_children = property(get_has_children, set_has_children)
 
+    class Meta:
+        app_label = 'todo'
+        ordering = ('order',)
+
+    def __unicode__(self):
+        return self.summary
+
+    @property
+    def code(self):
+        return str(self.id)
+
+    @models.permalink
+    def get_absolute_url(self):
+        return ('todo.views.task', [str(self.id)])
+
+    def get_admin_url(self):
+        return '/admin/todo/step/%s' % str(self.id)
+
     def clone(self):
-        return Todo.proto.create(self.prototype, task=self.task, parent=self.parent, order=self.order)
+        return self.prototype.spawn(summary=self.summary, task=self.task,
+                                    parent=self.parent, order=self.order)
 
-    def resolve(self, resolution=1, cascade=True):
-        self.status = 5
-        self.resolution = resolution
-        self.save()
-        if cascade and not self.is_task:
-            if self.resolves_parent or self.is_last:
-                if self.resolution == 2:
-                    cascade = False
-                    clone = self.parent.clone()
-                    clone.activate()
-                if not self.any_sibling_is('active'):
-                    self.parent.resolve(self.resolution, cascade)
-            elif self.resolution == 1 and self.next.status_is('new'):
-                self.next.activate()
-
-    def activate(self):
-        if self.has_children:
-            self.activate_children()
-            self.status = 2
-        else:
-            self.status = 3
-        self.save()
-
-    def activate_children(self):
-        auto_activated_children = self.children.filter(is_auto_activated=True)
-        if len(auto_activated_children) == 0:
-            auto_activated_children = (self.children.get(order=1),)
-        for child in auto_activated_children:
-            child.activate()
-
-    def any_sibling_is(self, method):
-        return bool(getattr(self.parent.children, method)())
-
-    def status_is(self, status_adj):
-        return self.get_status_display() == status_adj
-
-    def is_next(self):
-        return self.status == 3
-
-    def is_open(self):
-        return self.status != 5
+    @property
+    def siblings(self):
+       if self.parent is None:
+           return Step.objects.filter(task=self.task, parent=None)
+       else:
+           return super(Step, self).siblings
 
     @property
     def next(self):
         if self._next is None:
             try:
                 next = self.order + 1
-                self._next = self.parent.children.get(order=next)
+                self._next = self.siblings.get(order=next)
             except:
                 self._next = None
         return self._next
@@ -113,6 +83,28 @@ class Step(models.Model, Todo):
     def is_last(self):
         return self.next is None
 
-    @property
-    def code(self):
-        return str(self.id)
+    def activate(self):
+        if self.has_children is True:
+            self.activate_children()
+            self.status = 2
+        else:
+            self.status = 3
+        self.save()
+
+    def resolve(self, resolution=1, bubble_up=True):
+        self.status = 5
+        self.resolution = resolution
+        self.save()
+        if bubble_up:
+            if self.parent is not None and (self.resolves_parent or 
+                                            self.is_last):
+                if self.resolution == 2:
+                    bubble_up = False
+                    clone = self.parent.clone()
+                    clone.activate()
+                if not self.is_any_sibling_status(2, 3):
+                    self.parent.resolve(self.resolution, bubble_up)
+            elif (self.resolution == 1 and
+                  not self.is_last and
+                  self.next.status_is('new')):
+                self.next.activate()

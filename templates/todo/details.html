@@ -1,10 +1,6 @@
 {% extends "todo/base.html" %}
 {% load recurse %}
 
-{% block extra_feeds %}
-  <link rel="alternate" type="application/atom+xml" title="Todo: next actions for {{task}}" href="{% url django.contrib.syndication.views.feed 'next' %}task:{{task.code}}" />
-{% endblock %}
-
 {% block extra_head_matter %}
   <script type="text/javascript" src="{% url static path='jquery.js' %}"></script>
   <script type="text/javascript">
@@ -47,7 +43,7 @@
           
           resolved_steps : function resolved_steps(force) {
             if ( force || ! Task._resolved_steps)
-              Task._resolved_steps =  $('.todo.resolved.has_children').add('#task > .todo.resolved');
+              Task._resolved_steps =  $('.step.resolved.has_children').add('#task > .step.resolved');
             return Task._resolved_steps;
           },
           
@@ -296,8 +292,8 @@
       {% ifequal task.get_status_display "resolved" %}
         <input type="checkbox" checked="checked" disabled="disabled"/>
       {% else %}
-        {% if perms.todo.change_todo %}
-          <form action="{% url todo.views.resolve task.id %}" method="post">
+        {% if perms.todo.change_task %}
+          <form action="{% url todo.views.resolve_task task.id %}" method="post">
             <input type="hidden" name="task_id" value="{{task.id}}"/>
             <input type="checkbox" onclick="this.form.submit()"/>
           </form>
@@ -307,50 +303,48 @@
       {% endifequal %}
       <span>{{task}}</span>
       <a href="#" id="show_resolved" class="edit">show resolved steps</a>
-      {% if user.is_staff and perms.todo.change_todo %}
+      {% if user.is_staff and perms.todo.change_task %}
         <a href="{{ task.get_admin_url }}" class="edit">edit task</a>
       {% endif %}
     </h3>
     
     <div class="tags">
       {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
-      {% if task.project %}<a href="{% url todo_project_dashboard task.project.slug %}" class="tag">{{task.project}}</a>{% endif %}
-      {% if task.batch %}<a href="{% url todo_project_dashboard task.project.slug %}?batch={{task.batch}}" class="tag">{{task.batch}}</a>{% endif %}
       {% if task.bug %}<a href="{% url todo_bug_dashboard task.bug %}" class="tag">{{task.bug}}</a>{% endif %}
       
     </div>
     
-    {% with task.children.all as todos %}
+    {% with task.children as steps %}
     {% recurse_children %}
-      {% for todo in todos %}
+      {% for step in steps %}
       
-        <div class="todo {{todo.get_status_display}} {% if todo.has_children %}has_children{% endif %}">
-          {% if task.is_open and todo.is_next and perms.todo.change_todo %}
-            <form action="{% url todo.views.resolve todo.id %}" method="post">
+        <div class="step {{step.get_status_display}} {% if step.has_children %}has_children{% endif %}">
+          {% if task.is_open and step.is_next and perms.todo.change_step %}
+            <form action="{% url todo.views.resolve_step step.id %}" method="post">
               <input type="hidden" name="task_id" value="{{task.id}}"/>
-              {% if not todo.is_review %}
+              {% if not step.is_review %}
                 <input type="checkbox" onclick="this.form.submit()"/>
               {% else %}
                 <input type="checkbox" name="success" onclick="this.form.submit()"/>
                 <input type="checkbox" name="failure" onclick="this.form.submit()"/>
               {% endif %}
               <span>
-                {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-                {{todo}}
+                {% if step.owner %}<em>{{step.owner}}:</em>{% endif %}
+                {{step}}
               </span>
             </form>
           {% else %}
-            {% ifequal todo.get_status_display "resolved" %}
+            {% ifequal step.get_status_display "resolved" %}
               <input type="checkbox" disabled="disabled" checked="checked"/>
             {% else %}
               <input type="checkbox" disabled="disabled"/>
             {% endifequal %}
             <span>
-              {% if todo.owner %}<em>{{todo.owner}}:</em>{% endif %}
-              {{todo.summary}} {% ifequal todo.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
+              {% if step.owner %}<em>{{step.owner}}:</em>{% endif %}
+              {{step.summary}} {% ifequal step.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
             </span>
           {% endif %}
-          {% recurse todo.children.all as todos %}
+          {% recurse step.children.all as steps %}
         </div>
 
       {% endfor %}

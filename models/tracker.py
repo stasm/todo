@@ -34,27 +34,27 @@ class Tracker(models.Model, Todo):
         return ('todo_project_dashboard', (self.project.slug,))
 
     def get_admin_url(self):
-        return '/admin/todo/todo/%s' % str(self.id)
+        return '/admin/todo/tracker/%s' % str(self.id)
 
     def clone(self):
-        return self.prototype.spawn(parent=self.parent)
+        return self.prototype.spawn(summary=self.summary, parent=self.parent,
+                                    locale=self.locale)
+
+    @property
+    def siblings(self):
+       if self.parent is None:
+           return Tracker.objects.filter(parent=None)
+       else:
+           return super(Tracker, self).siblings
+
+    def activate_children(self):
+        """Activate child trackers and tasks."""
+        for child in self.children.all():
+            child.activate()
+        for task in self.tasks.all():
+            task.activate()
 
     def resolve(self, resolution=1):
         self.status = 5
         self.resolution = resolution
         self.save()
-
-    def activate(self):
-        self.activate_children()
-        self.status = 2
-        self.save()
-
-    def activate_children(self):
-        for child in self.children.all():
-            child.activate()
-
-    def status_is(self, status_adj):
-        return self.get_status_display() == status_adj
-
-    def is_open(self):
-        return self.status != 5

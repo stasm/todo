@@ -47,16 +47,13 @@ class ProtoTrackerForm(forms.ModelForm):
 class ProtoTaskForm(forms.ModelForm):
     parent = forms.ModelChoiceField(Proto.objects.filter(type=2),
                                    label='Proto task')
-
-    class Meta:
-        model = Nesting
-        fields = ['parent', 'clone_per_locale']
-
-class ProtoStepForm(forms.ModelForm):
-    parent = forms.ModelChoiceField(Proto.objects.filter(type=3),
-                                   label='Proto step')
+    order = forms.IntegerField(label='Order', required=True)
 
     class Meta:
         model = Nesting
         fields = ['parent', 'order', 'is_auto_activated',
                   'resolves_parent', 'repeat_if_failed']
+
+class ProtoStepForm(ProtoTaskForm):
+    parent = forms.ModelChoiceField(Proto.objects.filter(type=3),
+                                   label='Proto step')

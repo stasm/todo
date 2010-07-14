@@ -63,8 +63,13 @@ class Proto(models.Model):
     def _spawn_children(self, **custom_fields):
         """Create children of a todo object."""
 
-        for nesting in self.nestings_where_parent:
+        for nesting in self.nestings_where_parent.all():
             child = nesting.child.get_proto_object()
+            # steps inside task/steps need to inherit the following
+            # properties from the nesting, not the proto itself
+            for prop in ('order', 'is_auto_activated',
+                         'resolves_parent', 'repeat_if_failed'):
+                custom_fields.update({prop: getattr(nesting, prop)})
             if nesting.clone_per_locale is True:
                 # to avoid conflicts, locale and locales are deleted
                 # from custom_fields and are not passed to children

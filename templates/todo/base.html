@@ -2,13 +2,6 @@
 
 {% block title_matter %}todo dashboard{% endblock %}
 {% block head_matter %}
-{% block feeds %}
-  {% block extra_feeds %}{% endblock %}
-  <link rel="alternate" type="application/atom+xml" title="Todo: all tasks" href="{% url django.contrib.syndication.views.feed 'tasks' %}" />
-  <link rel="alternate" type="application/atom+xml" title="Todo: all next actions" href="{% url django.contrib.syndication.views.feed 'next' %}" />
-  
-  <link rel="alternate" type="application/atom+xml" title="Feed builder" href="{% url todo.views.feed_builder %}" />
-{% endblock %}
 <style>
   body {
      margin: 2em 7em 7em;
@@ -349,12 +342,12 @@
     background-color: #eee;
   }
   
-  .todo {
+  .step {
     margin: 10px 20px;
     color: #999;
   }
   
-  .task input, .todo input {
+  .task input, .step input {
     float: left;
     margin-right: 10px;
     margin-left: 0;
@@ -362,20 +355,20 @@
   .task input {
     margin-top: 5px;
   }
-  .task.active .todo.active, .task.active .todo.next {
+  .task.active .step.active, .task.active .step.next {
     color: #000;
   }
-  .task.active .todo.next {
+  .task.active .step.next {
     background-color: #c1f6ac;
   }
-  .todo.resolved {
+  .step.resolved {
     color: #999;
     text-decoration: line-through;
   }
-  .todo.resolved.has_children, #task > .todo.resolved {
+  .step.resolved.has_children, #task > .step.resolved {
     display: none;
   }
-  #task.resolved .todo.resolved {
+  #task.resolved .step.resolved {
     display: block;
   }
   
@@ -477,21 +470,12 @@
 <div class="{% block bodyclass %}{% endblock %}">
   {% block menu %}
   <div id="menu">
-    <div id="auth">
-      {% if user.is_authenticated %}
-        Hi, {% if user.first_name %}{{ user.first_name }}{% else %}{{ user.username }}{% endif %}. 
-        <a href="{% url django.contrib.auth.views.logout %}"><small>(log out)</small></a>
-      {% else %}
-        <a href="{% url django.contrib.auth.views.login %}">Log in</a>
-      {% endif %}
-    </div>  
     <ul>
       {% block menu_back %}
         <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
       {% endblock %}
       {% block extra_menu_items %}{% endblock %}
       <li><a href="{% url todo.views.new %}">new</a></li>
-      <li><a href="{% url todo.views.feed_builder %}">feed builder</a></li>
     </ul>
     <br/>
   </div>
