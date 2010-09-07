@@ -4,6 +4,8 @@ from todo.models import *
 from todo.admin.proto import (ProtoTrackerAdmin, ProtoTaskAdmin,
                               ProtoStepAdmin)
 
+admin.site.register(ProjectLine)
+admin.site.register(Project)
 admin.site.register(Actor)
 admin.site.register(Tracker)
 admin.site.register(Task)

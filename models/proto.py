@@ -40,7 +40,7 @@ class Proto(models.Model):
         return ct.model_class()
 
     def get_proto_object(self):
-        """Move from Proto to Proto{Tracker,Task,Step}"""
+        """Move from Proto instance to Proto{Tracker,Task,Step} instance"""
 
         return getattr(self, 'proto%s' % self.get_type_display())
 
@@ -93,6 +93,10 @@ class Proto(models.Model):
         prototypes and nestings. You can override them by passing custom
         values in the keyword arguments.
 
+        A `project` keyword argument is required when spawning trackers or
+        tasks. It must be an instance of todo.models.Project. The created todo 
+        objects will be related to the project passed.
+
         A special iterable `locales` keyword argument can be passed to create
         multiple trees of todo objects, one per locale in `locales`. Only
         todo objects with clone_per_locale set on the corresponding nesting
@@ -102,6 +106,8 @@ class Proto(models.Model):
         more were created as children.
 
         """
+        if self.type != 3 and 'project' not in custom_fields:
+            raise TypeError("Pass a project to spawn trackers and tasks.")
         todo = self._spawn_instance(**custom_fields)
         todo.save()
         custom_fields.update(parent=todo)

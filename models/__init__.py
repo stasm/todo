@@ -1,3 +1,4 @@
+from .project import ProjectLine, Project
 from .actor import Actor
 from .proto import *
 from .tracker import Tracker

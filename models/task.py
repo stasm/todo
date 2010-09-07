@@ -4,6 +4,7 @@ from django.core.urlresolvers import reverse
 from life.models import Locale
 
 from .base import Todo
+from .project import Project
 from .proto import ProtoTask
 from .tracker import Tracker
 from todo.managers import StatusManager
@@ -16,6 +17,7 @@ class Task(models.Model, Todo):
     parent = models.ForeignKey(Tracker, related_name='tasks', null=True, blank=True)
     summary = models.CharField(max_length=200, blank=True)
     locale = models.ForeignKey(Locale, related_name='tasks', null=True, blank=True)
+    project = models.ForeignKey(Project, related_name='tasks')
     bug = models.PositiveIntegerField(null=True, blank=True)
     snapshot_ts = models.DateTimeField(null=True, blank=True)
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
