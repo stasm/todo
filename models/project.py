@@ -32,3 +32,11 @@ class Project(models.Model):
 
     def __unicode__(self):
         return '%s %s' % (self.line.label, self.version)
+
+    def task_count(self, locale=None):
+        if locale is not None:
+            tasks = self.tasks.filter(locale=locale)
+        else:
+            tasks = self.tasks
+        return {'all': tasks.count(),
+                'open': tasks.filter(status__lt=4).count()}
