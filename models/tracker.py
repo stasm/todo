@@ -45,7 +45,7 @@ class Tracker(models.Model, Todo):
     @property
     def siblings(self):
        if self.parent is None:
-           return Tracker.objects.filter(parent=None)
+           return Tracker.objects.top_level()
        else:
            return super(Tracker, self).siblings
 

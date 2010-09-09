@@ -472,11 +472,8 @@
   {% block menu %}
   <div id="submenu">
     <ul>
-      {% block menu_back %}
-        <li><a href="{% url todo.views.index %}">&larr; back to index</a></li>
-      {% endblock %}
+      {% block menu_back %}{% endblock %}
       {% block extra_menu_items %}{% endblock %}
-      <li><a href="{% url todo.views.new %}">new</a></li>
     </ul>
     <br/>
   </div>

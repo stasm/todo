@@ -49,12 +49,16 @@ class Task(models.Model, Todo):
     def children(self):
         """Get the immediate children of the task.
         
-        Note the this is different from self.steps which is a manager returning
+        Note the this is different from self.steps which is a manager handling
         all steps under the task, no matter how deep they are in the steps
         hierarchy.
         
         """
-        return self.steps.filter(parent=None)
+        return self.steps.top_level()
+
+    def next_steps(self):
+       """Get the next steps in the task."""
+       return self.steps.next()
 
     def resolve(self, resolution=1):
         self.status = 5

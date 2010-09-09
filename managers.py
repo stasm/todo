@@ -15,3 +15,5 @@ class StatusManager(models.Manager):
         return self.filter(status=4)
     def resolved(self):
         return self.filter(status=5)
+    def top_level(self):
+        return self.filter(parent=None)

@@ -279,12 +279,6 @@
   </style>
 {% endblock %}
 
-{% block extra_menu_items %}
-  {% if task.project %}
-    <li><a href="{% url todo_project_summary task.project.slug %}">{{task.project.name}} summary</a></li>
-  {% endif %}
-{% endblock %}
-
 {% block view %}
 
   <div id="task" class="task {{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
@@ -307,12 +301,6 @@
         <a href="{{ task.get_admin_url }}" class="edit">edit task</a>
       {% endif %}
     </h3>
-    
-    <div class="tags">
-      {% if task.locale %}<a href="{% url todo_locale_dashboard task.locale.code %}" class="tag">{{task.locale}}</a>{% endif %}
-      {% if task.bug %}<a href="{% url todo_bug_dashboard task.bug %}" class="tag">{{task.bug}}</a>{% endif %}
-      
-    </div>
     
     {% with task.children as steps %}
     {% recurse_children %}

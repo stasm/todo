@@ -1,0 +1,12 @@
+<h2>Open Tasks</h2>
+<ul>
+{% for task in tasks %}
+    <li>
+        <a href="{% url todo.views.task task.id %}">{{task.summary}}</a>
+        Next steps:
+        {% for step in task.next_steps %}
+            {{step.summary}} ({{step.owner}})
+        {% endfor %}
+    </li>
+{% endfor %}
+</ul>
