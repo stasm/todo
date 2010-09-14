@@ -1,7 +1,0 @@
-<input type="checkbox" disabled="disabled" /><em>{{ obj.owner }}:</em> {{ obj.summary }}
-<dl>
-  <dt>Task:</dt><dd>{{ obj.task }}</dd>
-  <dt>Locale:</dt><dd>{{ obj.task.locale }}</dd>
-  <dt>Project:</dt><dd>{{ obj.task.project }}</dd>
-  {% if obj.task.batch %}<dt>Batch:</dt><dd>{{ obj.task.batch }}</dd>{% endif %}
-</dl>
