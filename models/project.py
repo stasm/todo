@@ -3,12 +3,17 @@ from django.template.defaultfilters import slugify
 
 from itertools import chain
 
+from shipping.models import AppVersion
+
 class Project(models.Model):
     """ e.g. 'Firefox 4.0'
     """
     label = models.CharField(max_length=50)
     code = models.SlugField(max_length=50, blank=True, unique=True)
     codename = models.CharField(max_length=50, blank=True, null=True)
+    # this could be moved to homepage.models.Project
+    # see https://bugzilla.mozilla.org/show_bug.cgi?id=589786#c4
+    shipping = models.OneToOneField(AppVersion, related_name="todo")
 
     class Meta:
         app_label = 'todo'
