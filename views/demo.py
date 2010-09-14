@@ -3,6 +3,12 @@ from django.utils.safestring import mark_safe
 
 from todo.views import snippets
 
+def task(request, task_id):
+    task_div = mark_safe(snippets.task(request, task_id,
+                                       redirect_view='todo.views.demo.task'))
+    return render_to_response('todo/demo_task.html',
+                              {'task_div': task_div,})
+
 def combined(request):
     from todo.models import Project
     from life.models import Locale
