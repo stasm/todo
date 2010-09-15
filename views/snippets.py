@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 
 from todo.models import Tracker, Task
 
-def task(request, task_id, redirect_view):
+def task(request, task_id, redirect_view='todo.views.demo.task'):
     """A single task view snippet.
 
     This snippet is intended to be included on a page showing a single task.
@@ -28,7 +28,7 @@ def task(request, task_id, redirect_view):
                             # the permissions of the user.
                             context_instance=RequestContext(request))
 
-def combined(request, project, locale, task_view):
+def combined(request, project, locale, task_view='todo.views.demo.task'):
     """A snippet to be included on the combined overview page.
 
     This snippet shows a short list of open tasks for a project+locale
@@ -45,7 +45,9 @@ def combined(request, project, locale, task_view):
                             {'tasks': project.open_tasks(locale),
                              'task_view': task_view})
 
-def tree(request, tracker=None, project=None, locale=None, task_view=None):
+def tree(request, tracker=None, project=None, locale=None,
+         task_view='todo.views.demo.task',
+         tracker_view='todo.views.demo.tracker'):
     """A snippet to be included on a single tracker page.
 
     Arguments:
@@ -71,4 +73,5 @@ def tree(request, tracker=None, project=None, locale=None, task_view=None):
             trackers = trackers.filter(parent=None)
     return render_to_string('todo/snippet_tree.html',
                             {'trackers': trackers,
-                             'task_view': task_view})
+                             'task_view': task_view,
+                             'tracker_view': tracker_view})
