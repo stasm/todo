@@ -1,0 +1,257 @@
+.todo {
+    margin: 2em 2em 7em;
+}    
+.todo p,
+.todo form {
+    margin: 0;
+    padding: 0;
+}
+.todo small {
+    font-size: 80%;
+    color: #666;
+}
+
+.todo h1,
+.todo h2 {
+    font-weight: normal;
+    font-size: 2.5em;
+    margin-top: 0;
+}
+.todo h1 + h2 { 
+    margin-top: -.5em; 
+}   
+
+.todo .column {
+    width: 45%;
+    float: left;
+    margin: 10px 0 7em;
+    -moz-transition: width 1s ease-in-out;
+    -webkit-transition: width 1s ease-in-out;
+    -o-transition: width 1s ease-in-out;
+    transition: width 1s ease-in-out;
+}
+.todo .column.narrow {
+    width: 30%;
+}
+.todo .column.wide {
+    width: 60%;
+}
+.todo .column.left {
+    float: left;
+}
+.todo .column.right {
+    float: right;
+}
+
+.todo .task {
+    border: 1px solid #ccc;
+    margin: 10px 0 2em;
+    padding: 10px;
+}
+
+.todo h3 {
+    font-size: 1.3em;
+    font-weight: normal;
+    margin: 0 0 5px;
+    padding: 0;
+} 
+
+.todo #activity h3 {
+    margin-top: 10px;
+}
+.todo .status {
+    display: none;
+    min-height: 2em;
+    margin-left: -30px;
+    padding-left: 30px;
+    margin-top: -5px;
+    padding-top: 5px;
+    background-repeat: no-repeat;
+    background-position: 0 13px;
+}
+.todo #outofdate {
+    /* see internal style sheet */
+}
+.todo #uptodate {
+    /* see internal style sheet */
+}
+.todo #checking div {
+    /* see internal style sheet */
+    width: 208px;
+    text-align: center;
+    padding-top: 30px;
+    font-size: small;
+    font-style: italic;
+}
+
+.todo #activity .comment {
+    margin-top: 1em;
+    border: 1px solid #ccc;
+    opacity: 1;
+    -moz-transition: opacity .5s ease-in-out;
+    -webkit-transition: opacity .5s ease-in-out;
+    -o-transition: opacity .5s ease-in-out;
+    transition: opacity .5s ease-in-out;
+}
+.todo #activity .comment.obsolete, .todo #activity .comment.working {
+    opacity: 0.5;
+}
+.todo #activity .comment.error {
+    padding: 10px;
+    border: 2px solid orange;
+    font-size: small;
+    font-style: italic;
+}
+.todo h4 {
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 10px;
+    background-color: #eee;
+    font-style: italic;
+}
+.todo input + h4 {
+    padding-left: 3em;
+}
+.todo #activity .comment .meta {
+    float: left; 
+    margin: .6em; 
+}
+.todo .comment .meta img, .todo .comment.working .meta input {
+    display: none;
+    width: 1em;
+    height: 1em;
+}
+.todo .comment.working .meta img {
+    display: inline;
+}
+.todo .comment.working .meta input {
+    display: none;
+}
+
+.todo #activity .comment div, .todo #activity .comment dl {
+    padding: 10px;
+    font-family: monospace;
+}
+.todo #activity .comment dl {
+    margin: 0;
+    padding: 0 10px 10px;
+    border-top: 1px solid #eee;
+    color: #999;
+}
+.todo #activity .comment dt {
+    margin-top: 10px;
+}
+.todo #activity .comment dd {
+    margin: 0;
+    padding: 0 0 0 10px;
+}
+.todo ins {
+    text-decoration: none;
+    background-color: #c1f6ac;
+}
+.todo del {
+    text-decoration: none;
+    background-color: #ffcac1;
+}
+
+.todo .edit {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: x-small;
+    padding: 2px 3px;
+    position: relative;
+    top: -1em;
+    color: #666;
+    text-decoration: none;
+    opacity: 0;
+    -moz-transition: opacity .5s ease-in-out;
+    -webkit-transition: opacity .5s ease-in-out;
+    -o-transition: opacity .5s ease-in-out;
+    transition: opacity .5s ease-in-out;
+}
+.todo h3:hover .edit {
+    opacity: 1;
+}
+.todo .edit:hover {
+    background-color: #eee;
+}
+
+.todo .tags {
+    margin: .5em 0 1em;
+}
+.todo .tag {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: x-small;
+    padding: 2px 3px;
+    color: #666;
+    text-decoration: none;
+    text-shadow: #fff 1px 1px 0;
+    background-color: #ddd;
+    border: 1px outset #ccc;
+}
+.todo .tag:hover {
+    background-color: #eee;
+}
+
+.todo .step {
+    margin: 10px 20px;
+    color: #999;
+}
+
+.todo .task input,
+.todo .step input {
+    float: left;
+    margin-right: 10px;
+    margin-left: 0;
+}
+.todo .task input {
+    margin-top: 5px;
+}
+.todo .task.active .step.active,
+.todo .task.active .step.next {
+    color: #000;
+}
+.todo .task.active .step.next {
+    background-color: #c1f6ac;
+}
+.todo .step.resolved {
+    color: #999;
+    text-decoration: line-through;
+}
+.todo .step.resolved.has_children,
+.todo #task > .step.resolved {
+    display: none;
+}
+.todo #task.resolved .step.resolved {
+    display: block;
+}
+
+
+/* ===========
+* Tracker
+* ===========
+*/
+
+.todo .tracker p::before {
+    color: #ccc;
+    content: "\\ ";
+    font-style: italic;
+}
+
+.todo .tracker p a.permalink {
+    display: none;
+}
+
+.todo .tracker p:hover a.permalink {
+    display: inline;
+}
+
+.todo .tracker .children {
+    padding: 0 10px 0 15px;
+    margin: 5px 0 5px 5px;
+    border-left: 1px dotted #ccc;
+}
+
+.todo .tracker .tasks {
+    font-style: italic;
+}
