@@ -1,0 +1,21 @@
+{% load recurse urlvar %}
+
+<h2>Tree</h2>
+
+{% recurse_children %}
+  {% for tracker in trackers %}
+  
+    <div class="tracker"> 
+      <p>{{tracker.summary}}</p>
+      <div class="children">
+         {% recurse tracker.children.all as trackers %}
+         <div class="tasks">
+         {% for task in tracker.tasks.all %}
+         <p><a href="{% urlvar task_view task.pk %}">{{task}}</a></p>
+         {% endfor %}
+        </div>
+      </div>
+    </div>
+
+  {% endfor %}
+{% endrecurse %}

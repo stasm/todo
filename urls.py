@@ -13,6 +13,7 @@ api_patterns = patterns('todo.views.api',
 demo_patterns = patterns('todo.views.demo',
     (r'^task/(?P<task_id>\d+)$', 'task'), # document this. apps need to have this
     (r'^combined$', 'combined'),
+    (r'^tree$', 'tree'),
 )
 
 urlpatterns = patterns('',

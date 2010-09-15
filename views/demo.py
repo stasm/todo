@@ -23,3 +23,25 @@ def combined(request):
     open_tasks_div = mark_safe(open_tasks_div)
     return render_to_response('todo/demo_combined.html',
                               {'open_tasks_div': open_tasks_div,})
+
+def tree(request):
+    from todo.models import Project, Tracker
+    from life.models import Locale
+    if ('project' not in request.GET and
+        'locale' not in request.GET and
+        'tracker' not in request.GET):
+        raise Exception("No project, locale or tracker passed as query args.")
+    tracker = project = locale = None
+    if 'tracker' in request.GET:
+        tracker = get_object_or_404(Tracker, pk=request.GET['tracker'])
+    else:
+        if 'project' in request.GET:
+            project = get_object_or_404(Project, code=request.GET['project'])
+        if 'locale' in request.GET:
+            locale = get_object_or_404(Locale, code=request.GET['locale'])
+
+    tree_div = snippets.tree(request, tracker=tracker, project=project,
+                             locale=locale, task_view='todo.views.demo.task')
+    tree_div = mark_safe(tree_div)
+    return render_to_response('todo/demo_tree.html',
+                              {'tree_div': tree_div,})

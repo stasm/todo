@@ -3,7 +3,7 @@ from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 
-from todo.models import Task
+from todo.models import Tracker, Task
 
 def task(request, task_id, redirect_view):
     """A single task view snippet.
@@ -43,4 +43,32 @@ def combined(request, project, locale, task_view):
     """
     return render_to_string('todo/snippet_combined.html',
                             {'tasks': project.open_tasks(locale),
+                             'task_view': task_view})
+
+def tree(request, tracker=None, project=None, locale=None, task_view=None):
+    """A snippet to be included on a single tracker page.
+
+    Arguments:
+    tracker -- an instance of todo.models.Tracker. If given, project and locale
+               are ignored.
+    project -- an instance of todo.models.Project
+    locale -- an instance of life.models.Locale
+
+    See todo.views.demo.tree for an example of how to use this snippet.
+
+    """
+    if tracker is not None:
+        trackers = (tracker,)
+    else:
+        trackers = Tracker.objects
+        if project is not None:
+            trackers = trackers.filter(project=project)
+        if locale is not None:
+            # return top-most trackers for the locale
+            trackers = trackers.filter(locale=locale, parent__locale=None)
+        else:
+            # return top-level trackers for the project
+            trackers = trackers.filter(parent=None)
+    return render_to_string('todo/snippet_tree.html',
+                            {'trackers': trackers,
                              'task_view': task_view})

@@ -462,7 +462,28 @@
   #create-tasks {
     margin: 1em 10px 0;
   }
-  
+
+  /* ===========
+   * Tracker
+   * ===========
+   */
+
+  .tracker p::before {
+    color: #ccc;
+    content: "\\ ";
+    font-style: italic;
+  }
+
+  .tracker .children {
+    padding: 0 10px 0 15px;
+    margin: 5px 0 5px 5px;
+    border-left: 1px dotted #ccc;
+  }
+
+  .tracker .tasks {
+    font-style: italic;
+  }
+
 </style>
 {% block extra_head_matter %}{% endblock %}
 {% endblock %}
