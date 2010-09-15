@@ -1,3 +1,4 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
 {% load recurse urlvar %}
 
 <h2>Tracker tree</h2>
@@ -6,13 +7,22 @@
   {% for tracker in trackers %}
   
     <div class="tracker"> 
-      <p>{{tracker.summary}} <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a></p>
+      <div class="summary">{{tracker.summary}} <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a></div>
       <div class="children">
          {% recurse tracker.children.all as trackers %}
          <div class="tasks">
-         {% for task in tracker.tasks.all %}
-         <p><a href="{% urlvar task_view task.pk %}">{{task}}</a></p>
-         {% endfor %}
+           {% for task in tracker.tasks.all %}
+             <div class="task {{task.get_status_display}}">
+               {% if task.is_open %}
+                 <a class="summary" href="{% urlvar task_view task.pk %}">{{task}}</a>
+                 {% for step in task.next_steps %}
+                   <small>{{step.owner}}: {{step.summary}}</small>
+                 {% endfor %}
+               {% else %}
+                 <div class="summary">{{task}} <a class="permalink" href="{% urlvar task_view task.pk %}">#</a></div>
+               {% endif %}
+             </div>
+           {% endfor %}
         </div>
       </div>
     </div>

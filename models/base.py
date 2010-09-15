@@ -32,7 +32,7 @@ class Todo(TodoInterface):
         return self.get_status_display() == status_adj
 
     def is_open(self):
-        return self.status != 5
+        return self.status in (1, 2, 3)
 
     def is_next(self):
         return self.status == 3

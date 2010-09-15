@@ -1,3 +1,4 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
 {% extends "base.html" %}
 
 {% block title_matter %}todo dashboard{% endblock %}
@@ -5,15 +6,15 @@
 <link rel="stylesheet" type="text/css" href="{% url static path='todo/todo.css' %}" />
 
 <style type="text/css">
-.todo #outofdate {
-    background-image: url({% url static path="todo/warning.png" %});
-}
-.todo #uptodate {
-    background-image: url({% url static path="todo/okay.png" %});
-}
-.todo #checking div {
-    background: url({% url static path="loadingAnimation.gif" %}) no-repeat 0 13px;
-}
+    .todo #outofdate {
+        background-image: url({% url static path="todo/warning.png" %});
+    }
+    .todo #uptodate {
+        background-image: url({% url static path="todo/okay.png" %});
+    }
+    .todo #checking div {
+        background: url({% url static path="loadingAnimation.gif" %}) no-repeat 0 13px;
+    }
 </style>
 {% endblock %}
 

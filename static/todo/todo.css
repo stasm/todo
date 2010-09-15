@@ -43,12 +43,6 @@
     float: right;
 }
 
-.todo .task {
-    border: 1px solid #ccc;
-    margin: 10px 0 2em;
-    padding: 10px;
-}
-
 .todo h3 {
     font-size: 1.3em;
     font-weight: normal;
@@ -232,26 +226,30 @@
 * ===========
 */
 
-.todo .tracker p::before {
+.todo .tracker .summary::before {
     color: #ccc;
     content: "\\ ";
     font-style: italic;
 }
 
-.todo .tracker p a.permalink {
+.todo .tracker div.summary a.permalink {
     display: none;
 }
 
-.todo .tracker p:hover a.permalink {
+.todo .tracker div.summary:hover a.permalink {
     display: inline;
 }
 
 .todo .tracker .children {
-    padding: 0 10px 0 15px;
-    margin: 5px 0 5px 5px;
+    padding: 0 10px 0 20px;
+    margin: 5px 0 5px 0;
     border-left: 1px dotted #ccc;
 }
 
 .todo .tracker .tasks {
     font-style: italic;
+}
+
+.todo .tracker .task.resolved {
+    color: #999;
 }
