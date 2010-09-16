@@ -70,17 +70,23 @@ def tree(request, tracker=None, project=None, locale=None,
 
     if tracker is not None:
         trackers = (tracker,)
+        tasks = []
     else:
         trackers = Tracker.objects
-        # FIXME: Add tasks.
+        tasks = Task.objects
         if project is not None:
             trackers = trackers.filter(project=project)
+            tasks = tasks.filter(project=project)
         if locale is not None:
             # return top-most trackers for the locale
             trackers = trackers.filter(locale=locale, parent__locale=None)
+            # return top-most tasks for the locale
+            tasks = tasks.filter(locale=locale, parent__locale=None)
         else:
             # return top-level trackers for the project
             trackers = trackers.filter(parent=None)
+            # return top-level tasks for the project
+            tasks = tasks.filter(parent=None)
 
     facets = {
         'project': [],
@@ -92,7 +98,7 @@ def tree(request, tracker=None, project=None, locale=None,
         'next_steps_owners': [],
         'next_steps': [],
     }
-    tree, facets = _make_tree(trackers, [], [], facets) 
+    tree, facets = _make_tree(trackers, tasks, [], facets) 
 
     return render_to_string('todo/snippet_tree.html',
                             {'tree': tree,
