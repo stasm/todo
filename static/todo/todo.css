@@ -96,7 +96,7 @@
     font-size: small;
     font-style: italic;
 }
-.todo h4 {
+.todo #activity h4 {
     font-size: 1em;
     font-weight: normal;
     margin: 0;
@@ -104,7 +104,7 @@
     background-color: #eee;
     font-style: italic;
 }
-.todo input + h4 {
+.todo #activity input + h4 {
     padding-left: 3em;
 }
 .todo #activity .comment .meta {
@@ -221,10 +221,10 @@
 }
 
 
-/* ===========
-* Tracker
-* ===========
-*/
+/*
+ * Tracker
+ * ===========
+ */
 
 .todo .tracker .summary::before {
     color: #ccc;
@@ -252,4 +252,27 @@
 
 .todo .tracker .task.resolved {
     color: #999;
+}
+
+
+/*
+ * Facet
+ * ===========
+ */
+
+.todo .facet h4 {
+    margin-bottom: 0;
+}
+
+.todo .facet h4:first-letter {
+    text-transform: uppercase;
+}
+
+.todo .facet .values {
+    font-size: 1em;
+    font-weight: normal;
+    margin: 0;
+    padding: 10px;
+    background-color: #eee;
+    font-style: italic;
 }

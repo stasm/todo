@@ -3,29 +3,50 @@
 
 <h2>Tracker tree</h2>
 
+<div class="column left wide">
 {% recurse_children %}
-  {% for tracker in trackers %}
-  
+
+  {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
       <div class="summary">{{tracker.summary}} <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a></div>
       <div class="children">
-         {% recurse tracker.children.all as trackers %}
-         <div class="tasks">
-           {% for task in tracker.tasks.all %}
-             <div class="task {{task.get_status_display}}">
-               {% if task.is_open %}
-                 <a class="summary" href="{% urlvar task_view task.pk %}">{{task}}</a>
-                 {% for step in task.next_steps %}
-                   <small>{{step.owner}}: {{step.summary}}</small>
-                 {% endfor %}
-               {% else %}
-                 <div class="summary">{{task}} <a class="permalink" href="{% urlvar task_view task.pk %}">#</a></div>
-               {% endif %}
-             </div>
-           {% endfor %}
-        </div>
+         {% recurse subtree as tree %}
       </div>
     </div>
-
   {% endfor %}
+
+  <div class="tasks">
+    {% for task, props in tree.tasks.iteritems %}
+      <div class="task {{task.get_status_display}}"
+        title="{{props.values}}">
+        {% if task.is_open %}
+          <a class="summary" href="{% urlvar task_view task.pk %}">{{task}}</a>
+          {% for step in task.next_steps %}
+            <small>{{step.owner}}: {{step.summary}}</small>
+          {% endfor %}
+        {% else %}
+          <div class="summary">{{task}} <a class="permalink" href="{% urlvar task_view task.pk %}">#</a></div>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+
 {% endrecurse %}
+</div>
+
+<div class="column right narrow">
+  <h3>Filters</h3>
+  {% for prop, value_list in facets.iteritems %}
+    <div class="facet">
+      <h4>{{prop}}</h4>
+      <div class="values">
+        {% for val in value_list %}
+          <div class="value">
+            <input type='checkbox'/>
+            {{val}}
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endfor %}
+</div>
