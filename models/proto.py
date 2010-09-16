@@ -33,26 +33,25 @@ class Proto(models.Model):
         return "[%s] %s" % (self.get_type_display(), self.summary)
 
     def get_related_model(self):
-        """Get the model class that the proto spawns."""
+        "Get the model class that the proto spawns."
 
         ct = ContentType.objects.get(app_label="todo", 
                                      model=self.get_type_display())
         return ct.model_class()
 
     def get_proto_object(self):
-        """Move from Proto instance to Proto{Tracker,Task,Step} instance"""
+        "Move from Proto instance to Proto{Tracker,Task,Step} instance"
 
         return getattr(self, 'proto%s' % self.get_type_display())
 
     def _spawn_instance(self, **custom_fields):
-        """Create an instance of the model related to the proto."""
+        "Create an instance of the model related to the proto."
 
         related_model = self.get_related_model()
+        # fields that are accepted by the spawned object
         accepted_fields = [f.name for f in related_model._meta.fields]
-        fields = {}
-        # get prototype's attribute values
-        proto_fields = [(f, getattr(self, f)) for f in self.inheritable]
-        fields.update(proto_fields)
+        # fields (with values) which will be inherited by the spawned object
+        fields = dict([(f, getattr(self, f)) for f in self.inheritable])
         # remove empty/unknown values from custom_fields
         # and overwrite other attributes
         custom_fields = [(k, v) for k, v in custom_fields.items()
@@ -61,23 +60,27 @@ class Proto(models.Model):
         return related_model(prototype=self, **fields)
 
     def _spawn_children(self, **custom_fields):
-        """Create children of a todo object."""
+        "Create children of the todo object."
 
         for nesting in self.nestings_where_parent.all():
             child = nesting.child.get_proto_object()
-            # steps inside task/steps need to inherit the following
+            # steps inside task/steps inherit the following
             # properties from the nesting, not the proto itself
             for prop in ('order', 'is_auto_activated',
                          'resolves_parent', 'repeat_if_failed'):
                 custom_fields.update({prop: getattr(nesting, prop)})
             if nesting.clone_per_locale is True:
+                # since we're deleting keys below, let's not do that
+                # on the original `custom_fields` which will be used by
+                # other nestings in the loop
+                per_locale_safe_fields = custom_fields.copy()
                 # to avoid conflicts, locale and locales are deleted
                 # from custom_fields and are not passed to children
                 # directly
-                locale = custom_fields.pop('locale', None)
-                locales = custom_fields.pop('locales', [locale])
+                locale = per_locale_safe_fields.pop('locale', None)
+                locales = per_locale_safe_fields.pop('locales', [locale])
                 for loc in locales:
-                    child.spawn(locale=loc, **custom_fields)
+                    child.spawn(locale=loc, **per_locale_safe_fields)
             else:
                 child.spawn(**custom_fields)
 
@@ -125,6 +128,7 @@ class ProtoTracker(Proto):
     """
     proto = models.OneToOneField(Proto, parent_link=True,
                                  related_name='prototracker')
+    # tuple of prototype's properties that can be inherited by a spawned object
     inheritable = ('summary',)
     # `_type` is used by Proto.__init__ to set `type` in the DB correctly
     _type = 1
