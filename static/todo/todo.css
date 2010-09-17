@@ -246,12 +246,12 @@
     border-left: 1px dotted #ccc;
 }
 
-.todo .tracker .tasks {
-    font-style: italic;
-}
-
 .todo .tracker .task.resolved {
     color: #999;
+}
+
+.todo .tracker .tasks small {
+    font-style: italic;
 }
 
 
@@ -262,6 +262,8 @@
 
 .todo .facet h4 {
     margin-bottom: 0;
+    margin-left: .7em;
+    font-weight: normal;
 }
 
 .todo .facet h4:first-letter {
@@ -272,7 +274,35 @@
     font-size: 1em;
     font-weight: normal;
     margin: 0;
-    padding: 10px;
+    padding: .5em;
     background-color: #eee;
     font-style: italic;
+}
+
+.todo .facet input {
+    float: left;
+    display: block;
+}
+
+.todo .facet .value {
+    padding-left: 1.7em;
+}
+
+/*
+ * Links
+ * ===========
+ */
+
+.todo a,
+.todo a:link {
+    color: #06d;
+    text-decoration: none;
+}
+
+.todo a:visited {
+    color: #808;
+}
+
+.todo a:hover {
+    text-decoration: underline;
 }
