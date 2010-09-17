@@ -246,14 +246,35 @@
     border-left: 1px dotted #ccc;
 }
 
-.todo .tracker .task.resolved {
+.todo .task {
+    height: 1.2em;
+    -moz-transition: height .5s ease-in-out;
+    -webkit-transition: height .5s ease-in-out;
+    -o-transition: height .5s ease-in-out;
+    transition: height .5s ease-in-out;
+}
+
+.todo .task.resolved {
     color: #999;
 }
 
-.todo .tracker .tasks small {
+.todo .tasks small {
     font-style: italic;
 }
 
+/*
+ * Filtering
+ * ===========
+ */
+
+.todo #tracker-tree.filter-is-on .task {
+    height: 0;
+    overflow: hidden;
+}
+
+.todo #tracker-tree.filter-is-on .task.selected {
+    height: 1.2em;
+}
 
 /*
  * Facet

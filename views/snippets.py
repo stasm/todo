@@ -110,10 +110,7 @@ def _update_facets(facets, task_properties):
     "Update facet data with properties of a task."
 
     for prop, val in task_properties.iteritems():
-        if type(val) is list:
-            facets[prop].extend(val)
-        else:
-            facets[prop].append(val)
+        facets[prop].extend(val)
         facets[prop] = list(set(facets[prop])) # uniquify the list
     return facets
 
@@ -152,11 +149,11 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
         tree['trackers'].update({tracker: subtree}) 
     for task in tasks:
         task_properties = {
-            'project': unicode(task.project),
-            'locale': unicode(task.locale),
-            'status': task.get_status_display(),
-            'prototype': task.prototype.summary,
-            'bug': task.bug,
+            'project': [unicode(task.project)],
+            'locale': [unicode(task.locale)],
+            'status': [task.get_status_display()],
+            'prototype': [task.prototype.summary],
+            'bug': [task.bug],
             'trackers': tracker_chain,
             'next_steps': [unicode(step) for step in task.next_steps()],
             'next_steps_owners': [unicode(step.owner)

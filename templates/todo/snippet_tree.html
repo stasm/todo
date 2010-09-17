@@ -1,9 +1,105 @@
 {# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
 {% load recurse urlvar %}
 
+<script type="application/javascript;version=1.8">
+
+$(document).ready(function() {
+  var tasks = $('.task');
+  var filter = new Filter(tasks);
+});
+
+function Filter(tasks) {
+  this.tasks = tasks;
+  this.criteria = {};
+  this.bindHandlers();
+}
+
+Filter.prototype = {
+
+  bindHandlers: function bindHandlers() {
+    var self = this;
+    $('input').each(function(i){
+      $(this).change(function(){
+        if (this.checked) {
+          // the checkbox has already been checked in this event
+          self.add(this);
+          self.exec();
+        } else {
+          self.remove(this);
+          self.exec();
+        }
+      })
+
+    }); 
+  },
+
+  add: function add(checkbox) {
+    var property = checkbox.getAttribute('data-property');
+    var value = checkbox.value;
+    if ( ! this.criteria[property])
+      this.criteria[property] = []
+    this.criteria[property].push(value);
+  },
+
+  remove: function remove(checkbox) {
+    var property = checkbox.getAttribute('data-property');
+    var value = checkbox.value;
+    if (this.criteria[property]) {
+      this.criteria[property].splice(this.criteria[property].indexOf(value), 1);
+      if (this.criteria[property].length == 0)
+        delete this.criteria[property];
+    }
+  },
+  
+  exec: function exec() {
+    var self = this;
+
+    // If no facets have any selected checkboxes,
+    // the tracker tree is displayed in its entirety.
+    // No tasks are filtered out.
+    if ($.isEmptyObject(self.criteria)) {
+      $('#tracker-tree').removeClass('filter-is-on');
+      self.tasks.removeClass('selected');
+      return;
+    }
+
+    // If there's at least one active facet, filter the tasks
+    // according to the filter rules in filter.criteria. 
+    $('#tracker-tree').addClass('filter-is-on');
+    self.tasks.each(function(i){
+      // `this` is a task div
+      for (prop in self.criteria) {
+        var passed = self.check_criterion(prop, this);
+        if (! passed) {
+          // Facets are ANDed together. If at least one criterion
+          // doesn't pass, the task should not be selected.
+          $(this).removeClass('selected');
+          return true; // continue to the next task
+        }
+      }
+      // If we're here, that means that all criteria checks have passed.
+      $(this).addClass('selected');
+    });    
+  },
+
+  check_criterion: function check_criterion(prop, task_div) {
+      var task_props = task_div.getAttribute('data-' + prop);
+      // Selections inside a facet are ORed together, hence Array.some.
+      var passed = this.criteria[prop].some(function(value, i, values){
+        return task_props.indexOf(value) != -1;
+      })
+      if (passed)
+        return true;
+      return false;
+  }
+
+}
+
+</script>
+
 <h2>Tracker tree</h2>
 
-<div class="column left wide">
+<div id="tracker-tree" class="column left wide">
 {% recurse_children %}
 
   {% for tracker, subtree in tree.trackers.iteritems %}
@@ -18,7 +114,9 @@
   <div class="tasks">
     {% for task, props in tree.tasks.iteritems %}
       <div class="task {{task.get_status_display}}"
-        title="{{props.values}}">
+        {% for prop, vals in props.iteritems %}
+          data-{{prop}}="{{vals|join:'|'}}"
+        {% endfor %}>
         {% if task.is_open %}
           <a class="summary" href="{% urlvar task_view task.pk %}">{{task}}</a>
           {% for step in task.next_steps %}
@@ -41,7 +139,7 @@
       <h4>{{prop}}</h4>
       <div class="values">
         {% for val in value_list %}
-        <input type='checkbox' value="{{val}}"/>
+        <input type='checkbox' value="{{val}}" data-property="{{prop}}"/>
           <div class="value">
             {{val}}
           </div>
