@@ -69,14 +69,18 @@ class Proto(models.Model):
             for prop in ('order', 'is_auto_activated',
                          'resolves_parent', 'repeat_if_failed'):
                 custom_fields.update({prop: getattr(nesting, prop)})
-            if nesting.clone_per_locale is True:
+            if child.clone_per_locale is True:
+                # `clone_per_locale` is always True for Tasks and always
+                # False for Steps. Its value for Trackers is stored in the DB.
+
                 # since we're deleting keys below, let's not do that
                 # on the original `custom_fields` which will be used by
                 # other nestings in the loop
                 per_locale_safe_fields = custom_fields.copy()
                 # to avoid conflicts, locale and locales are deleted
                 # from custom_fields and are not passed to children
-                # directly
+                # directly (we don't want to clone more then once in a single
+                # tracker tree).
                 locale = per_locale_safe_fields.pop('locale', None)
                 locales = per_locale_safe_fields.pop('locales', [locale])
                 for loc in locales:
@@ -128,6 +132,13 @@ class ProtoTracker(Proto):
     """
     proto = models.OneToOneField(Proto, parent_link=True,
                                  related_name='prototracker')
+    clone_per_locale = models.BooleanField(default=True, 
+                                           help_text="If False, the tracker "
+                                           "will never be cloned orthogonally "
+                                           "per locale if none of its parents "
+                                           "has been cloned yet. Leaving this "
+                                           "as True should be OK for 90% of "
+                                           "cases.")
     # tuple of prototype's properties that can be inherited by a spawned object
     inheritable = ('summary',)
     # `_type` is used by Proto.__init__ to set `type` in the DB correctly
@@ -145,6 +156,8 @@ class ProtoTask(Proto):
     """
     proto = models.OneToOneField(Proto, parent_link=True,
                                  related_name='prototask')
+    # this is always True so no need to store it in the DB
+    clone_per_locale = True
     inheritable = ('summary',)
     _type = 2
 
@@ -160,8 +173,11 @@ class ProtoTask(Proto):
             # custom summary should not propagate further down
             del custom_fields['summary']
         if 'parent' in custom_fields:
-            # `parent` might have been used before to create relationships
-            # between Trackers or Trackers/Tasks.
+            # Steps are related to Tasks via the `task` property which is set 
+            # above, and the top-level steps have the `parent` property set 
+            # to None. Here, we're removing `parent` to make sure the child
+            # steps are `parent`-less. (`parent` might have been used before
+            # to create relationships between Trackers or Trackers/Tasks). 
             del custom_fields['parent']
         self._spawn_children(**custom_fields)
         return todo
@@ -176,6 +192,8 @@ class ProtoStep(Proto):
                                  related_name='protostep')
     owner = models.ForeignKey(Actor, null=True, blank=True)
     is_review = models.BooleanField(default=False)
+    # this is always False so no need to store in the DB
+    clone_per_locale = False
     inheritable = ('summary', 'owner', 'is_review')
     _type = 3
 
@@ -195,8 +213,6 @@ class Nesting(models.Model):
     """
     parent = models.ForeignKey(Proto, related_name="nestings_where_parent")
     child = models.ForeignKey(Proto, related_name="nestings_where_child")
-    # set for child trackers
-    clone_per_locale = models.BooleanField(default=False)
     # set for child steps
     order = models.PositiveIntegerField(null=True, blank=True)
     is_auto_activated = models.BooleanField(default=False)

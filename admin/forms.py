@@ -42,7 +42,7 @@ class ProtoTrackerForm(forms.ModelForm):
 
     class Meta:
         model = Nesting
-        fields = ['parent', 'clone_per_locale']
+        fields = ['parent']
 
 class ProtoTaskForm(forms.ModelForm):
     parent = forms.ModelChoiceField(Proto.objects.filter(type=2),

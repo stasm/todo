@@ -38,14 +38,16 @@ class NestingInline(admin.TabularInline):
 class ProtoTrackerAdmin(admin.ModelAdmin):
     list_display_links = ('summary',)
     list_display = ('id',) + list_display_links
+    # parent inlines, child inlines
     inlines = [TrackerNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary',)}),
+            (None, {'fields': ('summary', 'clone_per_locale')}),
     )
 
 class ProtoTaskAdmin(admin.ModelAdmin):
     list_display_links = ('summary',)
     list_display = ('id',) + list_display_links
+    # parent inlines, child inlines
     inlines = [TrackerNestingInline, NestingInline]
     fieldsets = (
             (None, {'fields': ('summary',)}),
@@ -54,6 +56,7 @@ class ProtoTaskAdmin(admin.ModelAdmin):
 class ProtoStepAdmin(admin.ModelAdmin):
     list_display_links = ('summary',)
     list_display = ('id',) + list_display_links + ('owner', 'is_review')
+    # parent inlines, parent inlines, child inlines
     inlines = [TaskNestingInline, StepNestingInline, NestingInline]
     fieldsets = (
             (None, {'fields': ('summary', 'owner', 'is_review')}),
