@@ -1,0 +1,12 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Create new task</h2>
+
+  <form action="{% url todo.views.new_task %}" method="post">
+    {{ form.as_p }}
+    <input type="submit" value="Create" />
+  </form>
+  
+{% endblock %}

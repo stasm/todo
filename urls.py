@@ -18,6 +18,9 @@ demo_patterns = patterns('todo.views.demo',
 )
 
 urlpatterns = patterns('',
+    (r'new/$', 'todo.views.new'),
+    (r'new/task$', 'todo.views.new_task'),
+    (r'new/tracker$', 'todo.views.new_tracker'),
     # includes
     (r'^action/', include(action_patterns)),
     (r'^api/', include(api_patterns)),

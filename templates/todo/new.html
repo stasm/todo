@@ -1,0 +1,11 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Create new</h2>
+
+  <ul>
+    <li><a href="{% url todo.views.new_task %}">task</a></li>
+    <li><a href="{% url todo.views.new_tracker %}">tracker</a></li>
+  </ul>
+{% endblock %}
