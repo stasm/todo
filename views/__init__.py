@@ -3,46 +3,57 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 
-from todo.forms import AddTaskForm, AddTrackerForm
+from todo.models import Tracker
+from todo.forms import ChooseParentForm, AddTasksForm, AddTrackersForm
 
 def new(request):
     return render_to_response('todo/new.html')
 
+@permission_required('todo.create_tracker')
 @permission_required('todo.create_task')
-def new_task(request):
+def create(request, obj):
+    if obj == 'tasks':
+        form_class = AddTasksForm
+    else:
+        form_class = AddTrackersForm
+
     if request.method == 'POST':
-        form = AddTaskForm(request.POST)
-        if form.is_valid():
-            prototype = form.cleaned_data.pop('prototype')
+        form = form_class(request.POST)
+        parent_form = ChooseParentForm(request.POST)
+        if form.is_valid() and parent_form.is_valid():
             fields = form.cleaned_data
-            if fields['parent'] is not None:
+            parent_clean = parent_form.cleaned_data
+            parent = parent_clean['tracker']
+            if (parent is None and
+                parent_clean['parent_summary'] and
+                parent_clean['parent_project']):
+                # user wants to create a new tracker which will be the parent
+                parent = Tracker(summary=parent_clean['parent_summary'],
+                                  project=parent_clean['parent_project'],
+                                  locale=parent_clean['parent_locale'])
+                parent.save()
+            locales = fields.pop('locales')
+            if parent is not None:
                 # For consistency's sake, if a parent is specified, try to
                 # use its values for `project` and `locale` to create the
                 # task, ignoring values provided by the user in the form.
-                for field in ('project', 'locale'):
-                    parent_field_value = getattr(fields['parent'], field)
-                    if parent_field_value is not None:
-                        fields[field] = parent_field_value
-            task = prototype.spawn(**fields)
-            task.activate()
-            return HttpResponseRedirect(reverse('todo.views.demo.task',
-                                                args=[task.pk]))
-    else:
-        form = AddTaskForm()
-    return render_to_response('todo/new_task.html',
-                              {'form': form,})
-
-@permission_required('todo.create_tracker')
-def new_tracker(request):
-    if request.method == 'POST':
-        form = AddTrackerForm(request.POST)
-        if form.is_valid():
+                fields['project'] = parent.project
+                if parent.locale:
+                    locales = [parent.locale]
+            fields['parent'] = parent
             prototype = form.cleaned_data.pop('prototype')
-            tracker = prototype.spawn(**form.cleaned_data)
-            redirect_url = reverse('todo.views.demo.tracker',
-                                   args=[tracker.pk])
-            return HttpResponseRedirect(redirect_url)
+            if prototype.clone_per_locale is True:
+                for loc in locales:
+                    todo = prototype.spawn(locale=loc, **fields)
+                    todo.activate()
+            else:
+                todo = prototype.spawn(locales=locales, **fields) 
+                todo.activate()
+            return HttpResponseRedirect(reverse('todo.views.demo.%s' % obj[:-1],
+                                                args=[todo.pk]))
     else:
-        form = AddTrackerForm()
-    return render_to_response('todo/new_tracker.html',
-                              {'form': form,})
+        form = form_class()
+        parent_form = ChooseParentForm()
+    return render_to_response('todo/new_%s.html' % obj[:-1],
+                              {'form': form,
+                               'parent_form': parent_form,})

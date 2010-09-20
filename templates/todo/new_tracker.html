@@ -2,10 +2,13 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Create new tracker</h2>
+  <h2>Create new trackers</h2>
 
-  <form action="{% url todo.views.new_tracker %}" method="post">
+  <form action="{% url todo-create-trackers %}" method="post">
     {{ form.as_p }}
+    <p>Choosing a parent tracker is optional, but highly recommended if you are creating multiple trackers.</p>
+    <p>Careful: if you choose an existing parent tracker or create a new one, the project and the locale it belongs to will override your choices made above. If you want to create multiple trackers for many locales, make sure the parent tracker has an empty Locale field. (This will be fixed later.)</p>
+    {{ parent_form.as_p }}
     <input type="submit" value="Create" />
   </form>
   

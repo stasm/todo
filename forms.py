@@ -11,33 +11,38 @@ class TrackerChoiceField(forms.ModelChoiceField):
         return "%d: %s (%s + %s)" % (tracker.pk, tracker.summary,
                                      tracker.project, tracker.locale)
 
-class AddTaskForm(forms.Form):
+class ChooseParentForm(forms.Form):
+    "Form used to choose an existing parent tracker or create a new one."
+
+    _q = Tracker.objects.select_related('project', 'locale').all()
+    tracker = TrackerChoiceField(label='Existing parent tracker',
+                                queryset=_q, required=False,
+                                help_text="OR create a new one:")
+    parent_summary = forms.CharField(label='Summary', max_length=200,
+                                     required=False)
+    parent_project = forms.ModelChoiceField(queryset=Project.objects.all(),
+                                     required=False)
+    parent_locale = forms.ModelChoiceField(queryset=Locale.objects.all(),
+                                    required=False)
+
+    def clean(self):
+        clean = self.cleaned_data
+        if clean['parent_summary'] and not clean['parent_project']:
+            raise forms.ValidationError("Specify at least the summary and a "
+                                        "project to create a new tracker.")
+        return clean
+
+class AddTasksForm(forms.Form):
     prototype = forms.ModelChoiceField(queryset=ProtoTask.objects.all())
     summary = forms.CharField(label='Summary', max_length=200, required=False,
                               help_text="Leave empty to use the prototype's "
-                                        "summary.")
+                              "summary.")
     project = forms.ModelChoiceField(queryset=Project.objects.all())
-    locale = forms.ModelChoiceField(queryset=Locale.objects.all())
-    parent = TrackerChoiceField(label='Parent tracker',
-                                queryset=Tracker.objects.all(),
-                                help_text="For consistency's sake, if the "
-                                          "parent tracker is specified, its "
-                                          "project and locale (if present) "
-                                          "will override the choices made "
-                                          "above.")
+    locales = LocaleMultipleChoiceField(queryset=Locale.objects.all())
     bugid = forms.IntegerField(label='Bug id', required=False)
 
-class AddTrackerForm(forms.Form):
+class AddTrackersForm(AddTasksForm):
     prototype = forms.ModelChoiceField(queryset=ProtoTracker.objects.all())
-    summary = forms.CharField(label='Summary', max_length=200, required=False,
-                              help_text="Leave empty to use the prototype's "
-                                        "summary.")
-    project = forms.ModelChoiceField(queryset=Project.objects.all())
-    locales = LocaleMultipleChoiceField(label='Locales',
-                                        queryset=Locale.objects.all())
-    # parent tracker
-    bugid = forms.IntegerField(label='Bug id', required=False)
-
 
 class ResolveTaskForm(forms.Form):
     redirect_url = forms.CharField()
