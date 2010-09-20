@@ -32,22 +32,20 @@ def create(request, obj):
                                   project=parent_clean['parent_project'],
                                   locale=parent_clean['parent_locale'])
                 parent.save()
-            locales = fields.pop('locales')
             if parent is not None:
                 # For consistency's sake, if a parent is specified, try to
                 # use its values for `project` and `locale` to create the
                 # task, ignoring values provided by the user in the form.
                 fields['project'] = parent.project
                 if parent.locale:
-                    locales = [parent.locale]
+                    fields['locales'] = [parent.locale]
             fields['parent'] = parent
             prototype = form.cleaned_data.pop('prototype')
             if prototype.clone_per_locale is True:
-                for loc in locales:
-                    todo = prototype.spawn(locale=loc, **fields)
+                for todo in prototype.spawn_per_locale(**fields):
                     todo.activate()
             else:
-                todo = prototype.spawn(locales=locales, **fields) 
+                todo = prototype.spawn(**fields) 
                 todo.activate()
             return HttpResponseRedirect(reverse('todo.views.demo.%s' % obj[:-1],
                                                 args=[todo.pk]))

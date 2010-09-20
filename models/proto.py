@@ -69,24 +69,36 @@ class Proto(models.Model):
             for prop in ('order', 'is_auto_activated',
                          'resolves_parent', 'repeat_if_failed'):
                 custom_fields.update({prop: getattr(nesting, prop)})
+            # since `spawn` and `spawn_per_locale` might delete keys, 
+            # let's not do that on the original `custom_fields` which 
+            # will be used by other nestings in the loop
+            fields = custom_fields.copy()
             if child.clone_per_locale is True:
-                # `clone_per_locale` is always True for Tasks and always
-                # False for Steps. Its value for Trackers is stored in the DB.
-
-                # since we're deleting keys below, let's not do that
-                # on the original `custom_fields` which will be used by
-                # other nestings in the loop
-                per_locale_safe_fields = custom_fields.copy()
-                # to avoid conflicts, locale and locales are deleted
-                # from custom_fields and are not passed to children
-                # directly (we don't want to clone more then once in a single
-                # tracker tree).
-                locale = per_locale_safe_fields.pop('locale', None)
-                locales = per_locale_safe_fields.pop('locales', [locale])
-                for loc in locales:
-                    child.spawn(locale=loc, **per_locale_safe_fields)
+                # `spawn_per_locale` is a generator
+                list(child.spawn_per_locale(**fields))
             else:
-                child.spawn(**custom_fields)
+                child.spawn(**fields)
+
+    def spawn_per_locale(self, **fields):
+        """Create multiple todo objects from a single prototype per locale.
+
+        If `locales` iterable is passed in `fields`, the prototype will be used
+        to create multiple todo objects, one per locale given.
+
+        """
+        # to avoid conflicts, locale and locales are deleted
+        # from custom_fields and are not passed to children
+        # directly (we don't want to clone more then once in a single
+        # tracker tree).
+        locale = fields.pop('locale', None)
+        locales = fields.pop('locales', None)
+        if not locales:
+            # we could have done locales = fields.pop('locales', [locale])
+            # above, but this wouldn't have worked when fields['locales'] is
+            # an empty list.
+            locales = [locale]
+        for loc in locales:
+            yield self.spawn(locale=loc, **fields)
 
     def spawn(self, **custom_fields):
         """Create an instance of the model related to the proto, with children.
@@ -117,10 +129,10 @@ class Proto(models.Model):
             raise TypeError("Pass a project to spawn trackers and tasks.")
         todo = self._spawn_instance(**custom_fields)
         todo.save()
-        custom_fields.update(parent=todo)
         if 'summary' in custom_fields:
             # custom summary should not propagate further down
             del custom_fields['summary']
+        custom_fields.update(parent=todo)
         self._spawn_children(**custom_fields)
         return todo
 
@@ -168,7 +180,6 @@ class ProtoTask(Proto):
     def spawn(self, **custom_fields):
         todo = self._spawn_instance(**custom_fields)
         todo.save()
-        custom_fields.update(task=todo)
         if 'summary' in custom_fields:
             # custom summary should not propagate further down
             del custom_fields['summary']
@@ -179,6 +190,7 @@ class ProtoTask(Proto):
             # steps are `parent`-less. (`parent` might have been used before
             # to create relationships between Trackers or Trackers/Tasks). 
             del custom_fields['parent']
+        custom_fields.update(task=todo)
         self._spawn_children(**custom_fields)
         return todo
 

@@ -38,7 +38,8 @@ class AddTasksForm(forms.Form):
                               help_text="Leave empty to use the prototype's "
                               "summary.")
     project = forms.ModelChoiceField(queryset=Project.objects.all())
-    locales = LocaleMultipleChoiceField(queryset=Locale.objects.all())
+    locales = LocaleMultipleChoiceField(queryset=Locale.objects.all(),
+                                        required=False)
     bugid = forms.IntegerField(label='Bug id', required=False)
 
 class AddTrackersForm(AddTasksForm):
