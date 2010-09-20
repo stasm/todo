@@ -4,7 +4,9 @@ from django.utils.safestring import mark_safe
 from todo.views import snippets
 
 def task(request, task_id):
-    task_div = snippets.task(request, task_id,
+    from todo.models import Task
+    task = get_object_or_404(Task, pk=task_id)
+    task_div = snippets.task(request, task,
                              redirect_view='todo.views.demo.task')
     task_div = mark_safe(task_div)
     return render_to_response('todo/demo_task.html',

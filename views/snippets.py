@@ -5,21 +5,20 @@ from django.core.urlresolvers import reverse
 
 from todo.models import Tracker, Task
 
-def task(request, task_id, redirect_view='todo.views.demo.task'):
+def task(request, task, redirect_view='todo.views.demo.task'):
     """A single task view snippet.
 
     This snippet is intended to be included on a page showing a single task.
     The template includes all the necessary JS code, too.
 
     Arguments:
-    task_id -- an integer specifying task's ID
+    task -- an instance of todo.models.Task
     redirect_view -- a string with the name of the view which will be used
                      to resolve the URL that the forms will redirect to.
 
     See todo.views.demo.task for an example of how to use this snippet.
 
     """
-    task = get_object_or_404(Task, pk=task_id)
     redirect_url = reverse(redirect_view, args=[task.pk])
     return render_to_string('todo/snippet_task.html',
                             {'task': task,
@@ -37,6 +36,7 @@ def combined(request, project, locale, task_view='todo.views.demo.task'):
     Arguments:
     project -- an instance of todo.models.Project
     locale -- an instance of life.models.Locale
+    task_view -- a string with the name of the `single task` view
 
     See todo.views.demo.combined for an example of how to use this snippet.
 
@@ -55,6 +55,8 @@ def tree(request, tracker=None, project=None, locale=None,
                are ignored.
     project -- an instance of todo.models.Project. ANDed with locale.
     locale -- an instance of life.models.Locale. ANDed with project.
+    task_view -- a string with the name of the `single task` view
+    tracker_view -- a string with the name of the `single tracker` view
 
     See todo.views.demo.tracker and todo.views.demo.trackers for examples of 
     how to use this snippet.
