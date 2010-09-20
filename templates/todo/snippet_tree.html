@@ -104,7 +104,11 @@ Filter.prototype = {
 
   {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
-      <div class="summary">{{tracker}} <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a></div>
+      <div class="summary">
+        {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
+        {{tracker}}
+        <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a>
+      </div>
       <div class="children">
          {% recurse subtree as tree %}
       </div>

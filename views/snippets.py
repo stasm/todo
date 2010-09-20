@@ -95,6 +95,7 @@ def tree(request, tracker=None, project=None, locale=None,
         'prototype': [],
         'bug': [],
         'trackers': [],
+        'tracker_prototypes': [],
         'next_steps_owners': [],
         'next_steps': [],
     }
@@ -143,8 +144,7 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
     for tracker in trackers:
         subtree, facets = _make_tree(tracker.children.all(),
                                      tracker.tasks.all(),
-                                     tracker_chain +
-                                     [tracker],
+                                     tracker_chain + [tracker],
                                      facets)
         tree['trackers'].update({tracker: subtree}) 
     for task in tasks:
@@ -152,9 +152,11 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
             'project': [unicode(task.project)],
             'locale': [unicode(task.locale)],
             'status': [task.get_status_display()],
-            'prototype': [task.prototype],
+            'prototype': [task.prototype.summary],
             'bug': [task.bug],
-            'trackers': tracker_chain,
+            'trackers': [t.summary for t in tracker_chain],
+            'tracker_prototypes': [t.prototype.summary for t in 
+                                   tracker_chain if t.prototype],
             'next_steps': [unicode(step) for step in task.next_steps()],
             'next_steps_owners': [unicode(step.owner)
                                   for step in task.next_steps()],

@@ -23,8 +23,6 @@ class Tracker(models.Model, Todo):
         app_label = 'todo'
 
     def __unicode__(self):
-        if self.locale:
-            return "[%s] %s" % (self.locale.code, self.summary)
         return self.summary
     
     @property

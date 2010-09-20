@@ -267,6 +267,10 @@
  * ===========
  */
 
+.todo #tracker-tree.filter-is-on div.summary {
+    color: #999;
+}
+
 .todo #tracker-tree.filter-is-on .task {
     height: 0;
     overflow: hidden;
