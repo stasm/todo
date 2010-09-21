@@ -36,7 +36,7 @@ def _status_response(status, message):
 
 @require_POST
 def update_snapshot(request, task_id):
-    if not request.user.has_perm('todo.change_todo'):
+    if not request.user.has_perm('todo.change_task'):
         return _status_response('error', "You don't have permissions to "
                                 "update the snapshot timestamp.")
     new_snapshot_ts = datetime.strptime(request.POST.get('snapshot_ts'),
@@ -48,3 +48,18 @@ def update_snapshot(request, task_id):
     task.update_snapshot(new_snapshot_ts)
     return _status_response('ok', 'Timestamp updated (%s)' %
                             task.snapshot_ts_iso())
+
+@require_POST
+def update_bugid(request, task_id):
+    if not request.user.has_perm('todo.change_task'):
+        return _status_response('error', "You don't have permissions to "
+                                "update the bug ID of this task.")
+    new_bugid = request.POST.get('bugid', None)
+    try:
+        new_bugid = int(new_bugid)
+    except ValueError, TypeError:
+        return _status_response('error', 'Incorrect value of the bug ID (%s)' %
+                                request.POST.get('bugid'))
+    task = get_object_or_404(Task, pk=task_id)
+    task.update_bugid(new_bugid)
+    return _status_response('ok', 'Bug ID updated (%s)' % task.bugid)

@@ -5,9 +5,10 @@ action_patterns = patterns('todo.views.actions',
     (r'^resolve/step/(?P<step_id>\d+)$', 'resolve_step'),
 )
 
+# the API views return JSON responses
 api_patterns = patterns('todo.views.api',
-    # move this to actions
     (r'^task/(?P<task_id>\d+)/update-snapshot$', 'update_snapshot'),
+    (r'^task/(?P<task_id>\d+)/update-bugid$', 'update_bugid'),
 )
 
 demo_patterns = patterns('todo.views.demo',

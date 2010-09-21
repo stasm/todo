@@ -80,3 +80,7 @@ class Task(Todo):
     def update_snapshot(self, new_snapshot_ts):
         self.snapshot_ts = new_snapshot_ts
         self.save()
+
+    def update_bugid(self, new_bugid):
+        self.bugid = new_bugid
+        self.save()

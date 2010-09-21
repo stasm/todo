@@ -78,11 +78,18 @@
             if (!bug)
               BzAPI.changeStatusToNotFound();
             else {
-              // FIXME store the bugid in the DB
-              BzAPI.bugid = bug.id;
+              BzAPI.updateBugID(bug.id)
               BzAPI.getCommentsAndHistory();
             }
         })
+      },
+      
+      updateBugID : function updateBugID(bugid) {
+        BzAPI.bugid = bugid;
+        {% if perms.todo.change_task %}
+        $.post("{% url todo.views.api.update_bugid task.id %}",
+               { 'bugid': bugid }, function(data){}, 'json');
+        {% endif %}
       },
       
       getCommentsAndHistory : function getCommentsAndHistory() {
@@ -206,7 +213,7 @@
       updateSnapshot : function updateSnapshot(time, i) {
         var prev_and_self = BzAPI.markAsWorkingUpTo(i);
         $.post("{% url todo.views.api.update_snapshot task.id %}",
-               { snapshot_ts: time },
+               { 'snapshot_ts': time },
                function(data){
                  if (data.status == 'ok') {
                    BzAPI.markAsObsoleteUpTo(i, prev_and_self);
