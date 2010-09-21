@@ -51,18 +51,41 @@
     BzAPI = {
       
       apibase : 'https://api-dev.bugzilla.mozilla.org/latest/',
-      bugid : '{{ task.bug }}',
+      {% if task.bugid %}
+      bugid : '{{ task.bugid }}',
+      {% endif %}
+      bugalias : '{{ task.alias }}',
       snapshot_ts : '{{ task.snapshot_ts_iso }}',
       last_i : 0,
       showing_all : false,
       
       init : function init() {
         $('.show_all').hide().toggle(BzAPI.showAllActivity, BzAPI.hideObsolete)
-        BzAPI.getCommentsAndHistory();
+        BzAPI.getBug();
+      },
+    
+      getBug : function getBug() {
+        $('#checking').fadeIn('slow');
+        if (BzAPI.bugid) {
+          BzAPI.getCommentsAndHistory();
+          return;
+        }
+        // no bug id was assigned to the task. try to search for a bug
+        // matching the value of the task's alias.
+        var url = BzAPI.apibase + 'bug?field0-0-0=alias&type0-0-0=equals&value0-0-0=' + BzAPI.bugalias;
+        $.getJSON(url, function(data) {
+            var bug = data['bugs'].shift();
+            if (!bug)
+              BzAPI.changeStatusToNotFound();
+            else {
+              // FIXME store the bugid in the DB
+              BzAPI.bugid = bug.id;
+              BzAPI.getCommentsAndHistory();
+            }
+        })
       },
       
       getCommentsAndHistory : function getCommentsAndHistory() {
-        $('#checking').fadeIn('slow');
         var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?include_fields=_default,comments,history';
         $.getJSON(url, function(data) {
             //BzAPI.attachments = data['attachments'];
@@ -245,6 +268,12 @@
         $('.show_all').text('show obsolete');
       },
       
+      changeStatusToNotFound : function changeStatusToNotFound() {
+        $('.status:visible').fadeOut('slow', function() {
+          $('.status#notfound').fadeIn('slow');
+        });
+      },
+      
       changeStatusToOutofdate : function changeStatusToOutofdate() {
         $('.status:visible').fadeOut('slow', function() {
           $('.status#outofdate').fadeIn('slow');
@@ -334,7 +363,10 @@
 {% if task.bug %}
 <div id="activity" class="column right narrow">
   <div class="status" id="checking">
-    <div>(checking status)</div>
+    <div>(checking bug status)</div>
+  </div>
+  <div class="status" id="notfound">
+    <div><h3>No relevant bug found.</h3></div>
   </div>
   <div class="status" id="uptodate">
     <h3>Status of this task is up-to-date.</h3>
