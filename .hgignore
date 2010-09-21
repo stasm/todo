@@ -2,3 +2,6 @@ syntax: glob
 .DS_Store
 *.pyc
 *.json
+*.swp
+*.swo
+*.un~
