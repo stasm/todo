@@ -29,7 +29,7 @@ class Task(Todo):
         app_label = 'todo'
 
     def __unicode__(self):
-        return self.summary if not self.locale else "[%s] %s" % (self.locale.code, self.summary)
+        return self.summary
 
     @property
     def code(self):
@@ -66,8 +66,16 @@ class Task(Todo):
         self.resolution = resolution
         self.save()
 
-    def bug(self):
+    def get_bug(self):
         return self.bugid or self.alias
+
+    def set_bug(self, val):
+        if isinstance(val, int):
+            self.bugid = val
+        else:
+            self.alias = val
+    
+    bug = property(get_bug, set_bug)
 
     def is_uptodate(self, bug_last_modified_time):
         if self.snapshot_ts is None:

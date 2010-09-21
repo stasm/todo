@@ -228,7 +228,7 @@
 
 
 /*
- * Tracker
+ * Tracker and task
  * ===========
  */
 
@@ -238,12 +238,42 @@
     font-style: italic;
 }
 
-.todo .tracker div.summary a.permalink {
+.todo .tracker div.summary .permalink,
+.todo .tracker div.summary .quickedit,
+.todo .tracker span.summary .quickedit {
+    visibility: hidden;
+}
+
+.todo .tracker div.summary:hover .permalink,
+.todo .tracker div.summary:hover .quickedit,
+.todo .tracker span.summary:hover .quickedit {
+    visibility: visible;
+}
+
+.todo .summary form {
+    display: inline;
+}
+
+.todo .editable {
     display: none;
 }
 
-.todo .tracker div.summary:hover a.permalink {
-    display: inline;
+.todo .quickedit {
+    cursor: pointer;
+}
+
+.todo .cancel {
+    font-family: Helvetica, Arial, sans-serif;
+    font-size: x-small;
+    padding: 2px 3px;
+    color: #666;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.todo span.cancel:hover {
+    background-color: #eee;
+
 }
 
 .todo .tracker .children {

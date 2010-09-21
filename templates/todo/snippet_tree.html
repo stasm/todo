@@ -4,8 +4,11 @@
 <script type="application/javascript;version=1.8">
 
 $(document).ready(function() {
-  var tasks = $('.task');
-  var filter = new Filter(tasks);
+  var filter = new Filter($('.task'));
+    var quickeditors = []
+    $('.summary').each(function(i, todo) {
+      quickeditors.push(new QuickEditor(todo));
+    });
 });
 
 function Filter(tasks) {
@@ -95,6 +98,75 @@ Filter.prototype = {
 
 }
 
+function QuickEditor(todo) {
+  // todo is the DOM element with class="summary", representing a todo object
+  // (a tracker or a task)
+  this.todo = todo;
+  this.form = $('form', this.todo).first();
+  this.url = this.form.attr('action');
+  this.bindHandlers();
+}
+
+QuickEditor.prototype = {
+
+  bindHandlers: function bindHandlers() {
+    var self = this;
+    $('.quickedit', self.todo).click(function() {
+      self.showEditable();
+    });
+    $('.cancel', self.todo).click(function() {
+      self.hideEditable();
+    });
+    self.form.submit(function(e) {
+      e.preventDefault();
+      self.submit();
+    });
+  },
+
+  showEditable: function showEditable() {
+    var self = this;
+    self.form.children('input').each(function() {
+      $(this).attr('value', $(this).attr('data-default'));
+    });
+    $('.noneditable', self.todo).fadeOut('slow', function() {
+      $('.editable', self.todo).fadeIn('slow');
+    });
+  },
+
+  hideEditable: function hideEditable() {
+    var self = this;
+    $('.editable', self.todo).fadeOut('slow', function() {
+      $('.noneditable', self.todo).fadeIn('slow');
+    });
+  },
+
+  submit: function submit() {
+    var self = this;
+    var controls = this.form.serializeArray();
+    // `controls` is an array holding the data from the form's controls
+    // it has the following structure:
+    // [{name: a, value: 1}, {name: b, value: 2}]
+    // convert it to an object like this one: {a:1, b:2}
+    // (this won't work for checkboxes, but that's fine for thisuse case)
+    var data = {};
+    controls.forEach(function(control, i) {
+      console.log(control.name, control.value)
+      data[control.name] = control.value;
+    });
+    $.post(this.url,
+           data,
+           function(response){
+             console.log(response.status, response.message)
+             if (response.status == 'ok') {
+               // change the diaplayed values
+               self.hideEditable();
+             } else {
+               alert(response.message);
+             }
+           }, 'json');
+  }
+}
+
 </script>
 
 <h2>Tracker tree</h2>
@@ -104,9 +176,21 @@ Filter.prototype = {
 
   {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
-      <div class="summary" title="{{tracker.bug}}">
+      <div class="summary">
         {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
-        {{tracker}}
+        <span class="noneditable">
+          {{tracker}}
+          {% if perms.todo.change_tracker %}
+            <small class="quickedit">✎</small>
+          {% endif %}
+        </span>
+        <span class="editable">
+          <form action="{% url todo-api-update-tracker tracker.id %}" method="post">
+            <input type="text" name="summary" data-default="{{tracker}}"/>
+            <input type="text" name="bug" data-default="{{tracker.bug|default_if_none:''}}"/>
+            <input type="submit" value="OK"/> <span class="cancel">Cancel</span>
+          </form>
+        </span>
         <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a>
       </div>
       <div class="children">
@@ -122,7 +206,22 @@ Filter.prototype = {
           data-{{prop}}="{{vals|join:'|'}}"
         {% endfor %}>
         {% if task.is_open %}
-          <a class="summary" href="{% urlvar task_view task.pk %}">{{task}}</a>
+          <span class="summary">
+            {% if task.locale %}[{{task.locale.code}}]{% endif %}
+            <span class="noneditable">
+              <a href="{% urlvar task_view task.pk %}">{{task}}</a>
+              {% if perms.todo.change_task %}
+                <small class="quickedit">✎</small>
+              {% endif %}
+            </span>
+            <span class="editable">
+              <form action="{% url todo-api-update-task task.id %}" method="post">
+                <input type="text" name="summary" data-default="{{task}}"/>
+                <input type="text" name="bug" data-default="{{task.bug|default_if_none:''}}"/>
+                <input type="submit" value="OK"/> <span class="cancel">Cancel</span>
+              </form>
+            </span>
+          </span>
           {% for step in task.next_steps %}
             <small>{{step.owner}}: {{step.summary}}</small>
           {% endfor %}

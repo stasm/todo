@@ -9,6 +9,10 @@ action_patterns = patterns('todo.views.actions',
 api_patterns = patterns('todo.views.api',
     (r'^task/(?P<task_id>\d+)/update-snapshot$', 'update_snapshot'),
     (r'^task/(?P<task_id>\d+)/update-bugid$', 'update_bugid'),
+    (r'^task/(?P<obj_id>\d+)/update$', 'update', {'obj': 'task'},
+     'todo-api-update-task'),
+    (r'^tracker/(?P<obj_id>\d+)/update$', 'update', {'obj': 'tracker'},
+     'todo-api-update-tracker'),
 )
 
 demo_patterns = patterns('todo.views.demo',

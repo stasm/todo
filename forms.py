@@ -54,6 +54,23 @@ class AddTasksForm(forms.Form):
 class AddTrackersForm(AddTasksForm):
     prototype = forms.ModelChoiceField(queryset=ProtoTracker.objects.all())
 
+class UpdateTodoForm(forms.Form):
+    summary = forms.CharField(max_length=200, required=True)
+    bug = forms.CharField(max_length=200, required=False)
+
+    def clean_bug(self):
+        # the input value is a string, because it may be an ID or an alias.
+        # do the intelogent thing here, and convert the ID to an integer.
+        bug = self.cleaned_data['bug']
+        if not bug:
+            return None
+        try:
+            bug = int(bug)
+        except ValueError:
+            # it's a string!
+            pass
+        return bug
+
 class ResolveTaskForm(forms.Form):
     redirect_url = forms.CharField()
 

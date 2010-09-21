@@ -2,7 +2,8 @@ from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 
-from todo.models import Task
+from todo.models import Task, Tracker
+from todo.forms import UpdateTodoForm
 
 import urllib2
 from datetime import datetime
@@ -63,3 +64,21 @@ def update_bugid(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     task.update_bugid(new_bugid)
     return _status_response('ok', 'Bug ID updated (%s)' % task.bugid)
+
+@require_POST
+def update(request, obj, obj_id):
+    if not request.user.has_perm('todo.change_%s' % obj):
+        return _status_response('error', "You don't have permissions to "
+                                "update this %s." % obj)
+    form = UpdateTodoForm(request.POST)
+    if not form.is_valid():
+        message = 'There were problems with the following fields:\n'
+        for field, errorlist in form.errors.iteritems():
+            message += '%s: %s' % (field, errorlist.as_text())
+        return _status_response('error', message)
+    model = Task if obj == 'task' else Tracker
+    todo = get_object_or_404(model, pk=obj_id)
+    for prop, new_value in form.cleaned_data.iteritems():
+        setattr(todo, prop, new_value)
+    todo.save()
+    return _status_response('ok', '%s updated.' % obj)

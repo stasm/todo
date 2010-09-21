@@ -61,5 +61,13 @@ class Tracker(Todo):
         self.resolution = resolution
         self.save()
 
-    def bug(self):
+    def get_bug(self):
         return self.bugid or self.alias
+
+    def set_bug(self, val):
+        if isinstance(val, int):
+            self.bugid = val
+        else:
+            self.alias = val
+    
+    bug = property(get_bug, set_bug)

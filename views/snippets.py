@@ -107,7 +107,10 @@ def tree(request, tracker=None, project=None, locale=None,
                             {'tree': tree,
                              'facets': facets,
                              'task_view': task_view,
-                             'tracker_view': tracker_view})
+                             'tracker_view': tracker_view},
+                            # RequestContext is needed for checking 
+                            # the permissions of the user.
+                            context_instance=RequestContext(request))
 
 def _update_facets(facets, task_properties):
     "Update facet data with properties of a task."
