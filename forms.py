@@ -24,11 +24,15 @@ class ChooseParentForm(forms.Form):
                                      required=False)
     parent_locale = forms.ModelChoiceField(queryset=Locale.objects.all(),
                                     required=False)
+    parent_suffix = forms.SlugField(label='Alias suffix', max_length=8,
+                                    required=False, help_text="Will be "
+                                    "appended to parent's or project's alias. "
+                                    "Good example: '-search'")
 
     def clean(self):
         clean = self.cleaned_data
         if clean['parent_summary'] and not clean['parent_project']:
-            raise forms.ValidationError("Specify at least the summary and a "
+            raise forms.ValidationError("Specify at least a summary and a "
                                         "project to create a new tracker.")
         return clean
 
@@ -37,6 +41,11 @@ class AddTasksForm(forms.Form):
     summary = forms.CharField(label='Summary', max_length=200, required=False,
                               help_text="Leave empty to use the prototype's "
                               "summary.")
+    suffix = forms.SlugField(label='Alias suffix', max_length=8,
+                             required=False, help_text="Will be appended to "
+                             "parent's or project's alias. Good example: "
+                             "'-search'. Leave empty to use the prototype's "
+                             "suffix.")
     project = forms.ModelChoiceField(queryset=Project.objects.all())
     locales = LocaleMultipleChoiceField(queryset=Locale.objects.all(),
                                         required=False)

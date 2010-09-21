@@ -115,7 +115,7 @@
           comment.html('<h4>' + commenter + ' on ' + when + '</h4>' + text)
                  .hide()
                  .appendTo(column);
-        {% if perms.todo.change_todo %}
+        {% if perms.todo.change_task %}
           $('<span class="meta"></span>').html('<input type="checkbox" '+checked_disabled+'/><img src="{% url static path="todo/throbber.gif" %}"/>')
                                          .prependTo(comment)
                                          .click(function(){
@@ -272,7 +272,7 @@
     
 </script>
 
-<div id="task" class="task {{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
+<div id="task" class="{{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
 <h3>
   {% ifequal task.get_status_display "resolved" %}
     <input type="checkbox" checked="checked" disabled="disabled"/>

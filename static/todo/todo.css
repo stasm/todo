@@ -43,6 +43,12 @@
     float: right;
 }
 
+.todo #task {
+    border: 1px solid #ccc;
+    margin: 10px 0 2em;
+    padding: 10px;
+}
+
 .todo h3 {
     font-size: 1.3em;
     font-weight: normal;
@@ -192,20 +198,20 @@
     color: #999;
 }
 
-.todo .task input,
+.todo #task input,
 .todo .step input {
     float: left;
     margin-right: 10px;
     margin-left: 0;
 }
-.todo .task input {
+.todo #task input {
     margin-top: 5px;
 }
-.todo .task.active .step.active,
-.todo .task.active .step.next {
+.todo #task.active .step.active,
+.todo #task.active .step.next {
     color: #000;
 }
-.todo .task.active .step.next {
+.todo #task.active .step.next {
     background-color: #c1f6ac;
 }
 .todo .step.resolved {

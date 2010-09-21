@@ -41,7 +41,7 @@ class ProtoTrackerAdmin(admin.ModelAdmin):
     # parent inlines, child inlines
     inlines = [TrackerNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary', 'clone_per_locale')}),
+            (None, {'fields': ('summary', 'suffix', 'clone_per_locale')}),
     )
 
 class ProtoTaskAdmin(admin.ModelAdmin):
@@ -50,7 +50,7 @@ class ProtoTaskAdmin(admin.ModelAdmin):
     # parent inlines, child inlines
     inlines = [TrackerNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary',)}),
+            (None, {'fields': ('summary', 'suffix')}),
     )
 
 class ProtoStepAdmin(admin.ModelAdmin):

@@ -9,13 +9,15 @@ from .proto import ProtoTracker
 from todo.managers import StatusManager
 from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
 
-class Tracker(models.Model, Todo):
+class Tracker(Todo):
     prototype = models.ForeignKey(ProtoTracker, related_name='trackers', null=True, blank=True)
     parent = models.ForeignKey('self', related_name='children', null=True, blank=True)
     summary = models.CharField(max_length=200)
     locale = models.ForeignKey(Locale, related_name='trackers', null=True, blank=True)
     project = models.ForeignKey(Project, related_name='trackers')
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
+    bugid = models.PositiveIntegerField(null=True, blank=True)
+    alias = models.SlugField(max_length=200, null=True, blank=True)
 
     objects = StatusManager()
 
@@ -58,3 +60,6 @@ class Tracker(models.Model, Todo):
         self.status = 5
         self.resolution = resolution
         self.save()
+
+    def bug(self):
+        return self.bugid or self.alias

@@ -17,7 +17,7 @@ class Proto(models.Model):
     Proto.get_related_model to go from Proto to a specific proto model.
     
     """
-    summary = models.CharField(max_length=200, blank=True)
+    summary = models.CharField(max_length=200)
     type = models.PositiveIntegerField(choices=PROTO_TYPE_CHOICES)
 
     class Meta:
@@ -50,16 +50,20 @@ class Proto(models.Model):
         related_model = self.get_related_model()
         # fields that are accepted by the spawned object
         accepted_fields = [f.name for f in related_model._meta.fields]
-        # fields (with values) which will be inherited by the spawned object
-        fields = dict([(f, getattr(self, f)) for f in self.inheritable])
+        if self.type in (1, 2):
+            # for trackers and tasks
+            accepted_fields.append('suffix')
         # remove empty/unknown values from custom_fields
         # and overwrite other attributes
         custom_fields = [(k, v) for k, v in custom_fields.items()
                                 if v and k in accepted_fields]
+        # fields (with values) which will be inherited by the spawned object
+        fields = dict([(f, getattr(self, f)) for f in self.inheritable])
+        # custom fields override fields from the proto
         fields.update(custom_fields)
         return related_model(prototype=self, **fields)
 
-    def _spawn_children(self, **custom_fields):
+    def _spawn_children(self, cloning_allowed, **custom_fields):
         "Create children of the todo object."
 
         for nesting in self.nestings_where_parent.all():
@@ -73,34 +77,13 @@ class Proto(models.Model):
             # let's not do that on the original `custom_fields` which 
             # will be used by other nestings in the loop
             fields = custom_fields.copy()
-            if child.clone_per_locale is True:
+            if cloning_allowed and child.clone_per_locale:
                 # `spawn_per_locale` is a generator
                 list(child.spawn_per_locale(**fields))
             else:
-                child.spawn(**fields)
+                child.spawn(cloning_allowed, **fields)
 
-    def spawn_per_locale(self, **fields):
-        """Create multiple todo objects from a single prototype per locale.
-
-        If `locales` iterable is passed in `fields`, the prototype will be used
-        to create multiple todo objects, one per locale given.
-
-        """
-        # to avoid conflicts, locale and locales are deleted
-        # from custom_fields and are not passed to children
-        # directly (we don't want to clone more then once in a single
-        # tracker tree).
-        locale = fields.pop('locale', None)
-        locales = fields.pop('locales', None)
-        if not locales:
-            # we could have done locales = fields.pop('locales', [locale])
-            # above, but this wouldn't have worked when fields['locales'] is
-            # an empty list.
-            locales = [locale]
-        for loc in locales:
-            yield self.spawn(locale=loc, **fields)
-
-    def spawn(self, **custom_fields):
+    def spawn(self, cloning_allowed=True, **custom_fields):
         """Create an instance of the model related to the proto, with children.
         
         This method creates an instance of the model related to the current
@@ -118,23 +101,66 @@ class Proto(models.Model):
 
         A special iterable `locales` keyword argument can be passed to create
         multiple trees of todo objects, one per locale in `locales`. Only
-        todo objects with clone_per_locale set on the corresponding nesting
-        will be cloned in this way.
+        todo objects with clone_per_locale set to True will be cloned in this
+        way.
 
         The method always returns just one, top-level todo object, even if
         more were created as children.
 
         """
-        if self.type != 3 and 'project' not in custom_fields:
+        if self.type in (1, 2) and 'project' not in custom_fields:
             raise TypeError("Pass a project to spawn trackers and tasks.")
         todo = self._spawn_instance(**custom_fields)
         todo.save()
-        if 'summary' in custom_fields:
-            # custom summary should not propagate further down
-            del custom_fields['summary']
-        custom_fields.update(parent=todo)
-        self._spawn_children(**custom_fields)
+        if self.type in (1, 3):
+            # trackers and steps
+            to_be_removed = self.inheritable
+            custom_fields.update(parent=todo)
+        else:
+            # tasks
+            # Steps are related to Tasks via the `task` property which is set 
+            # above, and the top-level steps have the `parent` property set 
+            # to None. Here, we're removing `parent` to make sure the child
+            # steps are `parent`-less. (`parent` might have been used before
+            # to create relationships between Trackers or Trackers/Tasks). 
+            to_be_removed = self.inheritable + ('parent',)
+            custom_fields.update(task=todo)
+        for prop in to_be_removed:
+            # these properties are inheritable by the current todo object,
+            # but not by its children. they should not propagate further down.
+            if prop in custom_fields:
+                del custom_fields[prop]
+        self._spawn_children(cloning_allowed, **custom_fields)
         return todo
+
+    def spawn_per_locale(self, **fields):
+        """Create multiple todo objects from a single prototype per locale.
+
+        If `locales` iterable is passed in `fields`, the prototype will be used
+        to create multiple todo objects, one per locale given.
+
+        This method is a wrapper around a regular `spawn`. It loops over the
+        list of locales passed in as a keyword argument, adjusts the alias
+        suffix so that it ends with `-ab` (where `ab` is a locale's code) and
+        calls `spawn`.
+
+        """
+        # to avoid conflicts, locale and locales are deleted
+        # from custom_fields and are not passed to children
+        # directly (we don't want to clone more then once in a single
+        # tracker tree).
+        locale = fields.pop('locale', None)
+        locales = fields.pop('locales', None)
+        if not locales:
+            # we could have done locales = fields.pop('locales', [locale])
+            # above, but this wouldn't have worked when fields['locales'] is
+            # an empty list.
+            locales = [locale]
+        suffix = fields.pop('suffix', self.suffix)
+        for loc in locales:
+            if loc is not None:
+                fields['suffix'] = '%s-%s' % (suffix, loc.code)
+            yield self.spawn(locale=loc, cloning_allowed=False, **fields)
 
 class ProtoTracker(Proto):
     """Proto Tracker model.
@@ -151,8 +177,9 @@ class ProtoTracker(Proto):
                                            "has been cloned yet. Leaving this "
                                            "as True should be OK for 90% of "
                                            "cases.")
+    suffix = models.SlugField(max_length=8, blank=True)
     # tuple of prototype's properties that can be inherited by a spawned object
-    inheritable = ('summary',)
+    inheritable = ('summary', 'suffix')
     # `_type` is used by Proto.__init__ to set `type` in the DB correctly
     _type = 1
 
@@ -168,31 +195,15 @@ class ProtoTask(Proto):
     """
     proto = models.OneToOneField(Proto, parent_link=True,
                                  related_name='prototask')
+    suffix = models.SlugField(max_length=8, blank=True)
     # this is always True so no need to store it in the DB
     clone_per_locale = True
-    inheritable = ('summary',)
+    inheritable = ('summary', 'suffix')
     _type = 2
 
     class Meta:
         app_label = 'todo'
         ordering = ('type', 'summary',)
-
-    def spawn(self, **custom_fields):
-        todo = self._spawn_instance(**custom_fields)
-        todo.save()
-        if 'summary' in custom_fields:
-            # custom summary should not propagate further down
-            del custom_fields['summary']
-        if 'parent' in custom_fields:
-            # Steps are related to Tasks via the `task` property which is set 
-            # above, and the top-level steps have the `parent` property set 
-            # to None. Here, we're removing `parent` to make sure the child
-            # steps are `parent`-less. (`parent` might have been used before
-            # to create relationships between Trackers or Trackers/Tasks). 
-            del custom_fields['parent']
-        custom_fields.update(task=todo)
-        self._spawn_children(**custom_fields)
-        return todo
 
 class ProtoStep(Proto):
     """Proto Step model.

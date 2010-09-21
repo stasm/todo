@@ -29,8 +29,9 @@ def create(request, obj):
                 parent_clean['parent_project']):
                 # user wants to create a new tracker which will be the parent
                 parent = Tracker(summary=parent_clean['parent_summary'],
-                                  project=parent_clean['parent_project'],
-                                  locale=parent_clean['parent_locale'])
+                                 project=parent_clean['parent_project'],
+                                 locale=parent_clean['parent_locale'],
+                                 suffix=parent_clean['parent_suffix'])
                 parent.save()
             if parent is not None:
                 # For consistency's sake, if a parent is specified, try to

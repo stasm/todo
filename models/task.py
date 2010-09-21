@@ -12,15 +12,16 @@ from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RES
     
 from datetime import datetime
 
-class Task(models.Model, Todo):
+class Task(Todo):
     prototype = models.ForeignKey(ProtoTask, related_name='tasks', null=True, blank=True)
     parent = models.ForeignKey(Tracker, related_name='tasks', null=True, blank=True)
     summary = models.CharField(max_length=200, blank=True)
     locale = models.ForeignKey(Locale, related_name='tasks', null=True, blank=True)
     project = models.ForeignKey(Project, related_name='tasks')
-    bug = models.PositiveIntegerField(null=True, blank=True)
-    snapshot_ts = models.DateTimeField(null=True, blank=True)
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
+    bugid = models.PositiveIntegerField(null=True, blank=True)
+    alias = models.SlugField(max_length=200, null=True, blank=True)
+    snapshot_ts = models.DateTimeField(null=True, blank=True)
 
     objects = StatusManager()
     
@@ -64,6 +65,9 @@ class Task(models.Model, Todo):
         self.status = 5
         self.resolution = resolution
         self.save()
+
+    def bug(self):
+        return self.bugid or self.alias
 
     def is_uptodate(self, bug_last_modified_time):
         if self.snapshot_ts is None:

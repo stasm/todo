@@ -10,7 +10,7 @@ from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RES
     
 from datetime import datetime
 
-class Step(models.Model, Todo):
+class Step(Todo):
     prototype = models.ForeignKey(ProtoStep, related_name='steps', null=True, blank=True)
     summary = models.CharField(max_length=200, blank=True)
     parent = models.ForeignKey('self', related_name='children', null=True, blank=True)

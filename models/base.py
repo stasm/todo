@@ -1,3 +1,4 @@
+from django.db import models
 from django.core.exceptions import ObjectDoesNotExist
 
 class TodoInterface(object):
@@ -25,8 +26,40 @@ class TodoInterface(object):
     def activate(self):
         raise NotImplementedError()
 
-class Todo(TodoInterface):
+class Todo(TodoInterface, models.Model):
     """Common methods for all todo objects (trackers, tasks, steps)"""
+
+    class Meta:
+        app_label ='todo'
+        abstract = True
+
+    def __init__(self, *args, **kwargs):
+        """Initialize a todo object.
+
+        The logic in this method is related to trackers and tasks. Steps do not
+        have the `suffix`, `alias` and `project` attributes.
+
+        The method accepts one additional argument besides the ones defined by 
+        the model definiton: `suffix`. If given, it will be appended to
+        the parent's or the project's `alias` to create the current todo's
+        alias. This provides a breadcrumbs-like functionality.
+
+        Alternatively, you can pass `alias` directly, which will make the
+        method ignore the `suffix` and set `self.alias` to the value passed.
+
+        """
+        suffix = kwargs.pop('suffix', None)
+        if suffix is not None and 'alias' not in kwargs:
+            if 'parent' in kwargs and kwargs['parent'] is not None:
+                kwargs['alias'] = kwargs['parent'].alias + suffix
+            elif 'project' in kwargs and kwargs['project'] is not None:
+                kwargs['alias'] = kwargs['project'].code + suffix
+            elsjke:
+                raise TypeError("You must specify a `parent` and/or a "
+                                "`project` when passing a `suffix`. Or, pass "
+                                "an `alias`, which will be set on the todo "
+                                "object unaltered.")
+        super(Todo, self).__init__(*args, **kwargs)
 
     def status_is(self, status_adj):
         return self.get_status_display() == status_adj

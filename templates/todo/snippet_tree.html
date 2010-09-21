@@ -104,7 +104,7 @@ Filter.prototype = {
 
   {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
-      <div class="summary">
+      <div class="summary" title="{{tracker.bug}}">
         {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
         {{tracker}}
         <a class="permalink" href="{% urlvar tracker_view tracker.pk %}">#</a>
@@ -117,7 +117,7 @@ Filter.prototype = {
 
   <div class="tasks">
     {% for task, props in tree.tasks.iteritems %}
-      <div class="task {{task.get_status_display}}"
+    <div class="task {{task.get_status_display}}" title="{{task.bug}}"
         {% for prop, vals in props.iteritems %}
           data-{{prop}}="{{vals|join:'|'}}"
         {% endfor %}>
