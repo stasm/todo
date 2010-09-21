@@ -54,7 +54,7 @@ class Todo(TodoInterface, models.Model):
                 kwargs['alias'] = kwargs['parent'].alias + suffix
             elif 'project' in kwargs and kwargs['project'] is not None:
                 kwargs['alias'] = kwargs['project'].code + suffix
-            elsjke:
+            else:
                 raise TypeError("You must specify a `parent` and/or a "
                                 "`project` when passing a `suffix`. Or, pass "
                                 "an `alias`, which will be set on the todo "
