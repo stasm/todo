@@ -126,7 +126,7 @@ QuickEditor.prototype = {
   showEditable: function showEditable() {
     var self = this;
     self.form.children('input').each(function() {
-      $(this).attr('value', $(this).attr('data-default'));
+      self.setToDefault($(this));
     });
     $('.noneditable', self.todo).fadeOut('slow', function() {
       $('.editable', self.todo).fadeIn('slow');
@@ -149,10 +149,17 @@ QuickEditor.prototype = {
     // convert it to an object like this one: {a:1, b:2}
     // (this won't work for checkboxes, but that's fine for thisuse case)
     var data = {};
+    var no_values_changed = true;
     controls.forEach(function(control, i) {
-      console.log(control.name, control.value)
+      console.log(control.name, control.value, ' default: ', self.getDefault(control.name))
       data[control.name] = control.value;
+      if (control.value != self.getDefault(control.name))
+        no_values_changed = false;
     });
+    if (no_values_changed) {
+      self.hideEditable();
+      return;
+    }
     $.post(this.url,
            data,
            function(response){
@@ -164,7 +171,26 @@ QuickEditor.prototype = {
                alert(response.message);
              }
            }, 'json');
-  }
+  },
+
+  getDefault: function getDefault(input) {
+    if (typeof input == 'string' || input.constructor == String)
+      input = $('input[name='+input+']', this.form); 
+    return input.attr('data-default');
+  },
+
+  setDefault: function setDefault(input, value) {
+    if (typeof input == 'string' || input.constructor == String)
+      input = $('input[name='+input+']', this.form); 
+    input.attr('data-default', value);
+  },
+
+  setToDefault: function setToDefault(input) {
+    if (typeof input == 'string' || input.constructor == String)
+      input = $('input[name='+input+']', this.form); 
+    input.attr('value', this.getDefault(input));
+  },
+
 }
 
 </script>
