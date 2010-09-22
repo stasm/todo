@@ -73,6 +73,7 @@ class Task(Todo):
         if isinstance(val, int):
             self.bugid = val
         else:
+            self.bugid = None
             self.alias = val
     
     bug = property(get_bug, set_bug)
