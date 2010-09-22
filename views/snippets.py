@@ -147,7 +147,7 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
 
     tree = {'trackers': {}, 'tasks': {}}
     for tracker in trackers:
-        subtree, facets = _make_tree(tracker.children.all(),
+        subtree, facets = _make_tree(tracker.children_all(),
                                      tracker.tasks.all(),
                                      tracker_chain + [tracker],
                                      facets)

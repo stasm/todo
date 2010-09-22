@@ -36,13 +36,13 @@ class Todo(TodoInterface, models.Model):
     def __init__(self, *args, **kwargs):
         """Initialize a todo object.
 
-        The logic in this method is related to trackers and tasks. Steps do not
-        have the `suffix`, `alias` and `project` attributes.
+        The logic in this method is related to trackers and tasks.  Steps do
+        not have the `suffix`, `alias` and `project` attributes.
 
-        The method accepts one additional argument besides the ones defined by 
-        the model definiton: `suffix`. If given, it will be appended to
-        the parent's or the project's `alias` to create the current todo's
-        alias. This provides a breadcrumbs-like functionality.
+        The method accepts one additional argument besides the ones defined by
+        the model definiton: `suffix`.  If given, it will be appended to the
+        parent's or the project's `alias` to create the current todo's alias.
+        This provides a breadcrumbs-like functionality.
 
         Alternatively, you can pass `alias` directly, which will make the
         method ignore the `suffix` and set `self.alias` to the value passed.
@@ -70,13 +70,35 @@ class Todo(TodoInterface, models.Model):
     def is_next(self):
         return self.status == 3
 
-    @property
-    def siblings(self):
-       """Get a QuerySet with the siblings of the current todo object."""
-       return self.parent.children.all() 
+    def children_all(self):
+        """Get the immediate children of the todo object.
+
+        In its simplest form, this method just calls `all` on the todo object's
+        `children` manager.  It does more if called on a Task.  By calling
+        `children_all` you make sure that the returned value is a QuerySet, no
+        matter which model's instance you called it on.
+        
+        Backstory:  Tasks do not have the `children` manager, and instead, you
+        need to query for Steps with no parent (because only other Steps can be
+        Steps' parents).  Since you make an actual query, you get a queryset,
+        so the behavior is inconsistent with that of accessing `children` on
+        Steps and Tracker (which returns a manager).
+
+        """
+        return self.children.all()
+
+    def siblings_all(self):
+       """Get a QuerySet with the siblings of the current todo object.
+       
+       Since it returns a QuerySet, the name is `siblings_all` rather than
+       `siblings`, in order to help avoid confusion (similar to `children_all`
+       above).
+
+       """
+       return self.parent.children_all()
 
     def is_any_sibling_status(self, *status):
-        return bool(self.siblings.filter(status__in=status))
+        return bool(self.siblings_all().filter(status__in=status))
 
     def activate(self):
         self.activate_children()
@@ -84,11 +106,11 @@ class Todo(TodoInterface, models.Model):
         self.save()
 
     def activate_children(self):
-        auto_activated_children = self.children.filter(is_auto_activated=True)
+        auto_activated_children = self.children_all().filter(is_auto_activated=True)
         if len(auto_activated_children) == 0:
             try:
-                auto_activated_children = (self.children.get(order=1),)
+                auto_activated_children = (self.children_all().get(order=1),)
             except ObjectDoesNotExist:
-                auto_activated_children = self.children.all()
+                auto_activated_children = self.children_all()
         for child in auto_activated_children:
             child.activate()

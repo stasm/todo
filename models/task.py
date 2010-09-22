@@ -8,19 +8,25 @@ from .project import Project
 from .proto import ProtoTask
 from .tracker import Tracker
 from todo.managers import StatusManager
-from todo.workflow import statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES, RESOLUTION_CHOICES
+from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
+                           RESOLUTION_CHOICES)
     
 from datetime import datetime
 
 class Task(Todo):
-    prototype = models.ForeignKey(ProtoTask, related_name='tasks', null=True, blank=True)
-    parent = models.ForeignKey(Tracker, related_name='tasks', null=True, blank=True)
+    prototype = models.ForeignKey(ProtoTask, related_name='tasks', null=True,
+                                  blank=True)
+    parent = models.ForeignKey(Tracker, related_name='tasks', null=True,
+                               blank=True)
     summary = models.CharField(max_length=200, blank=True)
-    locale = models.ForeignKey(Locale, related_name='tasks', null=True, blank=True)
+    locale = models.ForeignKey(Locale, related_name='tasks', null=True,
+                               blank=True)
     project = models.ForeignKey(Project, related_name='tasks')
     status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
+    # a timestamp reflecting the up-to-date-ness of the Task compared to the 
+    # activity in the related bug
     snapshot_ts = models.DateTimeField(null=True, blank=True)
 
     objects = StatusManager()
@@ -47,22 +53,24 @@ class Task(Todo):
         return self.prototype.spawn(summary=self.summary, parent=self.parent,
                                     locale=self.locale, bug=self.bug)
 
-    @property
-    def children(self):
+    def children_all(self):
         """Get the immediate children of the task.
         
         Note the this is different from self.steps which is a manager handling
         all steps under the task, no matter how deep they are in the steps
         hierarchy.
-        
+
+        See todo.models.base.Todo for more docs.
+
         """
         return self.steps.top_level()
 
     def next_steps(self):
-       """Get the next steps in the task."""
+       "Get the next steps in the task."
        return self.steps.next()
 
     def resolve(self, resolution=1):
+        "Resolve the task."
         self.status = 5
         self.resolution = resolution
         self.save()
@@ -71,6 +79,7 @@ class Task(Todo):
         return self.bugid or self.alias
 
     def set_bug(self, val):
+        "Set the `bugid` or `alias` depending on the type of the value passed."
         if isinstance(val, int):
             self.bugid = val
         else:
@@ -85,4 +94,6 @@ class Task(Todo):
         return self.snapshot_ts >= bug_last_modified_time
 
     def snapshot_ts_iso(self):
-        return '%sZ' % self.snapshot_ts.isoformat() if self.snapshot_ts is not None else '0'
+        if self.snapshot_ts is not None:
+            return '%sZ' % self.snapshot_ts.isoformat()
+        return '0'

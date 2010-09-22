@@ -329,7 +329,7 @@
   {% endif %}
 </h3>
 
-{% with task.children as steps %}
+{% with task.children_all as steps %}
 {% recurse_children %}
   {% for step in steps %}
   
@@ -359,7 +359,7 @@
           {{step.summary}} {% ifequal step.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
         </span>
       {% endif %}
-      {% recurse step.children.all as steps %}
+      {% recurse step.children_all as steps %}
     </div>
 
   {% endfor %}
