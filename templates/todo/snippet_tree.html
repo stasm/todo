@@ -160,17 +160,22 @@ QuickEditor.prototype = {
       self.hideEditable();
       return;
     }
-    $.post(this.url,
-           data,
-           function(response){
-             console.log(response.status, response.message)
-             if (response.status == 'ok') {
-               // change the diaplayed values
-               self.hideEditable();
-             } else {
-               alert(response.message);
-             }
-           }, 'json');
+    $.post(this.url, data, function(response) {
+      console.log(response.status, response.message)
+      if (response.status == 'ok') {
+        // `response.data` is a list of serialized todo objects that have
+        // been changed
+        var todo = response.data[0].fields;
+        // see todo.models.{Tracker,Task}.get_bug
+        todo.bug = todo.bugid || todo.alias;
+        for (prop in todo) {
+          self.replace(prop, todo[prop]);
+        }
+        self.hideEditable();
+      } else {
+        alert(response.message);
+      }
+    }, 'json');
   },
 
   getDefault: function getDefault(input) {
@@ -191,6 +196,13 @@ QuickEditor.prototype = {
     input.attr('value', this.getDefault(input));
   },
 
+  replace: function replace(prop, value) {
+    // change the displayed value in the HTML
+    $('.replace-'+prop, this.todo).text(value);
+    // and the default value for the input
+    this.setDefault(prop, value);
+  },
+
 }
 
 </script>
@@ -205,7 +217,7 @@ QuickEditor.prototype = {
       <div class="summary">
         {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
         <span class="noneditable">
-          {{tracker}}
+          <span class="replace-summary">{{tracker}}</span>
           {% if perms.todo.change_tracker %}
             <small class="quickedit">✎</small>
           {% endif %}
@@ -227,7 +239,7 @@ QuickEditor.prototype = {
 
   <div class="tasks">
     {% for task, props in tree.tasks.iteritems %}
-    <div class="task {{task.get_status_display}}" title="{{task.bug}}"
+    <div class="task {{task.get_status_display}}"
         {% for prop, vals in props.iteritems %}
           data-{{prop}}="{{vals|join:'|'}}"
         {% endfor %}>
@@ -235,7 +247,7 @@ QuickEditor.prototype = {
           <span class="summary">
             {% if task.locale %}[{{task.locale.code}}]{% endif %}
             <span class="noneditable">
-              <a href="{% urlvar task_view task.pk %}">{{task}}</a>
+              <a href="{% urlvar task_view task.pk %}" class="replace-summary">{{task}}</a>
               {% if perms.todo.change_task %}
                 <small class="quickedit">✎</small>
               {% endif %}

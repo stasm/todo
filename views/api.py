@@ -11,6 +11,8 @@ try:
     import json
 except ImportError:
     from django.utils import simplejson as json
+from django.core.serializers import serialize
+from django.core.serializers.json import DjangoJSONEncoder
 
 class BzAPI(object):
     _baseurl = "https://api-dev.bugzilla.mozilla.org/latest/"
@@ -29,10 +31,11 @@ class BzAPI(object):
         self._bugs.update({bugid: last_modified_time})
         return last_modified_time
 
-def _status_response(status, message):
-    data = {'status': status,
-            'message': message}
-    return HttpResponse(json.dumps(data, indent=2),
+def _status_response(status, message, data):
+    response = {'status': status,
+                'message': message,
+                'data': data}
+    return HttpResponse(json.dumps(response, indent=2, cls=DjangoJSONEncoder),
                         mimetype='application/javascript')
 
 @require_POST
@@ -81,4 +84,5 @@ def update(request, obj, obj_id):
     for prop, new_value in form.cleaned_data.iteritems():
         setattr(todo, prop, new_value)
     todo.save()
-    return _status_response('ok', '%s updated.' % obj)
+    changed_objs = serialize('python', (todo,))
+    return _status_response('ok', '%s updated.' % obj, changed_objs)
