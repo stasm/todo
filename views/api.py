@@ -39,7 +39,39 @@ def _status_response(status, message, data=None):
                         mimetype='application/javascript')
 
 @require_POST
+def update(request, obj, obj_id):
+    """Update various properties of a todo object.
+
+    This method expects all the values to be in the `request.POST`. More 
+    specifically, `todo.forms.UpdateTodoForm` defines which properties
+    are accepted and which are required.
+
+    Arguments:
+    obj -- the model of the todo object to be changed
+    obj_id -- the ID of the todo object to be changed
+
+    """
+    if not request.user.has_perm('todo.change_%s' % obj):
+        return _status_response('error', "You don't have permissions to "
+                                "update this %s." % obj)
+    model = Task if obj == 'task' else Tracker
+    form = UpdateTodoForm(request.POST)
+    if not form.is_valid():
+        message = 'There were problems with the following fields:\n'
+        for field, errorlist in form.errors.iteritems():
+            message += '%s: %s' % (field, errorlist.as_text())
+        return _status_response('error', message)
+    todo = get_object_or_404(model, pk=obj_id)
+    for prop, new_value in form.cleaned_data.iteritems():
+        setattr(todo, prop, new_value)
+    todo.save()
+    changed_objs = serialize('python', (todo,))
+    return _status_response('ok', '%s updated.' % obj, changed_objs)
+
+@require_POST
 def update_snapshot(request, task_id):
+    "Specifically update the snapshot timestamp."
+
     if not request.user.has_perm('todo.change_task'):
         return _status_response('error', "You don't have permissions to "
                                 "update the snapshot timestamp.")
@@ -49,12 +81,15 @@ def update_snapshot(request, task_id):
         return _status_response('error', 'Unknown timestamp (%s)' %
                                 request.POST.get('snapshot_ts'))
     task = get_object_or_404(Task, pk=task_id)
-    task.update_snapshot(new_snapshot_ts)
+    task.snapshot_ts = new_snapshot_ts
+    task.save()
     return _status_response('ok', 'Timestamp updated (%s)' %
                             task.snapshot_ts_iso())
 
 @require_POST
 def update_bugid(request, task_id):
+    "Specifically update the bug ID."
+
     if not request.user.has_perm('todo.change_task'):
         return _status_response('error', "You don't have permissions to "
                                 "update the bug ID of this task.")
@@ -65,24 +100,6 @@ def update_bugid(request, task_id):
         return _status_response('error', 'Incorrect value of the bug ID (%s)' %
                                 request.POST.get('bugid'))
     task = get_object_or_404(Task, pk=task_id)
-    task.update_bugid(new_bugid)
+    task.bug = new_bugid
+    task.save()
     return _status_response('ok', 'Bug ID updated (%s)' % task.bugid)
-
-@require_POST
-def update(request, obj, obj_id):
-    if not request.user.has_perm('todo.change_%s' % obj):
-        return _status_response('error', "You don't have permissions to "
-                                "update this %s." % obj)
-    form = UpdateTodoForm(request.POST)
-    if not form.is_valid():
-        message = 'There were problems with the following fields:\n'
-        for field, errorlist in form.errors.iteritems():
-            message += '%s: %s' % (field, errorlist.as_text())
-        return _status_response('error', message)
-    model = Task if obj == 'task' else Tracker
-    todo = get_object_or_404(model, pk=obj_id)
-    for prop, new_value in form.cleaned_data.iteritems():
-        setattr(todo, prop, new_value)
-    todo.save()
-    changed_objs = serialize('python', (todo,))
-    return _status_response('ok', '%s updated.' % obj, changed_objs)

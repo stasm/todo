@@ -37,7 +37,8 @@ class Task(Todo):
 
     @models.permalink
     def get_absolute_url(self):
-        return ('todo.views.task', [str(self.id)])
+        # FIXME shouldn't point to a demo view
+        return ('todo.views.demo.task', [str(self.id)])
 
     def get_admin_url(self):
         return '/admin/todo/task/%s' % str(self.id)
@@ -85,11 +86,3 @@ class Task(Todo):
 
     def snapshot_ts_iso(self):
         return '%sZ' % self.snapshot_ts.isoformat() if self.snapshot_ts is not None else '0'
-
-    def update_snapshot(self, new_snapshot_ts):
-        self.snapshot_ts = new_snapshot_ts
-        self.save()
-
-    def update_bugid(self, new_bugid):
-        self.bugid = new_bugid
-        self.save()

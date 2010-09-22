@@ -15,6 +15,8 @@ api_patterns = patterns('todo.views.api',
      'todo-api-update-tracker'),
 )
 
+# demo views are used for testing and as an example for the real views
+# that an application wishing to have todo needs to implement
 demo_patterns = patterns('todo.views.demo',
     (r'^task/(?P<task_id>\d+)$', 'task'),
     (r'^combined$', 'combined'),
