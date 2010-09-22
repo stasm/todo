@@ -51,8 +51,7 @@ class ProtoTaskForm(forms.ModelForm):
 
     class Meta:
         model = Nesting
-        fields = ['parent', 'order', 'is_auto_activated',
-                  'resolves_parent', 'repeat_if_failed']
+        fields = ['parent', 'order', 'is_auto_activated', 'resolves_parent']
 
 class ProtoStepForm(ProtoTaskForm):
     parent = forms.ModelChoiceField(Proto.objects.filter(type=3),

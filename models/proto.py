@@ -70,8 +70,7 @@ class Proto(models.Model):
             child = nesting.child.get_proto_object()
             # steps inside task/steps inherit the following
             # properties from the nesting, not the proto itself
-            for prop in ('order', 'is_auto_activated',
-                         'resolves_parent', 'repeat_if_failed'):
+            for prop in ('order', 'is_auto_activated', 'resolves_parent'):
                 custom_fields.update({prop: getattr(nesting, prop)})
             # since `spawn` and `spawn_per_locale` might delete keys, 
             # let's not do that on the original `custom_fields` which 
@@ -240,7 +239,6 @@ class Nesting(models.Model):
     order = models.PositiveIntegerField(null=True, blank=True)
     is_auto_activated = models.BooleanField(default=False)
     resolves_parent = models.BooleanField(default=False)
-    repeat_if_failed = models.BooleanField(default=False)
     
     class Meta:
         app_label = 'todo'
