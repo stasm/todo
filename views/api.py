@@ -31,7 +31,7 @@ class BzAPI(object):
         self._bugs.update({bugid: last_modified_time})
         return last_modified_time
 
-def _status_response(status, message, data):
+def _status_response(status, message, data=None):
     response = {'status': status,
                 'message': message,
                 'data': data}
