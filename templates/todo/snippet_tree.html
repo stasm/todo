@@ -3,6 +3,18 @@
 
 <script type="application/javascript;version=1.8">
 
+$.fn.slugify = function(obj) {
+    jQuery(this).data('obj', jQuery(obj));
+    jQuery(this).keyup(function() {
+        var obj = jQuery(this).data('obj');
+        var slug = jQuery(this).val().replace(/\-+/g,'-')
+                                     .replace(/\s+/g,'-')
+                                     .replace(/[^a-zA-Z0-9\-]/g,'')
+                                     .toLowerCase();
+        obj.val(slug);
+    });
+}
+
 $(document).ready(function() {
   var filter = new Filter($('.task'));
     var quickeditors = []
@@ -121,6 +133,8 @@ QuickEditor.prototype = {
       e.preventDefault();
       self.submit();
     });
+    var bug_input = $('input[name="bug"]', self.todo);
+    bug_input.slugify(bug_input);
   },
 
   showEditable: function showEditable() {
