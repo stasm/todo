@@ -78,11 +78,13 @@ class Todo(TodoInterface, models.Model):
     def is_next(self):
         return self.status == 3
 
-    def get_actions(self, action_flag):
+    def get_actions(self, action_flag=None):
+        if action_flag is None:
+            return self.actions.all()
         offset_flag = action_flag + OFFSET
         return self.actions.filter(action_flag=offset_flag)
 
-    def get_latest_action(self, action_flag):
+    def get_latest_action(self, action_flag=None):
         return self.get_actions(action_flag).latest('action_time')
 
     def children_all(self):

@@ -115,6 +115,7 @@ class Step(Todo):
             # continue only for steps whose status is 'next'
             return False
         if self._overdue is None:
+            # FIXME this should be days; minutes are for testing
             allowed_timeinterval = timedelta(minutes=self.allowed_time)
             # get the last time the step was 'nexted'
             last_activity_ts = self.get_latest_action(3).action_time

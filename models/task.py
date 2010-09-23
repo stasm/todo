@@ -28,6 +28,9 @@ class Task(Todo):
     # a timestamp reflecting the up-to-date-ness of the Task compared to the 
     # activity in the related bug
     snapshot_ts = models.DateTimeField(null=True, blank=True)
+    # a timestamp: when was the last time a Step under this Task was resolved?
+    # it is set by a signal callback  (see `todo.models.log_status_change`)
+    latest_resolution_ts = models.DateTimeField(null=True, blank=True)
 
     objects = StatusManager()
     
