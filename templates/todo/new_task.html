@@ -2,12 +2,14 @@
 {% extends "base.html" %}
 
 {% block content %}
+  <small><a href="{% url todo.views.new %}">&larr; back</a></small>
   <h2>Create new tasks</h2>
 
   <form action="{% url todo-create-tasks %}" method="post">
     {{ form.as_p }}
+    <h3>Parent tracker</h3>
     <p>Choosing a parent tracker is optional, but highly recommended if you are creating multiple tasks.</p>
-    <p>Careful: if you choose an existing parent tracker or create a new one, the project and the locale it belongs to will override your choices made above. If you want to create multiple tasks for many locales, make sure the parent tracker has an empty Locale field. (This will be fixed later.)</p>
+    <p>Be careful if you choose an existing parent tracker or create a new one. <strong>The parent tracker's project and locale <em style="font-size: 1.3em;">will override</em> your choices made above</strong>. If you want to <strong>create multiple tasks for many locales</strong>, make sure the parent tracker has an <strong>empty Locale field below</strong>. (This will be fixed later.)</p>
     {{ parent_form.as_p }}
     <input type="submit" value="Create" />
   </form>
