@@ -34,6 +34,28 @@ Installation
 Configuration
 =============
 
+Settings
+--------
+
+The todo app logs every action perfomed on the todo objects using the Django
+admin's LogEntry model. Each action has a corresponding numerical flag. For
+example, the default flag for object creation in the LogEntry model is 1.
+
+The todo app uses its own action flags. Internally, they start with 1 and go
+up. In order to avoid conflicts with the default admin's flags, you can set
+a `TODO_FLAG_OFFSET` setting in your `settings.py`::
+
+     ``TODO_FLAG_OFFSET = 20``
+
+The value of the offset will be automatically added to all flags used by the
+todo app. For the exmaple above, if the flag for the *activation* action is 3,
+the value of the flag saved in admin's LogEntry will be 23.
+
+The default value is 10.
+
+Integration
+-----------
+
 In order to enable *todo* for your app, follow these steps:
 
 #. Add a one-to-one relation to your app's project model definition pointing to

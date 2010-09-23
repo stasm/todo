@@ -1,9 +1,12 @@
 from django.views.decorators.http import require_POST
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
+from django.core.serializers import serialize
+from django.core.serializers.json import DjangoJSONEncoder
 
 from todo.models import Task, Tracker
 from todo.forms import UpdateTodoForm
+from todo.signals import todo_updated, UPDATED, SNAPSHOT_UPDATED, BUGID_UPDATED
 
 import urllib2
 from datetime import datetime
@@ -11,8 +14,6 @@ try:
     import json
 except ImportError:
     from django.utils import simplejson as json
-from django.core.serializers import serialize
-from django.core.serializers.json import DjangoJSONEncoder
 
 class BzAPI(object):
     _baseurl = "https://api-dev.bugzilla.mozilla.org/latest/"
@@ -65,6 +66,7 @@ def update(request, obj, obj_id):
     for prop, new_value in form.cleaned_data.iteritems():
         setattr(todo, prop, new_value)
     todo.save()
+    todo_updated.send(sender=todo, user=request.user, action=UPDATED)
     changed_objs = serialize('python', (todo,))
     return _status_response('ok', '%s updated.' % obj, changed_objs)
 
@@ -83,6 +85,7 @@ def update_snapshot(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     task.snapshot_ts = new_snapshot_ts
     task.save()
+    todo_updated.send(sender=task, user=request.user, action=SNAPSHOT_UPDATED)
     return _status_response('ok', 'Timestamp updated (%s)' %
                             task.snapshot_ts_iso())
 
@@ -102,4 +105,5 @@ def update_bugid(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     task.bug = new_bugid
     task.save()
+    todo_updated.send(sender=task, user=request.user, action=BUGID_UPDATED)
     return _status_response('ok', 'Bug ID updated (%s)' % task.bugid)

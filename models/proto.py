@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
 from .actor import Actor
+from todo.signals import status_changed
 
 PROTO_TYPE_CHOICES = (
     (1, 'tracker'),
@@ -63,7 +64,7 @@ class Proto(models.Model):
         fields.update(custom_fields)
         return related_model(prototype=self, **fields)
 
-    def _spawn_children(self, cloning_allowed, **custom_fields):
+    def _spawn_children(self, user, cloning_allowed, **custom_fields):
         "Create children of the todo object."
 
         for nesting in self.nestings_where_parent.all():
@@ -78,11 +79,11 @@ class Proto(models.Model):
             fields = custom_fields.copy()
             if cloning_allowed and child.clone_per_locale:
                 # `spawn_per_locale` is a generator
-                list(child.spawn_per_locale(**fields))
+                list(child.spawn_per_locale(user, **fields))
             else:
-                child.spawn(cloning_allowed, **fields)
+                child.spawn(user, cloning_allowed, **fields)
 
-    def spawn(self, cloning_allowed=True, **custom_fields):
+    def spawn(self, user, cloning_allowed=True, **custom_fields):
         """Create an instance of the model related to the proto, with children.
         
         This method creates an instance of the model related to the current
@@ -111,6 +112,7 @@ class Proto(models.Model):
             raise TypeError("Pass a project to spawn trackers and tasks.")
         todo = self._spawn_instance(**custom_fields)
         todo.save()
+        status_changed.send(sender=todo, user=user, action=todo.status)
         if self.type in (1, 3):
             # trackers and steps
             to_be_removed = self.inheritable
@@ -129,10 +131,10 @@ class Proto(models.Model):
             # but not by its children. they should not propagate further down.
             if prop in custom_fields:
                 del custom_fields[prop]
-        self._spawn_children(cloning_allowed, **custom_fields)
+        self._spawn_children(user, cloning_allowed, **custom_fields)
         return todo
 
-    def spawn_per_locale(self, **fields):
+    def spawn_per_locale(self, user, **fields):
         """Create multiple todo objects from a single prototype per locale.
 
         If `locales` iterable is passed in `fields`, the prototype will be used
@@ -159,7 +161,8 @@ class Proto(models.Model):
         for loc in locales:
             if loc is not None:
                 fields['suffix'] = '%s-%s' % (suffix, loc.code)
-            yield self.spawn(locale=loc, cloning_allowed=False, **fields)
+            yield self.spawn(user, locale=loc, cloning_allowed=False,
+                             **fields)
 
 class ProtoTracker(Proto):
     """Proto Tracker model.

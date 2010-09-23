@@ -5,6 +5,7 @@ from django.contrib.auth.decorators import permission_required
 
 from todo.models import Tracker
 from todo.forms import ChooseParentForm, AddTasksForm, AddTrackersForm
+from todo.signals import status_changed
 
 def new(request):
     return render_to_response('todo/new.html')
@@ -33,6 +34,10 @@ def create(request, obj):
                                  locale=parent_clean['parent_locale'],
                                  suffix=parent_clean['parent_suffix'])
                 parent.save()
+                # send the 'created' signal
+                status_changed.send(sender=parent, user=request.user,
+                                    action=parent.status)
+                parent.activate(request.user)
             if parent is not None:
                 # For consistency's sake, if a parent is specified, try to
                 # use its values for `project` and `locale` to create the
@@ -43,11 +48,11 @@ def create(request, obj):
             fields['parent'] = parent
             prototype = form.cleaned_data.pop('prototype')
             if prototype.clone_per_locale is True:
-                for todo in prototype.spawn_per_locale(**fields):
-                    todo.activate()
+                for todo in prototype.spawn_per_locale(request.user, **fields):
+                    todo.activate(request.user)
             else:
-                todo = prototype.spawn(**fields) 
-                todo.activate()
+                todo = prototype.spawn(request.user, **fields) 
+                todo.activate(request.user)
             return HttpResponseRedirect(reverse('todo.views.demo.%s' % obj[:-1],
                                                 args=[todo.pk]))
     else:

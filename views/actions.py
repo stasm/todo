@@ -13,7 +13,7 @@ def resolve_task(request, task_id):
     form = ResolveTaskForm(request.POST)
     if form.is_valid():
         redirect_url = form.cleaned_data['redirect_url']
-        task.resolve()
+        task.resolve(request.user)
         return HttpResponseRedirect(redirect_url)
         
 @require_POST
@@ -24,7 +24,7 @@ def resolve_step(request, step_id):
         form = ResolveSimpleStepForm(request.POST)
         if form.is_valid():
             redirect_url = form.cleaned_data['redirect_url']
-            step.resolve()
+            step.resolve(request.user)
             return HttpResponseRedirect(redirect_url)
     else:
         form = ResolveReviewStepForm(request.POST)
@@ -32,5 +32,5 @@ def resolve_step(request, step_id):
             redirect_url = form.cleaned_data['redirect_url']
             success = form.cleaned_data['success']
             resolution = 1 if success else 2
-            step.resolve(resolution)
+            step.resolve(request.user, resolution)
             return HttpResponseRedirect(redirect_url)

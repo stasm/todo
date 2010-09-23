@@ -8,6 +8,7 @@ from .task import Task
 from todo.managers import StatusManager
 from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
                            RESOLUTION_CHOICES)
+from todo.signals import status_changed
     
 from datetime import datetime
 
@@ -64,9 +65,9 @@ class Step(Todo):
     def get_admin_url(self):
         return '/admin/todo/step/%s' % str(self.id)
 
-    def clone(self):
+    def clone(self, user):
         "Clone the step using the protype used to create it."
-        return self.prototype.spawn(summary=self.summary, task=self.task,
+        return self.prototype.spawn(user, summary=self.summary, task=self.task,
                                     parent=self.parent, order=self.order)
 
     def siblings_all(self):
@@ -105,23 +106,25 @@ class Step(Todo):
         "Check if there's no more unresolved steps under this step's parent."
         return not bool(self.siblings_other().filter(status__lt=5).count() )
 
-    def activate(self):
+    def activate(self, user):
         if self.has_children is True:
-            self.activate_children()
+            self.activate_children(user)
             # it's `active`, because one of the children is `next`
             self.status = 2
         else:
             # no children, `next` it
             self.status = 3
         self.save()
+        status_changed.send(sender=self, user=user, action=self.status)
 
-    def resolve(self, resolution=1, bubble_up=True):
+    def resolve(self, user, resolution=1, bubble_up=True):
         """Resolve the step.
 
         Resolve the current step and, if `bubble_up` is True, resolve the
         parent or the parents.
 
         Arguments:
+        user -- the user that is resolving the step; used for the signal
         resolution -- an integer specifying the resolution type (see
                       todo.workflow)
         bubble_up -- a boolean which if True will make the method resolve the
@@ -143,6 +146,8 @@ class Step(Todo):
         self.status = 5
         self.resolution = resolution
         self.save()
+        status_changed.send(sender=self, user=user, action=self.status)
+
         if not bubble_up:
             # don't do anything more
             return
@@ -156,12 +161,12 @@ class Step(Todo):
                     # a Step, not the Task (can't clone a Task), hence check
                     # for self.parent.
                     bubble_up = False
-                    clone = self.parent.clone()
-                    clone.activate()
-                self.parent.resolve(self.resolution, bubble_up)
+                    clone = self.parent.clone(user)
+                    clone.activate(user)
+                self.parent.resolve(user, self.resolution, bubble_up)
             else:
                 # no parent means this is a top-level step and the task is
                 # ready to be resolved.
-                self.task.resolve(self.resolution)
+                self.task.resolve(user, self.resolution)
         elif self.next_step() and self.next_step().status_is('new'):
-            self.next_step().activate()
+            self.next_step().activate(user)

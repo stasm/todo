@@ -10,6 +10,7 @@ from .tracker import Tracker
 from todo.managers import StatusManager
 from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
                            RESOLUTION_CHOICES)
+from todo.signals import status_changed
     
 from datetime import datetime
 
@@ -22,7 +23,7 @@ class Task(Todo):
     locale = models.ForeignKey(Locale, related_name='tasks', null=True,
                                blank=True)
     project = models.ForeignKey(Project, related_name='tasks')
-    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=2)
+    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
     # a timestamp reflecting the up-to-date-ness of the Task compared to the 
@@ -79,11 +80,12 @@ class Task(Todo):
        "Get the next steps in the task."
        return self.steps.next()
 
-    def resolve(self, resolution=1):
+    def resolve(self, user, resolution=1):
         "Resolve the task."
         self.status = 5
         self.resolution = resolution
         self.save()
+        status_changed.send(sender=self, user=user, action=self.status)
 
     def get_bug(self):
         return self.bugid or self.alias

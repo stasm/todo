@@ -2,6 +2,8 @@ from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 
+from todo.signals import status_changed
+
 class TodoInterface(object):
     """An interface class for all todo objects."""
 
@@ -98,15 +100,16 @@ class Todo(TodoInterface, models.Model):
        """
        return self.parent.children_all()
 
-    def activate(self):
-        self.activate_children()
+    def activate(self, user):
+        self.activate_children(user)
         self.status = 2
         self.save()
+        status_changed.send(sender=self, user=user, action=self.status)
 
-    def activate_children(self):
+    def activate_children(self, user):
         to_activate = self.children_all().filter(Q(is_auto_activated=True) |
                                                  Q(order=1))
         if len(to_activate) == 0:
             to_activate = self.children_all()
         for child in to_activate:
-            child.activate()
+            child.activate(user)
