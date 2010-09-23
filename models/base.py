@@ -1,8 +1,10 @@
 from django.db import models
 from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
+from django.contrib.contenttypes import generic
+from django.contrib.admin.models import LogEntry
 
-from todo.signals import status_changed
+from todo.signals import OFFSET, status_changed
 
 class TodoInterface(object):
     """An interface class for all todo objects."""
@@ -31,6 +33,9 @@ class TodoInterface(object):
 
 class Todo(TodoInterface, models.Model):
     """Common methods for all todo objects (trackers, tasks, steps)"""
+
+    # signals log actions using LogEntry
+    actions = generic.GenericRelation(LogEntry)
 
     class Meta:
         app_label ='todo'
@@ -72,6 +77,13 @@ class Todo(TodoInterface, models.Model):
 
     def is_next(self):
         return self.status == 3
+
+    def get_actions(self, action_flag):
+        offset_flag = action_flag + OFFSET
+        return self.actions.filter(action_flag=offset_flag)
+
+    def get_latest_action(self, action_flag):
+        return self.get_actions(action_flag).latest('action_time')
 
     def children_all(self):
         """Get the immediate children of the todo object.

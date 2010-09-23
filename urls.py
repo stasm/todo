@@ -7,6 +7,7 @@ action_patterns = patterns('todo.views.actions',
 
 # the API views return JSON responses
 api_patterns = patterns('todo.views.api',
+    (r'^step/(?P<step_id>\d+)/reset-time$', 'reset_time'),
     (r'^task/(?P<task_id>\d+)/update-snapshot$', 'update_snapshot'),
     (r'^task/(?P<task_id>\d+)/update-bugid$', 'update_bugid'),
     (r'^task/(?P<obj_id>\d+)/update$', 'update', {'obj': 'task'},

@@ -10,7 +10,7 @@ from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
                            RESOLUTION_CHOICES)
 from todo.signals import status_changed
     
-from datetime import datetime
+from datetime import datetime, timedelta
 
 class Step(Todo):
     prototype = models.ForeignKey(ProtoStep, related_name='steps', null=True,
@@ -28,12 +28,17 @@ class Step(Todo):
     is_auto_activated = models.BooleanField(default=False) #set on first
     is_review = models.BooleanField(default=False)
     resolves_parent = models.BooleanField(default=False) #set on last
+    allowed_time = models.PositiveSmallIntegerField(default=3,
+                                        verbose_name="Allowed time (in days)",
+                                        help_text="Time the owner has to "
+                                                  "complete the step.")
 
     objects = StatusManager()
     
     def __init__(self, *args, **kwargs):
         # the next step is unknown at this point
         self._next = self
+        self._overdue = None
         super(Step, self).__init__(*args, **kwargs)
 
     def get_has_children(self):
@@ -106,6 +111,18 @@ class Step(Todo):
         "Check if there's no more unresolved steps under this step's parent."
         return not bool(self.siblings_other().filter(status__lt=5).count() )
 
+    def is_overdue(self):
+        if self.status != 3:
+            # continue only for steps whose status is 'next'
+            return False
+        if self._overdue is None:
+            allowed_timeinterval = timedelta(minutes=self.allowed_time)
+            # get the last time the step was 'nexted'
+            last_activity_ts = self.get_latest_action(3).action_time
+            self._overdue = datetime.now() > (last_activity_ts +
+                                              allowed_timeinterval)
+        return self._overdue
+
     def activate(self, user):
         if self.has_children is True:
             self.activate_children(user)
@@ -116,6 +133,12 @@ class Step(Todo):
             self.status = 3
         self.save()
         status_changed.send(sender=self, user=user, action=self.status)
+
+    def reset_time(self, user):
+        if self.status == 3:
+            # the step must be a 'next' step.  Resetting the timer is simply
+            # sending the signal about the step being 'nexted' again.
+            status_changed.send(sender=self, user=user, action=self.status)
 
     def resolve(self, user, resolution=1, bubble_up=True):
         """Resolve the step.

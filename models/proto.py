@@ -217,9 +217,13 @@ class ProtoStep(Proto):
                                  related_name='protostep')
     owner = models.ForeignKey(Actor, null=True, blank=True)
     is_review = models.BooleanField(default=False)
+    allowed_time = models.PositiveSmallIntegerField(default=3,
+                                        verbose_name="Allowed time (in days)",
+                                        help_text="Time the owner has to "
+                                                  "complete the step.")
     # this is always False so no need to store in the DB
     clone_per_locale = False
-    inheritable = ('summary', 'owner', 'is_review')
+    inheritable = ('summary', 'owner', 'is_review', 'allowed_time')
     _type = 3
 
     class Meta:

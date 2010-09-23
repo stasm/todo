@@ -214,6 +214,9 @@
 .todo #task.active .step.next {
     background-color: #c1f6ac;
 }
+.todo #task.active .step.next.overdue {
+    background-color: #ffcac1;
+}
 .todo .step.resolved {
     color: #999;
     text-decoration: line-through;
@@ -228,7 +231,7 @@
 
 
 /*
- * Tracker and task
+ * Trackers and tasks in the tree view
  * ===========
  */
 
@@ -260,6 +263,8 @@
 
 .todo .quickedit {
     cursor: pointer;
+    color: #666;
+    font-size: 100%;
 }
 
 .todo .cancel {
@@ -296,6 +301,20 @@
 
 .todo .tasks small {
     font-style: italic;
+}
+
+/*
+ * Single task
+ * ===========
+ */
+
+.todo .step span.summary .quickedit {
+    visibility: hidden;
+    margin-left: 10px;
+}
+
+.todo .step span.summary:hover .quickedit {
+    visibility: visible;
 }
 
 /*

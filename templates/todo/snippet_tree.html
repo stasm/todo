@@ -17,10 +17,10 @@ $.fn.slugify = function(obj) {
 
 $(document).ready(function() {
   var filter = new Filter($('.task'));
-    var quickeditors = []
-    $('.summary').each(function(i, todo) {
-      quickeditors.push(new QuickEditor(todo));
-    });
+  var quickeditors = []
+  $('.summary').each(function(i, todo) {
+    quickeditors.push(new QuickEditor(todo));
+  });
 });
 
 function Filter(tasks) {
@@ -263,7 +263,7 @@ QuickEditor.prototype = {
             <span class="noneditable">
               <a href="{% urlvar task_view task.pk %}" class="replace-summary">{{task}}</a>
               {% if perms.todo.change_task %}
-                <small class="quickedit">✎</small>
+                <span class="quickedit">✎</span>
               {% endif %}
             </span>
             <span class="editable">

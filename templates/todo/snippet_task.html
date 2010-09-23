@@ -5,6 +5,10 @@
 
     $(document).ready(function() {
       Task.initResolvedStepsToggling();
+      var timeresetters = []
+      $('.step.overdue').each(function(i, step) {
+        timeresetters.push(new TimeResetter($(step)));
+      });
       {% if task.bug %}
         BzAPI.init();
       {% endif %}
@@ -46,6 +50,37 @@
       },
       
     }
+
+function TimeResetter(step) {
+  // step is the DOM element with class="step overdue", representing a step object
+  this.step = step;
+  this.quickedit = $('.quickedit', this.step).first();
+  this.url = this.quickedit.attr('data-url');
+  this.bindHandlers();
+}
+
+TimeResetter.prototype = {
+
+  bindHandlers: function bindHandlers() {
+    var self = this;
+    self.quickedit.click(function() {
+      self.submit();
+    });
+  },
+
+  submit: function submit() {
+    var self = this;
+    $.post(this.url, {}, function(response) {
+      console.log(response.status, response.message)
+      if (response.status == 'ok') {
+        self.step.removeClass('overdue');
+        self.quickedit.hide();
+      } else {
+        alert(response.message);
+      }
+    }, 'json');
+  },
+}
     
   {% if task.bug %}
     BzAPI = {
@@ -333,7 +368,7 @@
 {% recurse_children %}
   {% for step in steps %}
   
-    <div class="step {{step.get_status_display}} {% if step.has_children %}has_children{% endif %}">
+    <div class="step {{step.get_status_display}} {% if step.has_children %}has_children{% endif %} {% if step.is_overdue %}overdue{% endif %}">
       {% if task.is_open and step.is_next and perms.todo.change_step %}
         <form action="{% url todo.views.actions.resolve_step step.id %}" method="post">
           <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
@@ -343,9 +378,12 @@
             <input type="checkbox" name="success" onclick="this.form.submit()"/>
             <input type="checkbox" name="failure" onclick="this.form.submit()"/>
           {% endif %}
-          <span>
+          <span class="summary">
             {% if step.owner %}<em>{{step.owner}}:</em>{% endif %}
             {{step}}
+            {% if step.is_overdue %}
+              <span class="quickedit" data-url="{% url todo.views.api.reset_time step.pk %}">↺</span>
+            {% endif %}
           </span>
         </form>
       {% else %}

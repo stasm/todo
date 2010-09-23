@@ -4,9 +4,10 @@ from django.shortcuts import get_object_or_404
 from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
 
-from todo.models import Task, Tracker
+from todo.models import Step, Task, Tracker
 from todo.forms import UpdateTodoForm
-from todo.signals import todo_updated, UPDATED, SNAPSHOT_UPDATED, BUGID_UPDATED
+from todo.signals import (status_changed, todo_updated, UPDATED,
+                          SNAPSHOT_UPDATED, BUGID_UPDATED)
 
 import urllib2
 from datetime import datetime
@@ -38,6 +39,24 @@ def _status_response(status, message, data=None):
                 'data': data}
     return HttpResponse(json.dumps(response, indent=2, cls=DjangoJSONEncoder),
                         mimetype='application/javascript')
+
+@require_POST
+def reset_time(request, step_id):
+    "Reset the last activity timestamp for a Step to now."
+
+    if not request.user.has_perm('todo.change_step'):
+        # this permission is apparently enough, no need to requied
+        # `admin.add_logentry` on top of that.  Note that this view doesn't
+        # really change the step; it creates a LogEntry instead.  It makes more
+        # sense to check for right to change steps, however.
+        return _status_response('error', "You don't have permissions to "
+                                "change this step.")
+    step = get_object_or_404(Step, pk=step_id)
+    # `reset_time` will send the correct signal (in fact, it does just that),
+    # so there's no need to send it explicitly here.
+    step.reset_time(request.user)
+    return _status_response('ok', "Step's timer reset. You have %d days, "
+                            "again." % step.allowed_time)
 
 @require_POST
 def update(request, obj, obj_id):

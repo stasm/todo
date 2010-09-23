@@ -59,5 +59,6 @@ class ProtoStepAdmin(admin.ModelAdmin):
     # parent inlines, parent inlines, child inlines
     inlines = [TaskNestingInline, StepNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary', 'owner', 'is_review')}),
+            (None, {'fields': ('summary', 'owner', 'is_review',
+                               'allowed_time')}),
     )
