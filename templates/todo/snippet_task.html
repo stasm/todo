@@ -71,7 +71,6 @@ TimeResetter.prototype = {
   submit: function submit() {
     var self = this;
     $.post(this.url, {}, function(response) {
-      console.log(response.status, response.message)
       if (response.status == 'ok') {
         self.step.removeClass('overdue');
         self.quickedit.hide();

@@ -165,7 +165,6 @@ QuickEditor.prototype = {
     var data = {};
     var no_values_changed = true;
     controls.forEach(function(control, i) {
-      console.log(control.name, control.value, ' default: ', self.getDefault(control.name))
       data[control.name] = control.value;
       if (control.value != self.getDefault(control.name))
         no_values_changed = false;
@@ -175,7 +174,6 @@ QuickEditor.prototype = {
       return;
     }
     $.post(this.url, data, function(response) {
-      console.log(response.status, response.message)
       if (response.status == 'ok') {
         // `response.data` is a list of serialized todo objects that have
         // been changed
