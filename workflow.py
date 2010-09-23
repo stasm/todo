@@ -7,8 +7,7 @@ statuses = {
     5: ('resolved', 'resolved'),
 }
 
-STATUS_ADJ_CHOICES = tuple([(i, adj) for i, (verb, adj) in statuses.items()])
-STATUS_VERB_CHOICES = tuple([(i, verb) for i, (verb, adj) in statuses.items()])
+STATUS_CHOICES = tuple([(i, adj) for i, (verb, adj) in statuses.items()])
 
 resolutions = {
     1: 'success',

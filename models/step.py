@@ -6,8 +6,7 @@ from .actor import Actor
 from .proto import ProtoStep
 from .task import Task
 from todo.managers import StatusManager
-from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
-                           RESOLUTION_CHOICES)
+from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
 from todo.signals import status_changed
     
 from datetime import datetime, timedelta
@@ -21,7 +20,7 @@ class Step(Todo):
     task = models.ForeignKey(Task, related_name='steps')
     owner = models.ForeignKey(Actor, null=True, blank=True)
     order = models.PositiveIntegerField()
-    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
                                              null=True, blank=True)
     _has_children = models.NullBooleanField(null=True, blank=True)

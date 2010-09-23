@@ -8,8 +8,7 @@ from .project import Project
 from .proto import ProtoTask
 from .tracker import Tracker
 from todo.managers import StatusManager
-from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
-                           RESOLUTION_CHOICES)
+from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
 from todo.signals import status_changed
     
 from datetime import datetime
@@ -23,7 +22,7 @@ class Task(Todo):
     locale = models.ForeignKey(Locale, related_name='tasks', null=True,
                                blank=True)
     project = models.ForeignKey(Project, related_name='tasks')
-    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
     # a timestamp reflecting the up-to-date-ness of the Task compared to the 

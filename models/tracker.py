@@ -7,8 +7,7 @@ from .base import Todo
 from .project import Project
 from .proto import ProtoTracker
 from todo.managers import StatusManager
-from todo.workflow import (statuses, STATUS_ADJ_CHOICES, STATUS_VERB_CHOICES,
-                           RESOLUTION_CHOICES)
+from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
 from todo.signals import status_changed
 
 class Tracker(Todo):
@@ -20,7 +19,7 @@ class Tracker(Todo):
     locale = models.ForeignKey(Locale, related_name='trackers', null=True,
                                blank=True)
     project = models.ForeignKey(Project, related_name='trackers')
-    status = models.PositiveIntegerField(choices=STATUS_ADJ_CHOICES, default=1)
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
 
