@@ -36,14 +36,14 @@ Configuration
 
 In order to enable *todo* for your app, follow these steps:
 
-#. Add a one-to-one relation to your app's project model on 
-   `todo.models.Project`::
+#. Add a one-to-one relation to your app's project model definition pointing to
+`todo.models.Project` with `related_name="origin"`::
 
-    from yourapp.models import YourProject
+    from todo.models import Project as TodoProject
 
-    class Project(models.Model):
+    class YourProject(models.Model):
         ...
-        yourapp = models.OneToOneField(YourProject, related_name="todo")
+        todo = models.OneToOneField(TodoProject, related_name="origin")
 
 #. Create or modify views where you want to use the `todo` snippets. You must
    have at least two views:
