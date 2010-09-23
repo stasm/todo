@@ -27,7 +27,8 @@ def task(request, task, redirect_view='todo.views.demo.task'):
                             # the permissions of the user.
                             context_instance=RequestContext(request))
 
-def combined(request, project, locale, task_view='todo.views.demo.task'):
+def showcase(request, project, locale, tasks_shown=5,
+             task_view='todo.views.demo.task'):
     """A snippet to be included on the combined overview page.
 
     This snippet shows a short list of open tasks for a project+locale
@@ -36,13 +37,15 @@ def combined(request, project, locale, task_view='todo.views.demo.task'):
     Arguments:
     project -- an instance of todo.models.Project
     locale -- an instance of life.models.Locale
+    tasks_shown -- a number of tasks to show
     task_view -- a string with the name of the `single task` view
 
     See todo.views.demo.combined for an example of how to use this snippet.
 
     """
-    return render_to_string('todo/snippet_combined.html',
-                            {'tasks': project.open_tasks(locale),
+    tasks = project.open_tasks(locale).order_by('-latest_resolution_ts')[:5]
+    return render_to_string('todo/snippet_showcase.html',
+                            {'tasks': tasks,
                              'task_view': task_view})
 
 def tree(request, tracker=None, project=None, locale=None,

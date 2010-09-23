@@ -29,20 +29,3 @@ class Project(models.Model):
 
     def open_tasks(self, locale):
         return self.tasks.filter(locale=locale, status__in=(1, 2))
-
-    def iterchildren(self, locale, status=(1, 2)):
-        """Get immediate children of a project.
-
-        Returns an iterator with immediate children of a project, be it
-        trackers or tasks, for a particular locale.
-
-        An optional `status` argument can be passed in order to get trackers
-        and tasks of the specified status. The default value will return new
-        and active objects.
-
-        """
-        trackers = self.trackers.top_level().filter(locale=locale,
-                                                    status__in=status)
-        tasks = self.tasks.top_level().filter(locale=locale,
-                                              status__in=status)
-        return chain(trackers, tasks)

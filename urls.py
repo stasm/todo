@@ -20,7 +20,7 @@ api_patterns = patterns('todo.views.api',
 # that an application wishing to have todo needs to implement
 demo_patterns = patterns('todo.views.demo',
     (r'^task/(?P<task_id>\d+)$', 'task'),
-    (r'^combined$', 'combined'),
+    (r'^showcase$', 'showcase'),
     (r'^tracker/(?P<tracker_id>\d+)$', 'tracker'),
     (r'^trackers$', 'trackers'),
 )
