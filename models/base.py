@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 from django.core.exceptions import ObjectDoesNotExist
 
 class TodoInterface(object):
@@ -97,20 +98,15 @@ class Todo(TodoInterface, models.Model):
        """
        return self.parent.children_all()
 
-    def is_any_sibling_status(self, *status):
-        return bool(self.siblings_all().filter(status__in=status))
-
     def activate(self):
         self.activate_children()
         self.status = 2
         self.save()
 
     def activate_children(self):
-        auto_activated_children = self.children_all().filter(is_auto_activated=True)
-        if len(auto_activated_children) == 0:
-            try:
-                auto_activated_children = (self.children_all().get(order=1),)
-            except ObjectDoesNotExist:
-                auto_activated_children = self.children_all()
-        for child in auto_activated_children:
+        to_activate = self.children_all().filter(Q(is_auto_activated=True) |
+                                                 Q(order=1))
+        if len(to_activate) == 0:
+            to_activate = self.children_all()
+        for child in to_activate:
             child.activate()

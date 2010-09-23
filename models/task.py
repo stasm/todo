@@ -65,6 +65,16 @@ class Task(Todo):
         """
         return self.steps.top_level()
 
+    def siblings_all(self):
+       """Get a QuerySet with the Task siblings of the current Task.
+       
+       Returns sibling Tasks only, without Trackers which happen to be at the
+       same level in the hierarchy as the Task.  In order to get the sibling
+       Trackers, call Task.parent.children_all.
+
+       """
+       return self.parent.tasks.all()
+
     def next_steps(self):
        "Get the next steps in the task."
        return self.steps.next()

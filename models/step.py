@@ -30,7 +30,10 @@ class Step(Todo):
 
     objects = StatusManager()
     
-    _next = None
+    def __init__(self, *args, **kwargs):
+        # the next step is unknown at this point
+        self._next = self
+        super(Step, self).__init__(*args, **kwargs)
 
     def get_has_children(self):
         if self._has_children is None:
@@ -73,13 +76,17 @@ class Step(Todo):
 
        """
        if self.parent is None:
-           return Step.objects.filter(task=self.task, parent=None)
+           return self.task.children_all()
        else:
            return super(Step, self).siblings_all()
 
+    def siblings_other(self):
+        "Get all siblings except the current object."
+        return self.siblings_all().exclude(pk=self.pk)
+
     def next_step(self):
         "Get the step that should be completed after this one."
-        if self._next is None:
+        if self._next is self:
             try:
                 next = self.order + 1
                 self._next = self.siblings_all().get(order=next)
@@ -89,6 +96,14 @@ class Step(Todo):
 
     def is_last(self):
         return self.next_step() is None
+
+    def is_only_active(self):
+        "Check if there's no more active steps under this step's parent."
+        return not bool(self.siblings_other().filter(status__in=(2, 3)).count())
+
+    def is_last_open(self):
+        "Check if there's no more unresolved steps under this step's parent."
+        return not bool(self.siblings_other().filter(status__lt=5).count() )
 
     def activate(self):
         if self.has_children is True:
@@ -128,17 +143,25 @@ class Step(Todo):
         self.status = 5
         self.resolution = resolution
         self.save()
-        if bubble_up:
-            if self.parent and (self.is_last() or self.resolves_parent):
+        if not bubble_up:
+            # don't do anything more
+            return
+        if ((self.is_last() and self.is_only_active()) or
+            self.is_last_open()):
+            if self.parent:
+                # resolve the parent Step(s)
                 if self.resolution == 2:
                     # if the step has failed, resolve only the immediate parent
-                    # and make a fresh copy of it
+                    # and make a fresh copy of it.  The parent needs to be
+                    # a Step, not the Task (can't clone a Task), hence check
+                    # for self.parent.
                     bubble_up = False
                     clone = self.parent.clone()
                     clone.activate()
-                if not self.is_any_sibling_status(2, 3):
-                    self.parent.resolve(self.resolution, bubble_up)
-            elif (self.resolution == 1 and
-                  not self.is_last() and
-                  self.next_step().status_is('new')):
-                self.next_step().activate()
+                self.parent.resolve(self.resolution, bubble_up)
+            else:
+                # no parent means this is a top-level step and the task is
+                # ready to be resolved.
+                self.task.resolve(self.resolution)
+        elif self.next_step() and self.next_step().status_is('new'):
+            self.next_step().activate()
