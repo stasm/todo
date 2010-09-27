@@ -249,11 +249,11 @@ QuickEditor.prototype = {
 
   <div class="tasks">
     {% for task, props in tree.tasks.iteritems %}
-    <div class="task {{task.get_status_display}}"
+    <div class="task {% if task.is_resolved_all %}resolved{% endif %}"
         {% for prop, vals in props.iteritems %}
           data-{{prop}}="{{vals|join:'|'}}"
         {% endfor %}>
-        {% if task.is_open %}
+        {% if not task.is_resolved_all %}
           <span class="summary">
             {% if task.locale %}[{{task.locale.code}}]{% endif %}
             <span class="noneditable">

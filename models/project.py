@@ -21,11 +21,13 @@ class Project(models.Model):
         else:
             tasks = self.tasks
         all = tasks.count()
-        open = tasks.filter(status__lt=4).count()
+        # status and resolution are kept on the intermediary `TaskInProject`
+        # model
+        open = tasks.filter(statuses__status__lt=4).count()
         return {'all': all,
                 'open': open,
                 'completion': 100 * (all - open) / all if all != 0 else 0,
                }
 
     def open_tasks(self, locale):
-        return self.tasks.filter(locale=locale, status__in=(1, 2))
+        return self.tasks.filter(locale=locale, statuses__status__in=(1, 2))

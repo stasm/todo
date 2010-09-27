@@ -4,15 +4,20 @@ from todo.models import *
 from todo.admin.proto import (ProtoTrackerAdmin, ProtoTaskAdmin,
                               ProtoStepAdmin)
 
+class TaskInProjectInline(admin.TabularInline):
+    model = TaskInProject
+    verbose_name_plural = 'Projects'
+    extra = 1
+
 class TaskAdmin(admin.ModelAdmin):
     list_display_links = ('summary',)
-    list_display = ('id',) + list_display_links + ('project', 'locale')
+    list_display = ('id',) + list_display_links + ('locale',)
+    inlines = [TaskInProjectInline]
     fieldsets = (
             (None, {'fields': ('summary', 'alias', 'bugid')}),
-            ('Status', {'fields': ('status',)}),
             ('Hierarchy', {
                 'classes': ('collapse',),
-                'fields': ('project', 'locale', 'parent'),
+                'fields': ('locale', 'parent'),
             }),
             ('Under the hood', {
                 'classes': ('collapse',),
@@ -25,6 +30,8 @@ admin.site.register(Actor)
 admin.site.register(Tracker)
 admin.site.register(Task, TaskAdmin)
 admin.site.register(Step)
+admin.site.register(TaskInProject)
+admin.site.register(TrackerInProject)
 admin.site.register(ProtoTracker, ProtoTrackerAdmin)
 admin.site.register(ProtoTask, ProtoTaskAdmin)
 admin.site.register(ProtoStep, ProtoStepAdmin)

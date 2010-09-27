@@ -57,7 +57,8 @@ class Todo(TodoInterface, models.Model):
 
         """
         suffix = kwargs.pop('suffix', None)
-        if suffix is not None and 'alias' not in kwargs:
+        if False:
+        #if suffix is not None and 'alias' not in kwargs:
             if 'parent' in kwargs and kwargs['parent'] is not None:
                 kwargs['alias'] = kwargs['parent'].alias + suffix
             elif 'project' in kwargs and kwargs['project'] is not None:

@@ -10,8 +10,8 @@ from todo.signals import OFFSET, actions, status_changed, todo_updated
 from .project import Project
 from .actor import Actor
 from .proto import *
-from .tracker import Tracker
-from .task import Task
+from .tracker import Tracker, TrackerInProject
+from .task import Task, TaskInProject
 from .step import Step
 
 @receiver(todo_updated)

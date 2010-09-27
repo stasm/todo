@@ -73,6 +73,7 @@ def tree(request, tracker=None, project=None, locale=None,
     #     selected_related('parent')
     #   repeat until there's no parents left
 
+    filters = {}
     if tracker is not None:
         trackers = (tracker,)
         tasks = []
@@ -80,9 +81,11 @@ def tree(request, tracker=None, project=None, locale=None,
         trackers = Tracker.objects
         tasks = Task.objects
         if project is not None:
-            trackers = trackers.filter(project=project)
-            tasks = tasks.filter(project=project)
+            filters.update(projects=project)
+            trackers = trackers.filter(projects=project)
+            tasks = tasks.filter(projects=project)
         if locale is not None:
+            filters.update(locale=locale)
             # return top-most trackers for the locale
             trackers = trackers.filter(locale=locale, parent__locale=None)
             # return top-most tasks for the locale
@@ -94,17 +97,17 @@ def tree(request, tracker=None, project=None, locale=None,
             tasks = tasks.filter(parent=None)
 
     facets = {
-        'project': [],
-        'locale': [],
-        'status': [],
-        'prototype': [],
-        'bug_id': [],
+        'projects': [],
+        'locales': [],
+        'statuses': [],
+        'prototypes': [],
+        'bugs': [],
         'trackers': [],
         'tracker_prototypes': [],
         'next_steps_owners': [],
         'next_steps': [],
     }
-    tree, facets = _make_tree(trackers, tasks, [], facets) 
+    tree, facets = _make_tree(filters, trackers, tasks, [], facets) 
 
     return render_to_string('todo/snippet_tree.html',
                             {'tree': tree,
@@ -123,7 +126,7 @@ def _update_facets(facets, task_properties):
         facets[prop] = list(set(facets[prop])) # uniquify the list
     return facets
 
-def _make_tree(trackers, tasks, tracker_chain, facets):
+def _make_tree(filters, trackers, tasks, tracker_chain, facets):
     """Construct the data tree about requested trackers.
 
     The function recursively iterates over the given list of trackers
@@ -133,6 +136,7 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
     used to navigate the tracker tree.
 
     Arguments:
+    filters --
     trackers -- an iterable of todo.models.Tracker instances that that tree
                 will be constructed for.
     tasks -- an iterable of todo.models.Tracker instances that that tree
@@ -150,18 +154,26 @@ def _make_tree(trackers, tasks, tracker_chain, facets):
 
     tree = {'trackers': {}, 'tasks': {}}
     for tracker in trackers:
-        subtree, facets = _make_tree(tracker.children_all(),
+        child_trackers = tracker.children_all()
+        if 'projects' in filters:
+            child_trackers = child_trackers.filter(projects=filters['projects'])
+        if 'locale' in filters:
+            child_trackers = child_trackers.filter(locale=filters['locale'])
+        subtree, facets = _make_tree(filters,
+                                     child_trackers,
                                      tracker.tasks.all(),
                                      tracker_chain + [tracker],
                                      facets)
         tree['trackers'].update({tracker: subtree}) 
     for task in tasks:
         task_properties = {
-            'project': [unicode(task.project)],
-            'locale': [unicode(task.locale)],
-            'status': [task.get_status_display()],
-            'prototype': [task.prototype.summary],
-            'bug_id': [task.bugid],
+            'projects': [unicode(p) for p in task.projects.all()],
+            'locales': [unicode(task.locale)],
+            'statuses': ['%s for %s' % 
+                       (s.get_status_display(), unicode(s.project)) for s in
+                       task.statuses.all()],
+            'prototypes': [task.prototype.summary],
+            'bugs': [task.bugid],
             'trackers': [t.summary for t in tracker_chain],
             'tracker_prototypes': [t.prototype.summary for t in 
                                    tracker_chain if t.prototype],

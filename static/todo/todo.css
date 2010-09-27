@@ -193,37 +193,37 @@
     background-color: #eee;
 }
 
-.todo .step {
+.todo #task .step {
     margin: 10px 20px;
-    color: #999;
+    color: #000;
 }
-
-.todo #task input,
-.todo .step input {
+.todo h3 form {
     float: left;
+    margin-right: 10px;
+}
+.todo #task input {
+    margin: 5px 0 0 0;
+}
+.todo #task .step input {
     margin-right: 10px;
     margin-left: 0;
 }
-.todo #task input {
-    margin-top: 5px;
-}
-.todo #task.active .step.active,
-.todo #task.active .step.next {
-    color: #000;
-}
-.todo #task.active .step.next {
+.todo #task .step.next {
     background-color: #c1f6ac;
 }
-.todo #task.active .step.next.overdue {
+.todo #task .step.next.overdue {
     background-color: #ffcac1;
 }
-.todo .step.resolved {
+.todo #task .step.resolved {
     color: #999;
     text-decoration: line-through;
 }
-.todo .step.resolved.has_children,
+.todo #task .step.resolved.has_children,
 .todo #task > .step.resolved {
     display: none;
+}
+.todo #task.resolved .step {
+    color: #999;
 }
 .todo #task.resolved .step.resolved {
     display: block;
