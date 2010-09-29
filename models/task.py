@@ -63,12 +63,8 @@ class Task(Todo):
         return str(self.id)
 
     @models.permalink
-    def get_absolute_url(self):
-        # FIXME shouldn't point to a demo view
-        return ('todo.views.demo.task', [str(self.id)])
-
     def get_admin_url(self):
-        return '/admin/todo/task/%s' % str(self.id)
+        return ('admin:todo_task_change', [self.id])
 
     def clone(self):
         return self.prototype.spawn(summary=self.summary, parent=self.parent,

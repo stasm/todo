@@ -54,12 +54,8 @@ class Tracker(Todo):
         return str(self.id)
     
     @models.permalink
-    def get_absolute_url(self):
-        # FIXME shouldn't point to a demo view
-        return ('todo.views.demo.tracker', [str(self.id)])
-
     def get_admin_url(self):
-        return '/admin/todo/tracker/%s' % str(self.id)
+        return ('admin:todo_tracker_change', [self.id])
 
     def is_generic(self):
         return self.prototype is None

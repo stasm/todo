@@ -63,11 +63,8 @@ class Step(Todo):
         return str(self.id)
 
     @models.permalink
-    def get_absolute_url(self):
-        return ('todo.views.task', [str(self.id)])
-
     def get_admin_url(self):
-        return '/admin/todo/step/%s' % str(self.id)
+        return ('admin:todo_step_change', [self.id])
 
     def clone(self, user):
         "Clone the step using the protype used to create it."

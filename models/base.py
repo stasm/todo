@@ -16,10 +16,8 @@ class TodoInterface(object):
     def code(self):
         raise NotImplementedError()
 
-    def get_absolute_url(self):
-        raise NotImplementedError()
-
     def get_admin_url(self):
+        # see https://bugzilla.mozilla.org/show_bug.cgi?id=600544
         raise NotImplementedError()
 
     def children_all(self):
