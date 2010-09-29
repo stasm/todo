@@ -13,6 +13,17 @@ from todo.signals import status_changed
     
 from datetime import datetime
 
+class TaskInProject(models.Model):
+    task = models.ForeignKey('Task', related_name="statuses")
+    project = models.ForeignKey(Project, related_name="task_statuses")
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
+                                             null=True, blank=True)
+
+    class Meta:
+        app_label = 'todo'
+        unique_together = ('task', 'project')
+
 class Task(Todo):
     prototype = models.ForeignKey(ProtoTask, related_name='tasks', null=True,
                                   blank=True)
@@ -21,8 +32,8 @@ class Task(Todo):
     summary = models.CharField(max_length=200, blank=True)
     locale = models.ForeignKey(Locale, related_name='tasks', null=True,
                                blank=True)
-    project = models.ForeignKey(Project, related_name='tasks')
-    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    projects = models.ManyToManyField(Project, related_name='tasks',
+                                      through=TaskInProject)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
     # a timestamp reflecting the up-to-date-ness of the Task compared to the 
@@ -39,6 +50,13 @@ class Task(Todo):
 
     def __unicode__(self):
         return self.summary
+
+    def assign_to_projects(self, projects):
+        for project in projects:
+            TaskInProject.objects.create(task=self, project=project)
+
+    def is_resolved_all(self):
+        return not self.statuses.filter(status__lt=5).count()
 
     @property
     def code(self):
@@ -82,12 +100,13 @@ class Task(Todo):
        "Get the next steps in the task."
        return self.steps.next()
 
-    def resolve(self, user, resolution=1):
+    def resolve(self, user, project, resolution=1):
         "Resolve the task."
-        self.status = 5
-        self.resolution = resolution
-        self.save()
-        status_changed.send(sender=self, user=user, action=self.status)
+        status = self.statuses.get(project=project)
+        status.status = 5
+        status.resolution = resolution
+        status.save()
+        status_changed.send(sender=self, user=user, action=5)
 
     def get_bug(self):
         return self.bugid or self.alias

@@ -6,7 +6,7 @@ class ProtoChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, proto):
         return "%s (%s)" % (proto.summary, proto.suffix)
 
-class ProjectChoiceField(forms.ModelChoiceField):
+class ProjectMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, project):
         return "%s (%s)" % (project.label, project.code)
 
@@ -16,20 +16,17 @@ class LocaleMultipleChoiceField(forms.ModelMultipleChoiceField):
 
 class TrackerChoiceField(forms.ModelChoiceField):
     def label_from_instance(self, tracker):
-        return "%d: %s (%s) %s + %s" % (tracker.pk, tracker.summary,
-                                        tracker.alias, tracker.project,
-                                        tracker.locale)
+        return "%d: %s (%s) %s" % (tracker.pk, tracker.summary,
+                                        tracker.alias, tracker.locale)
 
 class ChooseParentForm(forms.Form):
     "Form used to choose an existing parent tracker or create a new one."
 
-    _q = Tracker.objects.select_related('project', 'locale').all()
+    _q = Tracker.objects.select_related('locale').all()
     tracker = TrackerChoiceField(label='Existing parent tracker',
                                 queryset=_q, required=False,
                                 help_text="OR create a new one:")
     parent_summary = forms.CharField(label='Summary', max_length=200,
-                                     required=False)
-    parent_project = ProjectChoiceField(queryset=Project.objects.all(),
                                      required=False)
     parent_locale = forms.ModelChoiceField(queryset=Locale.objects.all(),
                                     required=False, help_text="Probably better"
@@ -42,9 +39,9 @@ class ChooseParentForm(forms.Form):
 
     def clean(self):
         clean = self.cleaned_data
-        if clean['parent_summary'] and not clean['parent_project']:
-            raise forms.ValidationError("Specify at least a summary and a "
-                                        "project to create a new tracker.")
+        if not clean['tracker'] and not clean['parent_summary']:
+            raise forms.ValidationError("Specify at least a summary "
+                                        "to create a new tracker.")
         return clean
 
 class AddTasksForm(forms.Form):
@@ -52,7 +49,7 @@ class AddTasksForm(forms.Form):
     summary = forms.CharField(label='Summary', max_length=200, required=False,
                               help_text="Leave empty to use the prototype's "
                               "summary.")
-    project = ProjectChoiceField(queryset=Project.objects.all())
+    projects = ProjectMultipleChoiceField(queryset=Project.objects.all())
     locales = LocaleMultipleChoiceField(queryset=Locale.objects.all(),
                                         required=False)
     suffix = forms.SlugField(label='Alias suffix', max_length=8,
@@ -89,6 +86,7 @@ class UpdateTodoForm(forms.Form):
 
 class ResolveTaskForm(forms.Form):
     redirect_url = forms.CharField()
+    project_code = forms.CharField()
 
 class ResolveSimpleStepForm(forms.Form):
     redirect_url = forms.CharField()

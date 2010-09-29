@@ -3,7 +3,7 @@ from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
 
-from todo.models import Task, Step
+from todo.models import Project, Task, Step
 from todo.forms import *
 
 @require_POST
@@ -13,7 +13,9 @@ def resolve_task(request, task_id):
     form = ResolveTaskForm(request.POST)
     if form.is_valid():
         redirect_url = form.cleaned_data['redirect_url']
-        task.resolve(request.user)
+        project_code = form.cleaned_data['project_code']
+        project = get_object_or_404(Project, code=project_code)
+        task.resolve(request.user, project)
         return HttpResponseRedirect(redirect_url)
         
 @require_POST

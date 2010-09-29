@@ -52,17 +52,30 @@ class Proto(models.Model):
         # fields that are accepted by the spawned object
         accepted_fields = [f.name for f in related_model._meta.fields]
         if self.type in (1, 2):
-            # for trackers and tasks
+            # for trackers and tasks. need to add this because the field is
+            # called `alias`, but you can pass a `suffix` which will be
+            # appended to the parent's `alias`.
             accepted_fields.append('suffix')
-        # remove empty/unknown values from custom_fields
-        # and overwrite other attributes
+            projects = custom_fields.get('projects', None)
+        else:
+            # steps don't belong to projects. Their parent tasks do.
+            projects = None
+        # remove empty/unknown values from custom_fields and overwrite other
+        # attributes
         custom_fields = [(k, v) for k, v in custom_fields.items()
                                 if v and k in accepted_fields]
         # fields (with values) which will be inherited by the spawned object
         fields = dict([(f, getattr(self, f)) for f in self.inheritable])
         # custom fields override fields from the proto
         fields.update(custom_fields)
-        return related_model(prototype=self, **fields)
+        todo = related_model(prototype=self, **fields)
+        todo.save()
+        # in order to create relations between Trackers/Tasks and Project,
+        # create required {Tracker,Task}InProject objects handling the
+        # many-to-many relation.
+        if projects:
+            todo.assign_to_projects(projects)
+        return todo
 
     def _spawn_children(self, user, cloning_allowed, **custom_fields):
         "Create children of the todo object."
@@ -108,11 +121,11 @@ class Proto(models.Model):
         more were created as children.
 
         """
-        if self.type in (1, 2) and 'project' not in custom_fields:
-            raise TypeError("Pass a project to spawn trackers and tasks.")
+        if self.type in (1, 2) and 'projects' not in custom_fields:
+            raise TypeError("Pass projects to spawn trackers and tasks.")
         todo = self._spawn_instance(**custom_fields)
         todo.save()
-        status_changed.send(sender=todo, user=user, action=todo.status)
+        status_changed.send(sender=todo, user=user, action=1)
         if self.type in (1, 3):
             # trackers and steps
             to_be_removed = self.inheritable

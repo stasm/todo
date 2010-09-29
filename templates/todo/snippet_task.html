@@ -342,20 +342,23 @@ TimeResetter.prototype = {
     
 </script>
 
-<div id="task" class="{{task.get_status_display}} {% if task.bug %}column left wide{% endif %}">
+<div id="task" class="{% if task.is_resolved_all %}resolved{% endif %} {% if task.bug %}column left wide{% endif %}">
 <h3>
-  {% ifequal task.get_status_display "resolved" %}
+  {% if task.is_resolved_all %}
     <input type="checkbox" checked="checked" disabled="disabled"/>
   {% else %}
-    {% if perms.todo.change_task %}
-      <form action="{% url todo.views.actions.resolve_task task.id %}" method="post">
-        <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
-        <input type="checkbox" onclick="this.form.submit()"/>
-      </form>
-    {% else %}
-      <input type="checkbox" disabled="disabled"/>
-    {% endif %}
-  {% endifequal %}
+    <form action="{% url todo.views.actions.resolve_task task.id %}" method="post">
+      <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
+      {% for status in task.statuses.all %}
+        <small>[
+          <input type="checkbox" name="project_code" value="{{status.project.code}}" onclick="this.form.submit()"
+               {% if not perms.todo.change_task %}disabled="disabled"{% endif %}
+               {% ifequal status.status 5 %}checked="checked" disabled="disabled"{% endifequal %}
+        />
+        {{status.project.code}}]</small>
+      {% endfor %}
+    </form>
+  {% endif %}
   <span>{{task}}</span>
   <a href="#" id="show_resolved" class="edit">show resolved steps</a>
   {% if user.is_staff and perms.todo.change_task %}
@@ -368,7 +371,7 @@ TimeResetter.prototype = {
   {% for step in steps %}
   
     <div class="step {{step.get_status_display}} {% if step.has_children %}has_children{% endif %} {% if step.is_overdue %}overdue{% endif %}">
-      {% if task.is_open and step.is_next and perms.todo.change_step %}
+      {% if not task.is_resolved_all and step.is_next and perms.todo.change_step %}
         <form action="{% url todo.views.actions.resolve_step step.id %}" method="post">
           <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
           {% if not step.is_review %}

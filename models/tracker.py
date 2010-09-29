@@ -10,6 +10,17 @@ from todo.managers import StatusManager
 from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
 from todo.signals import status_changed
 
+class TrackerInProject(models.Model):
+    tracker = models.ForeignKey('Tracker', related_name="statuses")
+    project = models.ForeignKey(Project, related_name="tracker_statuses")
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
+                                             null=True, blank=True)
+
+    class Meta:
+        app_label = 'todo'
+        unique_together = ('tracker', 'project')
+
 class Tracker(Todo):
     prototype = models.ForeignKey(ProtoTracker, related_name='trackers',
                                   null=True, blank=True)
@@ -18,8 +29,11 @@ class Tracker(Todo):
     summary = models.CharField(max_length=200)
     locale = models.ForeignKey(Locale, related_name='trackers', null=True,
                                blank=True)
-    project = models.ForeignKey(Project, related_name='trackers')
+    projects = models.ManyToManyField(Project, related_name='trackers',
+                                      through=TrackerInProject)
     status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
+                                             null=True, blank=True)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
 
@@ -30,6 +44,10 @@ class Tracker(Todo):
 
     def __unicode__(self):
         return self.summary
+
+    def assign_to_projects(self, projects):
+        for project in projects:
+            TrackerInProject.objects.create(tracker=self, project=project)
     
     @property
     def code(self):
@@ -42,6 +60,9 @@ class Tracker(Todo):
 
     def get_admin_url(self):
         return '/admin/todo/tracker/%s' % str(self.id)
+
+    def is_generic(self):
+        return self.prototype is None
 
     def clone(self):
         return self.prototype.spawn(summary=self.summary, parent=self.parent,

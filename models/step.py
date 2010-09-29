@@ -189,7 +189,8 @@ class Step(Todo):
                 self.parent.resolve(user, self.resolution, bubble_up)
             else:
                 # no parent means this is a top-level step and the task is
-                # ready to be resolved.
-                self.task.resolve(user, self.resolution)
+                # possibly ready to be resolved. This left for the user to
+                # decide however.
+                pass
         elif self.next_step() and self.next_step().status_is('new'):
             self.next_step().activate(user)

@@ -26,11 +26,9 @@ def create(request, obj):
             parent_clean = parent_form.cleaned_data
             parent = parent_clean['tracker']
             if (parent is None and
-                parent_clean['parent_summary'] and
-                parent_clean['parent_project']):
+                parent_clean['parent_summary']):
                 # user wants to create a new tracker which will be the parent
                 parent = Tracker(summary=parent_clean['parent_summary'],
-                                 project=parent_clean['parent_project'],
                                  locale=parent_clean['parent_locale'],
                                  suffix=parent_clean['parent_suffix'])
                 parent.save()
@@ -39,10 +37,14 @@ def create(request, obj):
                                     action=parent.status)
                 parent.activate(request.user)
             if parent is not None:
+                try:
+                    parent.assign_to_projects(fields['projects'])
+                except IntegrityError:
+                    # the parent tracker already belongs to these projects
+                    pass
                 # For consistency's sake, if a parent is specified, try to
                 # use its values for `project` and `locale` to create the
                 # task, ignoring values provided by the user in the form.
-                fields['project'] = parent.project
                 if parent.locale:
                     fields['locales'] = [parent.locale]
             fields['parent'] = parent
