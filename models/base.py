@@ -106,14 +106,14 @@ class Todo(TodoInterface, models.Model):
         return self.children.all()
 
     def siblings_all(self):
-       """Get a QuerySet with the siblings of the current todo object.
-       
-       Since it returns a QuerySet, the name is `siblings_all` rather than
-       `siblings`, in order to help avoid confusion (similar to `children_all`
-       above).
-
-       """
-       return self.parent.children_all()
+        """Get a QuerySet with the siblings of the current todo object.
+        
+        Since it returns a QuerySet, the name is `siblings_all` rather than
+        `siblings`, in order to help avoid confusion (similar to `children_all`
+        above).
+ 
+        """
+        return self.parent.children_all()
 
     def activate(self, user):
         self.activate_children(user)

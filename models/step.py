@@ -75,15 +75,15 @@ class Step(Todo):
                                     parent=self.parent, order=self.order)
 
     def siblings_all(self):
-       """Get a QuerySet with the siblings of the step.
-       
-       See `todo.models.base.Todo.siblings_all` for more docs.
-
-       """
-       if self.parent is None:
-           return self.task.children_all()
-       else:
-           return super(Step, self).siblings_all()
+        """Get a QuerySet with the siblings of the step.
+        
+        See `todo.models.base.Todo.siblings_all` for more docs.
+ 
+        """
+        if self.parent is None:
+            return self.task.children_all()
+        else:
+            return super(Step, self).siblings_all()
 
     def siblings_other(self):
         "Get all siblings except the current object."

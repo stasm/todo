@@ -69,10 +69,10 @@ class Tracker(Todo):
                                     locale=self.locale)
 
     def siblings_all(self):
-       if self.parent is None:
-           return Tracker.objects.top_level()
-       else:
-           return super(Tracker, self).siblings_all()
+        if self.parent is None:
+            return Tracker.objects.top_level()
+        else:
+            return super(Tracker, self).siblings_all()
 
     def activate_children(self, user):
         "Activate child trackers and tasks."
