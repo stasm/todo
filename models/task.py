@@ -81,7 +81,11 @@ class Task(Todo):
         all steps under the task, no matter how deep they are in the steps
         hierarchy.
 
-        See todo.models.base.Todo for more docs.
+        Backstory:  Tasks do not have the `children` manager, and instead, you
+        need to query for Steps with no parent (because only other Steps can be
+        Steps' parents).  Since you make an actual query, you get a queryset,
+        so the behavior is inconsistent with that of accessing `children` on
+        Steps and Tracker (which returns a manager).
 
         """
         return self.steps.top_level()
@@ -89,9 +93,11 @@ class Task(Todo):
     def siblings_all(self):
         """Get a QuerySet with the Task siblings of the current Task.
         
-        Returns sibling Tasks only, without Trackers which happen to be at the
-        same level in the hierarchy as the Task.  In order to get the sibling
-        Trackers, call Task.parent.children_all.
+        Returns sibling Tasks only, without Trackers which might happen to be
+        at the same level in the hierarchy as the Task.  In order to get the
+        sibling Trackers, call Task.parent.children_all.
+        
+        See `todo.models.base.TodoInterface.siblings_all` for more docs.
  
         """
         return self.parent.tasks.all()

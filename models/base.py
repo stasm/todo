@@ -22,6 +22,29 @@ class TodoInterface(object):
     def get_admin_url(self):
         raise NotImplementedError()
 
+    def children_all(self):
+        """Get the immediate children of the todo object.
+
+        In its simplest form, this method just calls `all` on the todo object's
+        `children` manager.  It does more if called on a Task.  By calling
+        `children_all` you make sure that the returned value is a QuerySet, no
+        matter which model's instance you called it on.
+
+        See todo.models.Task.children_all for more docs.
+        
+        """
+        raise NotImplementedError()
+
+    def siblings_all(self):
+        """Get a QuerySet with the siblings of the current todo object.
+        
+        Since it returns a QuerySet, the name is `siblings_all` rather than
+        `siblings`, in order to help avoid confusion (similar to `children_all`
+        above).
+ 
+        """
+        raise NotImplementedError()
+
     def clone(self):
         raise NotImplementedError()
 
@@ -57,6 +80,7 @@ class Todo(TodoInterface, models.Model):
 
         """
         suffix = kwargs.pop('suffix', None)
+        # turn this off for now while transitioning to multiprojects
         if False:
         #if suffix is not None and 'alias' not in kwargs:
             if 'parent' in kwargs and kwargs['parent'] is not None:
@@ -87,33 +111,6 @@ class Todo(TodoInterface, models.Model):
 
     def get_latest_action(self, action_flag=None):
         return self.get_actions(action_flag).latest('action_time')
-
-    def children_all(self):
-        """Get the immediate children of the todo object.
-
-        In its simplest form, this method just calls `all` on the todo object's
-        `children` manager.  It does more if called on a Task.  By calling
-        `children_all` you make sure that the returned value is a QuerySet, no
-        matter which model's instance you called it on.
-        
-        Backstory:  Tasks do not have the `children` manager, and instead, you
-        need to query for Steps with no parent (because only other Steps can be
-        Steps' parents).  Since you make an actual query, you get a queryset,
-        so the behavior is inconsistent with that of accessing `children` on
-        Steps and Tracker (which returns a manager).
-
-        """
-        return self.children.all()
-
-    def siblings_all(self):
-        """Get a QuerySet with the siblings of the current todo object.
-        
-        Since it returns a QuerySet, the name is `siblings_all` rather than
-        `siblings`, in order to help avoid confusion (similar to `children_all`
-        above).
- 
-        """
-        return self.parent.children_all()
 
     def activate(self, user):
         self.activate_children(user)

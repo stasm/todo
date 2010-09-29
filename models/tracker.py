@@ -68,7 +68,16 @@ class Tracker(Todo):
         return self.prototype.spawn(summary=self.summary, parent=self.parent,
                                     locale=self.locale)
 
+    def children_all(self):
+        "Get child trackers of the tracker."
+        return self.children.all()
+
     def siblings_all(self):
+        """Get a QuerySet with the siblings of the tracker.
+        
+        See `todo.models.base.TodoInterface.siblings_all` for more docs.
+ 
+        """
         if self.parent is None:
             return Tracker.objects.top_level()
         else:

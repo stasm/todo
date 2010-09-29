@@ -74,10 +74,14 @@ class Step(Todo):
         return self.prototype.spawn(user, summary=self.summary, task=self.task,
                                     parent=self.parent, order=self.order)
 
+    def children_all(self):
+        "Get child steps of the tracker."
+        return self.children.all()
+
     def siblings_all(self):
         """Get a QuerySet with the siblings of the step.
         
-        See `todo.models.base.Todo.siblings_all` for more docs.
+        See `todo.models.base.TodoInterface.siblings_all` for more docs.
  
         """
         if self.parent is None:
