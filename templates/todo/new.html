@@ -2,10 +2,16 @@
 {% extends "base.html" %}
 
 {% block content %}
-  <h2>Create new</h2>
 
-  <ul>
-    <li><a href="{% url todo-create-tasks %}">tasks</a></li>
-    <li><a href="{% url todo-create-trackers %}">trackers</a></li>
-  </ul>
+  <h2>Create new</h2>
+  <p>Step {{ step }} of {{ step_count }}</p>
+  <form action="." method="post">
+    <table>
+      {{ form }}
+    </table>
+    <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
+    {{ previous_fields|safe }}
+    <input type="submit">
+  </form>
+  
 {% endblock %}

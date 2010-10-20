@@ -1,4 +1,6 @@
 from django.conf.urls.defaults import *
+from todo.forms.new import (CreateNewWizard, ChooseProjectLocaleForm,
+                            ChoosePrototypeForm, ChooseParentFactory)
 
 action_patterns = patterns('todo.views.actions',
     (r'^resolve/task/(?P<task_id>\d+)$', 'resolve_task'),
@@ -16,6 +18,11 @@ api_patterns = patterns('todo.views.api',
      'todo-api-update-tracker'),
 )
 
+new_patterns = patterns('',
+    (r'^$', CreateNewWizard([ChooseProjectLocaleForm, ChoosePrototypeForm,
+                             ChooseParentFactory()])),
+)
+
 # demo views are used for testing and as an example for the real views
 # that an application wishing to have todo needs to implement
 demo_patterns = patterns('todo.views.demo',
@@ -26,12 +33,8 @@ demo_patterns = patterns('todo.views.demo',
 )
 
 urlpatterns = patterns('',
-    (r'new/$', 'todo.views.new'),
-    (r'new/tasks$', 'todo.views.create', {'obj': 'tasks'},
-     'todo-create-tasks'),
-    (r'new/trackers$', 'todo.views.create', {'obj': 'trackers'},
-     'todo-create-trackers'),
     # includes
+    (r'^new/', include(new_patterns)),
     (r'^action/', include(action_patterns)),
     (r'^api/', include(api_patterns)),
     (r'^demo/', include(demo_patterns)),
