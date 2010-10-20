@@ -18,7 +18,7 @@ $.fn.slugify = function(obj) {
 $(document).ready(function() {
   var filter = new Filter($('.task'));
   var quickeditors = []
-  $('.summary').each(function(i, todo) {
+  $('.todo_obj').each(function(i, todo) {
     quickeditors.push(new QuickEditor(todo));
   });
 });
@@ -142,6 +142,7 @@ QuickEditor.prototype = {
     self.form.children('input').each(function() {
       self.setToDefault($(this));
     });
+    $('.next_step', self.todo).fadeOut('slow');
     $('.noneditable', self.todo).fadeOut('slow', function() {
       $('.editable', self.todo).fadeIn('slow');
     });
@@ -151,6 +152,7 @@ QuickEditor.prototype = {
     var self = this;
     $('.editable', self.todo).fadeOut('slow', function() {
       $('.noneditable', self.todo).fadeIn('slow');
+      $('.next_step', self.todo).fadeIn('slow');
     });
   },
 
@@ -224,7 +226,7 @@ QuickEditor.prototype = {
 
   {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
-      <div class="summary">
+      <div class="todo_obj summary">
         {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
         <span class="noneditable">
           <span class="replace-summary">{{tracker}}</span>
@@ -249,7 +251,7 @@ QuickEditor.prototype = {
 
   <div class="tasks">
     {% for task, props in tree.tasks.iteritems %}
-    <div class="task {% if task.is_resolved_all %}resolved{% endif %}"
+    <div class="todo_obj task {% if task.is_resolved_all %}resolved{% endif %}"
         {% for prop, vals in props.iteritems %}
           data-{{prop}}="{{vals|join:'|'}}"
         {% endfor %}>
@@ -271,7 +273,7 @@ QuickEditor.prototype = {
             </span>
           </span>
           {% for step in task.next_steps %}
-            <small>{{step.owner}}: {{step.summary}}</small>
+            <small class="next_step">{{step.owner}}: {{step.summary}}</small>
           {% endfor %}
         {% else %}
           <div class="summary">{{task}} <a class="permalink" href="{% urlvar task_view task.pk %}">#</a></div>
