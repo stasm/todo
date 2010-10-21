@@ -77,7 +77,7 @@ class Tracker(Todo):
         if self.parent is None:
             return Tracker.objects.top_level()
         else:
-            return super(Tracker, self).siblings_all()
+            return self.parent.children_all()
 
     def activate_children(self, user):
         "Activate child trackers and tasks."

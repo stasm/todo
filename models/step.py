@@ -84,7 +84,7 @@ class Step(Todo):
         if self.parent is None:
             return self.task.children_all()
         else:
-            return super(Step, self).siblings_all()
+            return self.parent.children_all()
 
     def siblings_other(self):
         "Get all siblings except the current object."
