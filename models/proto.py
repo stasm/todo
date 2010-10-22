@@ -170,10 +170,22 @@ class Proto(models.Model):
             # above, but this wouldn't have worked when fields['locales'] is
             # an empty list.
             locales = [locale]
-        suffix = fields.pop('suffix', self.suffix)
+        alias = fields.pop('alias', None)
+        suffix = fields.pop('suffix', None)
+        if not suffix:
+            # if suffix is None or empty, use prototype's suffix
+            suffix = self.suffix
         for loc in locales:
-            if loc is not None:
-                fields['suffix'] = '%s-%s' % (suffix, loc.code)
+            if loc:
+                # the suffix part will always run, so that if `suffix` is None,
+                # the resulting fields['suffix'] contains at least the loc.code
+                bits = [bit for bit in (suffix, loc.code) if bit]
+                fields['suffix'] = '-'.join(bits)
+                if alias:
+                    # the alias part should only run if the `alias` was passed
+                    # in the fields, which means that the user intends to make
+                    # use of it (it will override the suffix)
+                    fields['alias'] = '-'.join((alias, loc.code))
             yield self.spawn(user, locale=loc, cloning_allowed=False,
                              **fields)
 

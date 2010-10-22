@@ -42,6 +42,27 @@ class Tracker(Todo):
     class Meta:
         app_label = 'todo'
 
+    def __init__(self, *args, **kwargs):
+        """Initialize a Tracker object.
+
+        The method accepts one additional argument besides the ones defined by
+        the model definiton: `suffix`.  If given, it will be appended to the
+        parent's `alias` to create the current todo's alias.  This provides
+        a breadcrumbs-like functionality.
+
+        Alternatively, you can pass `alias` directly, which will make the
+        method ignore the `suffix` and set `self.alias` to the value passed.
+
+        """
+        suffix = kwargs.pop('suffix', None)
+        parent = kwargs.get('parent', None)
+        alias = kwargs.get('alias', None)
+        if not alias:
+            prefix = parent.alias if parent else None
+            bits = [bit for bit in (prefix, suffix) if bit]
+            kwargs['alias'] = '-'.join(bits)
+        super(Todo, self).__init__(*args, **kwargs)
+
     def __unicode__(self):
         return self.summary
 

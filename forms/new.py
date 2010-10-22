@@ -40,6 +40,9 @@ class ChoosePrototypeForm(forms.Form):
     summary = forms.CharField(label='Summary', max_length=200, required=False,
                               help_text="Leave empty to use the prototype's "
                               "summary.")
+    alias = forms.CharField(label='Alias', max_length=16, required=False,
+                            help_text="Leave empty to use the prototype's "
+                            "alias.")
 
     def clean(self):
         clean = self.cleaned_data
@@ -52,11 +55,9 @@ class ChoosePrototypeForm(forms.Form):
 class ChooseParentForm(forms.Form):
     parent_summary = forms.CharField(label='Summary', max_length=200,
                                      required=False)
-    parent_suffix = forms.SlugField(label='Alias suffix', max_length=8,
-                                    required=False, help_text="Will be "
-                                    "appended to project's alias. "
-                                    "Good example: '-newloc'; result: "
-                                    "'fx40-newloc'.")
+    parent_alias = forms.SlugField(label='Alias', max_length=16,
+                                   required=False, help_text="Child trackers' "
+                                   "aliases will be prefixed by this.")
 
     def __init__(self, projects, locales, *args, **kwargs):
         """Init the form given a list of accepted projects and locales.
@@ -127,14 +128,19 @@ class CreateNewWizard(FormWizard):
             if form.is_valid():
                 clean.update(form.cleaned_data)
         parent = clean['parent_tracker']
-        if (parent is None and
-            clean['parent_summary']):
-            # user wants to create a new tracker which will be the parent
+        if parent is None and clean['parent_summary']:
+            # user wants to create a new generic tracker which will be the
+            # parent
             parent = Tracker(summary=clean['parent_summary'],
-                             suffix=clean['parent_suffix'])
+                             alias=clean['parent_alias'])
             parent.save()
             parent.activate(request.user)
-        clean['parent'] = parent
+        if parent:
+            clean['parent'] = parent
+            # because the parent exists, the desired outcome if for created 
+            # todo objects' aliases to be appended to the parent's alias. 
+            # Suffix works exactly this way.
+            clean['suffix'] = clean.pop('alias', None)
         tracker_proto = clean.pop('tracker_proto')
         task_proto = clean.pop('task_proto')
         prototype = tracker_proto or task_proto
