@@ -173,7 +173,7 @@ class Proto(models.Model):
         alias = fields.pop('alias', None)
         suffix = fields.pop('suffix', None)
         if not suffix:
-            # if suffix is None or empty, use prototype's suffix
+            # if suffix is not given explicitly, use prototype's suffix
             suffix = self.suffix
         for loc in locales:
             if loc:

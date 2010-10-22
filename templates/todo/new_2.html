@@ -1,0 +1,45 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
+{% extends "todo/new.html" %}
+
+{% block intro %}
+  <p>Lastly, choose the prototype for the todo items you wish to create.</p>
+{% endblock %}
+
+{% block fields %}
+  <table>
+    <tr>
+      <th>{{ form.tracker_proto.label }}</th>
+      <th rowspan="2">- or -</th>
+      <th>{{ form.task_proto.label }}</th>
+    </tr>
+    <tr>
+      <td>{{ form.tracker_proto }}</td>
+      <td>{{ form.task_proto }}</td>
+    </tr>
+    <tr>
+      <td>{{ form.tracker_proto.errors }}</td>
+      <td>{{ form.task_proto.errors }}</td>
+    </tr>
+  </table>
+  <p>Optionally, customize it:</p>
+  <table>
+    <tr>
+      <th>{{ form.summary.label }}</th>
+      <td>{{ form.summary }}</td>
+      <td>{{ form.summary.errors }}</td>
+    </tr>
+    <tr>
+      <th>{{ form.alias.label }}</th>
+      <td>
+        {% if parent_alias %}<tt>{{ parent_alias }}-</tt>{% endif %}
+        {{ form.alias }}
+        {% if locale_code %}<tt>-{{ locale_code }}</tt>{% endif %}
+      </td>
+      <td>{{ form.alias.errors }}</td>
+    </tr>
+  </table>
+{% endblock %}
+
+{% block submit %}
+  <input type="submit" value="Create" /> 
+{% endblock %}

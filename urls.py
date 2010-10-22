@@ -19,8 +19,9 @@ api_patterns = patterns('todo.views.api',
 )
 
 new_patterns = patterns('',
-    (r'^$', CreateNewWizard([ChooseProjectLocaleForm, ChoosePrototypeForm,
-                             ChooseParentFactory()])),
+    (r'^$', CreateNewWizard([ChooseProjectLocaleForm, 
+                             ChooseParentFactory(),
+                             ChoosePrototypeForm]))
 )
 
 # demo views are used for testing and as an example for the real views

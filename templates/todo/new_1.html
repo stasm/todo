@@ -1,0 +1,34 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
+{% extends "todo/new.html" %}
+
+{% block intro %}
+  <p>Optionally, you can group the todo items that will be created under
+  a common parent for easier tracking (recommended).</p>
+{% endblock %}
+
+{% block fields %}
+  <table>
+    <tr>
+      <th>{{ form.parent_tracker.label }}</th>
+      <td>{{ form.parent_tracker }}</td>
+      <td>{{ form.parent_tracker.errors }}</td>
+    </tr>
+  </table>
+  <p>Or, create a new generic tracker:</p>
+  <table>
+    <tr>
+      <th>{{ form.parent_summary.label }}</th>
+      <td>{{ form.parent_summary }}</td>
+      <td>{{ form.parent_summary.errors }}</td>
+    </tr>
+    <tr>
+      <th>{{ form.parent_alias.label }}</th>
+      <td>{{ form.parent_alias }}</td>
+      <td>{{ form.parent_alias.errors }}</td>
+    </tr>
+  </table>
+{% endblock %}
+
+{% block submit %}
+  <input type="submit" value="Continue" /> 
+{% endblock %}

@@ -5,13 +5,14 @@
 
   <h2>Create new</h2>
   <p>Step {{ step }} of {{ step_count }}</p>
+  {% block intro %}{% endblock %}
+
   <form action="." method="post">
-    <table>
-      {{ form }}
-    </table>
+    {{ form.non_field_errors }}
+    {% block fields %}{% endblock %}
     <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
     {{ previous_fields|safe }}
-    <input type="submit">
+    {% block submit %}{% endblock %}
   </form>
   
 {% endblock %}

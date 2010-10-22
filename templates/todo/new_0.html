@@ -1,0 +1,22 @@
+{# vim: set ft=htmldjango ts=2 et sts=2 sw=2: #}
+{% extends "todo/new.html" %}
+
+{% block intro %}
+  <p>First, choose project(s) and locale(s) you wish to create todo items for.</p>
+{% endblock %}
+
+{% block fields %}
+  <table>
+    {% for field in form %}
+      <tr>
+        <th>{{ field.label }}</th>
+        <td>{{ field }}</th>
+        <td>{{ field.errors }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+{% endblock %}
+
+{% block submit %}
+  <input type="submit" value="Continue" /> 
+{% endblock %}

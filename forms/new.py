@@ -53,11 +53,10 @@ class ChoosePrototypeForm(forms.Form):
         return clean
 
 class ChooseParentForm(forms.Form):
-    parent_summary = forms.CharField(label='Summary', max_length=200,
+    parent_summary = forms.CharField(label='Parent Summary', max_length=200,
                                      required=False)
-    parent_alias = forms.SlugField(label='Alias', max_length=16,
-                                   required=False, help_text="Child trackers' "
-                                   "aliases will be prefixed by this.")
+    parent_alias = forms.SlugField(label='Parent Alias', max_length=16,
+                                   required=False)
 
     def __init__(self, projects, locales, *args, **kwargs):
         """Init the form given a list of accepted projects and locales.
@@ -89,6 +88,13 @@ class ChooseParentForm(forms.Form):
                                     queryset=_q, required=False)
         self.fields['parent_tracker'] = parent
 
+    def clean(self):
+        clean = self.cleaned_data
+        if clean['parent_summary'] and clean['parent_tracker']:
+            raise forms.ValidationError('Please either choose an existing '
+                                        'tracker or create a new one.')
+        return clean
+
 class ChooseParentFactory(object):
     """Factory class returning ChooseParentForm instances.
 
@@ -112,13 +118,25 @@ class ChooseParentFactory(object):
 
 class CreateNewWizard(FormWizard):
     def get_template(self, step):
-        return 'todo/new.html'
+        return 'todo/new_%d.html' % step
 
     def process_step(self, request, form, step):
-        if step == 0 and form.is_valid():
-            projects = form.cleaned_data['projects']
-            locales = form.cleaned_data['locales']
-            self.form_list[2] = ChooseParentFactory(projects, locales)
+        clean = {}
+        if form.is_valid():
+            clean = form.cleaned_data
+        if clean and step == 0:
+            projects = clean['projects']
+            locales = clean['locales']
+            self.form_list[1] = ChooseParentFactory(projects, locales)
+            self.extra_context.update({
+                'locale_code': locales[0].code if len(locales) == 1 else 'ab-CD',
+            })
+        if clean and step == 1:
+            parent_tracker = clean['parent_tracker']
+            parent_alias = clean['parent_alias']
+            self.extra_context.update({
+                'parent_alias': parent_tracker.alias if parent_tracker else parent_alias,
+            })
     
     @permission_required('todo.create_tracker')
     @permission_required('todo.create_task')
@@ -137,9 +155,9 @@ class CreateNewWizard(FormWizard):
             parent.activate(request.user)
         if parent:
             clean['parent'] = parent
-            # because the parent exists, the desired outcome if for created 
+            # the parent exists and the desired outcome is for created 
             # todo objects' aliases to be appended to the parent's alias. 
-            # Suffix works exactly this way.
+            # Suffix (set on child trackers) works exactly this way.
             clean['suffix'] = clean.pop('alias', None)
         tracker_proto = clean.pop('tracker_proto')
         task_proto = clean.pop('task_proto')
