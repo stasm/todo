@@ -38,6 +38,11 @@
       <td>{{ form.alias.errors }}</td>
     </tr>
   </table>
+
+  <script type="application/javascript;version=1.8">
+    var alias = $('#{{ form.alias.auto_id }}');
+    alias.slugify(alias);
+  </script>
 {% endblock %}
 
 {% block submit %}

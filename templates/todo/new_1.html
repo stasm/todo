@@ -27,6 +27,11 @@
       <td>{{ form.parent_alias.errors }}</td>
     </tr>
   </table>
+
+  <script type="application/javascript;version=1.8">
+    var alias = $('#{{ form.parent_alias.auto_id }}');
+    alias.slugify(alias);
+  </script>
 {% endblock %}
 
 {% block submit %}

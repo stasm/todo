@@ -40,7 +40,7 @@ class ChoosePrototypeForm(forms.Form):
     summary = forms.CharField(label='Summary', max_length=200, required=False,
                               help_text="Leave empty to use the prototype's "
                               "summary.")
-    alias = forms.CharField(label='Alias', max_length=16, required=False,
+    alias = forms.SlugField(label='Alias', max_length=16, required=False,
                             help_text="Leave empty to use the prototype's "
                             "alias.")
 
