@@ -172,5 +172,4 @@ class CreateNewWizard(FormWizard):
         else:
             todo = prototype.spawn(request.user, **clean) 
             todo.activate(request.user)
-        return HttpResponseRedirect(reverse('todo.views.demo.tracker',
-                                            args=[parent.pk]))
+        return HttpResponseRedirect(reverse('todo.views.created'))

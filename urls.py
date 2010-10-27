@@ -1,6 +1,4 @@
 from django.conf.urls.defaults import *
-from todo.forms.new import (CreateNewWizard, ChooseProjectLocaleForm,
-                            ChoosePrototypeForm, ChooseParentFactory)
 
 action_patterns = patterns('todo.views.actions',
     (r'^resolve/task/(?P<task_id>\d+)$', 'resolve_task'),
@@ -19,9 +17,8 @@ api_patterns = patterns('todo.views.api',
 )
 
 new_patterns = patterns('',
-    (r'^$', CreateNewWizard([ChooseProjectLocaleForm, 
-                             ChooseParentFactory(),
-                             ChoosePrototypeForm]))
+    (r'^$', 'todo.views.new'),
+    (r'^created$', 'todo.views.created'),
 )
 
 # demo views are used for testing and as an example for the real views
