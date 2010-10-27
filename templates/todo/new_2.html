@@ -21,7 +21,7 @@
       <td>{{ form.task_proto.errors }}</td>
     </tr>
   </table>
-  <p>Optionally, customize it:</p>
+  <p>Optionally, customize it (or leave empty to use the default values):</p>
   <table>
     <tr>
       <th>{{ form.summary.label }}</th>
@@ -33,7 +33,7 @@
       <td>
         {% if parent_alias %}<tt>{{ parent_alias }}-</tt>{% endif %}
         {{ form.alias }}
-        {% if locale_code %}<tt>-{{ locale_code }}</tt>{% endif %}
+        {% if locale_code and not parent_locale %}<tt>-{{ locale_code }}</tt>{% endif %}
       </td>
       <td>{{ form.alias.errors }}</td>
     </tr>

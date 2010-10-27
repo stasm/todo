@@ -129,13 +129,17 @@ class CreateNewWizard(FormWizard):
             locales = clean['locales']
             self.form_list[1] = ChooseParentFactory(projects, locales)
             self.extra_context.update({
-                'locale_code': locales[0].code if len(locales) == 1 else 'ab-CD',
+                'locale_code': (locales[0].code if len(locales) == 1
+                                else 'ab-CD'),
             })
         if clean and step == 1:
             parent_tracker = clean['parent_tracker']
             parent_alias = clean['parent_alias']
             self.extra_context.update({
-                'parent_alias': parent_tracker.alias if parent_tracker else parent_alias,
+                'parent_alias': (parent_tracker.alias if parent_tracker
+                                 else parent_alias),
+                'parent_locale': (parent_tracker.locale if parent_tracker 
+                                  else None),
             })
     
     @permission_required('todo.create_tracker')
@@ -145,20 +149,20 @@ class CreateNewWizard(FormWizard):
         for form in form_list:
             if form.is_valid():
                 clean.update(form.cleaned_data)
-        parent = clean['parent_tracker']
+        parent = clean.pop('parent_tracker')
         if parent is None and clean['parent_summary']:
             # user wants to create a new generic tracker which will be the
             # parent
-            parent = Tracker(summary=clean['parent_summary'],
-                             alias=clean['parent_alias'])
+            parent = Tracker(summary=clean.pop('parent_summary'),
+                             alias=clean.pop('parent_alias'))
             parent.save()
             parent.activate(request.user)
-        if parent:
-            clean['parent'] = parent
-            # the parent exists and the desired outcome is for created 
-            # todo objects' aliases to be appended to the parent's alias. 
-            # Suffix (set on child trackers) works exactly this way.
-            clean['suffix'] = clean.pop('alias', None)
+        clean['parent'] = parent
+        # If the parent exists the desired outcome is for created todo objects'
+        # aliases to be appended to the parent's alias.  Suffix (set on child
+        # trackers) works exactly this way. If there is no parent, `suffix`
+        # will behave like `alias` (cf. `Task.__init__` and `Tracker.__init__`)
+        clean['suffix'] = clean.pop('alias', None)
         tracker_proto = clean.pop('tracker_proto')
         task_proto = clean.pop('task_proto')
         prototype = tracker_proto or task_proto

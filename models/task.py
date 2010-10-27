@@ -63,8 +63,9 @@ class Task(Todo):
         suffix = kwargs.pop('suffix', None)
         parent = kwargs.get('parent', None)
         alias = kwargs.get('alias', None)
-        if parent and not alias:
-            bits = [bit for bit in (parent.alias, suffix) if bit]
+        if not alias:
+            prefix = parent.alias if parent else None
+            bits = [bit for bit in (prefix, suffix) if bit]
             kwargs['alias'] = '-'.join(bits)
         super(Todo, self).__init__(*args, **kwargs)
 

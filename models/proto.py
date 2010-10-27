@@ -128,7 +128,7 @@ class Proto(models.Model):
         status_changed.send(sender=todo, user=user, action=1)
         if self.type in (1, 3):
             # trackers and steps
-            to_be_removed = self.inheritable
+            to_be_removed = self.inheritable + ('alias',)
             custom_fields.update(parent=todo)
         else:
             # tasks
@@ -137,7 +137,7 @@ class Proto(models.Model):
             # to None. Here, we're removing `parent` to make sure the child
             # steps are `parent`-less. (`parent` might have been used before
             # to create relationships between Trackers or Trackers/Tasks). 
-            to_be_removed = self.inheritable + ('parent',)
+            to_be_removed = self.inheritable + ('alias', 'parent')
             custom_fields.update(task=todo)
         for prop in to_be_removed:
             # these properties are inheritable by the current todo object,
@@ -170,13 +170,29 @@ class Proto(models.Model):
             # above, but this wouldn't have worked when fields['locales'] is
             # an empty list.
             locales = [locale]
-        alias = fields.pop('alias', None)
-        suffix = fields.pop('suffix', None)
+        # Normally, the whole suffix/alias mechanic is done by the
+        # `_spawn_instance` method. If neither `suffix` nor `alias` are passed
+        # to the method, the suffix from the prototype will be used. Here,
+        # however, we want to modify this behavior so that the resulting
+        # aliases contain locale codes (e.g. "foo" becomes "foo-pl" for the
+        # Polish locale). In order to achieve this, we will always pass
+        # a (amended) `suffix` argument to `_spawn_instance`. If original
+        # `suffix` was empty, the prototype's suffix will be passed, so that
+        # the behavior remains consistent.
+        parent = fields.get('parent', None)
+        alias = fields.get('alias', None)
+        suffix = fields.get('suffix', None)
         if not suffix:
             # if suffix is not given explicitly, use prototype's suffix
             suffix = self.suffix
         for loc in locales:
-            if loc:
+            # loc might be None (see above)
+            if loc and (not parent or not parent.locale):
+                # only executed if there's no parent or if the parent doesn't
+                # have a locale set. If it does, we want to use its alias
+                # verbatim, as it probably already contains the locale code
+                # (and if it doesn't, that's most likely on purpose).
+                #
                 # the suffix part will always run, so that if `suffix` is None,
                 # the resulting fields['suffix'] contains at least the loc.code
                 bits = [bit for bit in (suffix, loc.code) if bit]
