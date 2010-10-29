@@ -3,6 +3,7 @@ from django.core.urlresolvers import reverse
 
 from .base import Todo
 from .actor import Actor
+from .project import Project
 from .proto import ProtoStep
 from .task import Task
 from todo.managers import StatusManager
@@ -18,6 +19,8 @@ class Step(Todo):
     parent = models.ForeignKey('self', related_name='children', null=True,
                                blank=True)
     task = models.ForeignKey(Task, related_name='steps')
+    project = models.ForeignKey(Project, related_name='steps', null=True,
+                                blank=True)
     owner = models.ForeignKey(Actor, null=True, blank=True)
     order = models.PositiveIntegerField()
     status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
@@ -33,6 +36,13 @@ class Step(Todo):
                                                   "complete the step.")
 
     objects = StatusManager()
+
+    class Meta:
+        app_label = 'todo'
+        ordering = ('order',)
+
+    # a list of additional argument names that can be passed to __init__
+    extra_fields = []
     
     def __init__(self, *args, **kwargs):
         # the next step is unknown at this point
@@ -51,12 +61,11 @@ class Step(Todo):
 
     has_children = property(get_has_children, set_has_children)
 
-    class Meta:
-        app_label = 'todo'
-        ordering = ('order',)
-
     def __unicode__(self):
+        if self.project:
+            return '%s %s' % (self.summary, self.project)
         return self.summary
+
 
     @property
     def code(self):
@@ -66,10 +75,17 @@ class Step(Todo):
     def get_admin_url(self):
         return ('admin:todo_step_change', [self.id])
 
+    def assign_to_projects(self, projects):
+        pass
+
     def clone(self, user):
         "Clone the step using the protype used to create it."
         return self.prototype.spawn(user, summary=self.summary, task=self.task,
-                                    parent=self.parent, order=self.order)
+                                    parent=self.parent, order=self.order,
+                                    project=self.project,
+                                    # in case any decendant steps have
+                                    # `clone_per_project` set to True
+                                    projects=[self.project])
 
     def children_all(self):
         "Get child steps of the tracker."

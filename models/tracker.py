@@ -42,6 +42,9 @@ class Tracker(Todo):
     class Meta:
         app_label = 'todo'
 
+    # a list of additional argument names that can be passed to __init__
+    extra_fields = ['suffix']
+
     def __init__(self, *args, **kwargs):
         """Initialize a Tracker object.
 

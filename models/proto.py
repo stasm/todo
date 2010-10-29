@@ -51,15 +51,12 @@ class Proto(models.Model):
         related_model = self.get_related_model()
         # fields that are accepted by the spawned object
         accepted_fields = [f.name for f in related_model._meta.fields]
-        if self.type in (1, 2):
-            # for trackers and tasks. need to add this because the field is
-            # called `alias`, but you can pass a `suffix` which will be
-            # appended to the parent's `alias`.
-            accepted_fields.append('suffix')
-            projects = custom_fields.get('projects', None)
-        else:
-            # steps don't belong to projects. Their parent tasks do.
-            projects = None
+        # models can define additional accepted fields (e.g. 'suffix')
+        accepted_fields += related_model.extra_fields
+        # remove projects from custom_fields since related_model.__init__ 
+        # (regardless of which model it stands for) does not accept them as
+        # argument; store the value for later use, though.
+        projects = custom_fields.pop('projects', None)
         # remove empty/unknown values from custom_fields and overwrite other
         # attributes
         custom_fields = [(k, v) for k, v in custom_fields.items()
@@ -70,12 +67,39 @@ class Proto(models.Model):
         fields.update(custom_fields)
         todo = related_model(prototype=self, **fields)
         todo.save()
-        # in order to create relations between Trackers/Tasks and Project,
-        # create required {Tracker,Task}InProject objects handling the
-        # many-to-many relation.
         if projects:
+            # in order to create relations between Trackers/Tasks and Project,
+            # create required {Tracker,Task}InProject objects handling the
+            # many-to-many relation.
             todo.assign_to_projects(projects)
         return todo
+
+    def _prepare_fields_for_children(self, custom_fields, todo):
+        """Filter given fields to be suitable for spawning todo's children.
+
+        This method prepares the custom fields given by the user so that the
+        children todo items can be spawned properly. It will remove invalid
+        fields and make sure that the children are created with proper
+        relations to their parents (in other words, it will set the `parent` or
+        `task` arguments correctly).
+
+        Arguments:
+            todo -- the todo object that was just spawned using this prototype
+            custom_fields -- a dict of user-passed fields that will override
+                             prototype's values
+
+        Returns:
+            a custom_fields dict ready to be used to spawn tracker's children.
+
+        """
+        raise NotImplementedError()
+
+    def _remove_fields(self, custom_fields, to_be_removed):
+        "Remove given keys from the custom_fields dict."
+        for prop in to_be_removed:
+            if prop in custom_fields:
+                del custom_fields[prop]
+        return custom_fields
 
     def _spawn_children(self, user, cloning_allowed, **custom_fields):
         "Create children of the todo object."
@@ -86,17 +110,20 @@ class Proto(models.Model):
             # properties from the nesting, not the proto itself
             for prop in ('order', 'is_auto_activated'):
                 custom_fields.update({prop: getattr(nesting, prop)})
-            # since `spawn` and `spawn_per_locale` might delete keys, 
+            # since `spawn` and `spawn_per_*` might delete keys, 
             # let's not do that on the original `custom_fields` which 
             # will be used by other nestings in the loop
             fields = custom_fields.copy()
-            if cloning_allowed and child.clone_per_locale:
-                # `spawn_per_locale` is a generator
+            if cloning_allowed['locale'] and child.clone_per_locale:
+                # `spawn_per_locale` returns an iterator
                 list(child.spawn_per_locale(user, **fields))
+            elif cloning_allowed['project'] and child.clone_per_project:
+                # `spawn_per_project` returns an iterator
+                list(child.spawn_per_project(user, **fields))
             else:
                 child.spawn(user, cloning_allowed, **fields)
 
-    def spawn(self, user, cloning_allowed=True, **custom_fields):
+    def spawn(self, user, cloning_allowed=None, **custom_fields):
         """Create an instance of the model related to the proto, with children.
         
         This method creates an instance of the model related to the current
@@ -108,9 +135,9 @@ class Proto(models.Model):
         prototypes and nestings. You can override them by passing custom
         values in the keyword arguments.
 
-        A `project` keyword argument is required when spawning trackers or
-        tasks. It must be an instance of todo.models.Project. The created todo 
-        objects will be related to the project passed.
+        A `projects` keyword argument is the only required argument. It must be
+        a list of todo.models.Project instances. The created todo objects will
+        be related to the projects passed.
 
         A special iterable `locales` keyword argument can be passed to create
         multiple trees of todo objects, one per locale in `locales`. Only
@@ -121,29 +148,20 @@ class Proto(models.Model):
         more were created as children.
 
         """
-        if self.type in (1, 2) and 'projects' not in custom_fields:
-            raise TypeError("Pass projects to spawn trackers and tasks.")
+        # `projects` is the only required argument (the values for all other
+        # can be inherited from the prototype)
+        if 'projects' not in custom_fields or not custom_fields['projects']:
+            raise TypeError("Pass projects to spawn todos.")
+        if cloning_allowed is None:
+            cloning_allowed = {
+                'locale': True,
+                'project': True,
+            }
         todo = self._spawn_instance(**custom_fields)
         todo.save()
         status_changed.send(sender=todo, user=user, action=1)
-        if self.type in (1, 3):
-            # trackers and steps
-            to_be_removed = self.inheritable + ('alias',)
-            custom_fields.update(parent=todo)
-        else:
-            # tasks
-            # Steps are related to Tasks via the `task` property which is set 
-            # above, and the top-level steps have the `parent` property set 
-            # to None. Here, we're removing `parent` to make sure the child
-            # steps are `parent`-less. (`parent` might have been used before
-            # to create relationships between Trackers or Trackers/Tasks). 
-            to_be_removed = self.inheritable + ('alias', 'parent')
-            custom_fields.update(task=todo)
-        for prop in to_be_removed:
-            # these properties are inheritable by the current todo object,
-            # but not by its children. they should not propagate further down.
-            if prop in custom_fields:
-                del custom_fields[prop]
+        # remove fields that should not propagate onto the children
+        custom_fields = self._prepare_fields_for_children(custom_fields, todo)
         self._spawn_children(user, cloning_allowed, **custom_fields)
         return todo
 
@@ -159,6 +177,10 @@ class Proto(models.Model):
         calls `spawn`.
 
         """
+        cloning_allowed = {
+            'locale': False,
+            'project': True,
+        }
         # to avoid conflicts, locale and locales are deleted
         # from custom_fields and are not passed to children
         # directly (we don't want to clone more then once in a single
@@ -202,9 +224,27 @@ class Proto(models.Model):
                     # in the fields, which means that the user intends to make
                     # use of it (it will override the suffix)
                     fields['alias'] = '-'.join((alias, loc.code))
-            yield self.spawn(user, locale=loc, cloning_allowed=False,
+            yield self.spawn(user, locale=loc, cloning_allowed=cloning_allowed,
                              **fields)
 
+    def spawn_per_project(self, user, **fields):
+        """Create multiple todo objects from a single prototype per project.
+
+        This method should only be used for steps (it will have no effect in
+        used on other models).
+
+        """
+        cloning_allowed = {
+            'locale': False,
+            'project': False,
+        }
+        projects = fields.get('projects', None)
+        if not projects:
+            projects = [None]
+        for project in projects:
+            yield self.spawn(user, project=project, 
+                             cloning_allowed=cloning_allowed, **fields)
+        
 class ProtoTracker(Proto):
     """Proto Tracker model.
 
@@ -220,6 +260,8 @@ class ProtoTracker(Proto):
                                            "has been cloned yet. Leaving this "
                                            "as True should be OK for 90% of "
                                            "cases.")
+    # this is always False so no need to store in the DB
+    clone_per_project = False
     suffix = models.SlugField(max_length=8, blank=True)
     # tuple of prototype's properties that can be inherited by a spawned object
     inheritable = ('summary', 'suffix')
@@ -229,6 +271,16 @@ class ProtoTracker(Proto):
     class Meta:
         app_label = 'todo'
         ordering = ('type', 'summary',)
+
+    def _prepare_fields_for_children(self, custom_fields, todo):
+        """Filter custom_fields to be suitable for spawning tracker's children.
+
+        See the docs at Proto._prepare_fields_for_children.
+
+        """
+        custom_fields.update(parent=todo)
+        to_be_removed = self.inheritable + ('alias',)
+        return self._remove_fields(custom_fields, to_be_removed)
 
 class ProtoTask(Proto):
     """Proto Task model.
@@ -241,12 +293,29 @@ class ProtoTask(Proto):
     suffix = models.SlugField(max_length=8, blank=True)
     # this is always True so no need to store it in the DB
     clone_per_locale = True
+    # this is always False so no need to store in the DB
+    clone_per_project = False
     inheritable = ('summary', 'suffix')
     _type = 2
 
     class Meta:
         app_label = 'todo'
         ordering = ('type', 'summary',)
+
+    def _prepare_fields_for_children(self, custom_fields, todo):
+        """Filter custom_fields to be suitable for spawning task's children.
+
+        See the docs at Proto._prepare_fields_for_children.
+
+        """
+        # Child steps are related to Tasks via the `task` property and the
+        # top-level steps have the `parent` property set to None. 
+        custom_fields.update(task=todo)
+        # Here, we're removing `parent` to make sure the child steps are
+        # `parent`-less. (`parent` might have been used before to create
+        # relationships between Trackers or Trackers/Tasks). 
+        to_be_removed = self.inheritable + ('alias', 'parent')
+        return self._remove_fields(custom_fields, to_be_removed)
 
 class ProtoStep(Proto):
     """Proto Step model.
@@ -262,6 +331,14 @@ class ProtoStep(Proto):
                                         verbose_name="Allowed time (in days)",
                                         help_text="Time the owner has to "
                                                   "complete the step.")
+    clone_per_project = models.BooleanField(default=False, 
+                                            help_text="If True and the task "
+                                            "this step is under belongs to "
+                                            "multiple projects, a copy of "
+                                            "this protostep will be spawned "
+                                            "for every project. Works best "
+                                            "if the protostep is inside "
+                                            "another, grouping protostep.")
     # this is always False so no need to store in the DB
     clone_per_locale = False
     inheritable = ('summary', 'owner', 'is_review', 'allowed_time')
@@ -270,6 +347,19 @@ class ProtoStep(Proto):
     class Meta:
         app_label = 'todo'
         ordering = ('type', 'summary',)
+
+    def _prepare_fields_for_children(self, custom_fields, todo):
+        """Filter custom_fields to be suitable for spawning step's children.
+
+        See the docs at Proto._prepare_fields_for_children.
+
+        """
+        custom_fields.update(parent=todo)
+        # we'll want to remove `project` if it exists, because we only need it
+        # for the step that has `clone_per_project` set to True, not its
+        # children
+        to_be_removed = self.inheritable + ('alias', 'project')
+        return self._remove_fields(custom_fields, to_be_removed)
 
 class Nesting(models.Model):
     """Nesting model stores the relationships between Proto objects.
