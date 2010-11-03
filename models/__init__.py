@@ -5,8 +5,9 @@ try:
 except ImportError:
     from todo.signals import receiver
 
-from todo.signals import OFFSET, actions, status_changed, todo_updated
+from todo.signals import status_changed, todo_updated
 
+from .action import Action
 from .project import Project
 from .actor import Actor
 from .proto import *
@@ -16,7 +17,7 @@ from .step import Step
 
 @receiver(todo_updated)
 @receiver(status_changed)
-def log_status_change(sender, user, action, **kwargs):
+def log_status_change(sender, user, flag, **kwargs):
     """Create a log entry describing the change.
 
     The logging backend is the default Django's admin one. Log entries are
@@ -28,21 +29,12 @@ def log_status_change(sender, user, action, **kwargs):
     readily available for quick queries.
 
     """
-    LogEntry.objects.log_action(
-        user_id = user.pk,
-        content_type_id = ContentType.objects.get_for_model(sender).pk,
-        object_id = sender.pk,
-        object_repr = '%s: %s' % (unicode(sender), actions[action][0]),
-        action_flag = action + OFFSET,
-        change_message = actions[action][0]
-    )
+    action = Action.objects.log(user, sender, flag)
 
-    if isinstance(sender, Step) and action == 5:
+    if isinstance(sender, Step) and action >= 5:
         # a Step has just been resolved, let's store the time of this change on
-        # the related Task for faster queries.
-
-        # why on Earth don't log_action return what it created?! :/
-        tstamp = sender.get_latest_action(5).action_time
-        sender.task.latest_resolution_ts = tstamp
-        sender.task.save()
-        # don't send the signal about the task being changed, it's not worth it
+        # the related Task for faster queries. We don't need to send the signal
+        # again for the task as the action has already been recorded for the
+        # step.
+        sender.task.update(user, {'latest_resolution_ts': action.timestamp},
+                           send_signal=False)

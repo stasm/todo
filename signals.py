@@ -1,25 +1,4 @@
-from django.conf import settings
 import django.dispatch
-
-from todo.workflow import statuses
-
-# To avoid conflicts with action flags defined in django.contrib.admin.models
-# an arbitraty offset is added to every action's index
-try:
-    OFFSET = int(settings.TODO_LOG_OFFSET)
-except (AttributeError, ValueError, TypeError):
-    OFFSET = 10
-    
-UPDATED = 6
-SNAPSHOT_UPDATED = 7
-BUGID_UPDATED = 8
-
-actions = statuses.copy()
-actions.update({
-    UPDATED: ('updated',),
-    SNAPSHOT_UPDATED: ('snapshot updated',),
-    BUGID_UPDATED: ('bugid updated',),
-})
 
 # Signal used by `spawn`, `activate` and `resolve` in todo.models.  It handles
 # the workflow events, like creating, activating and resolving a todo object.

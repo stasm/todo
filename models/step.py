@@ -1,13 +1,16 @@
 from django.db import models
 from django.core.urlresolvers import reverse
 
+from .action import NEXTED
 from .base import Todo
 from .actor import Actor
 from .project import Project
 from .proto import ProtoStep
 from .task import Task
 from todo.managers import StatusManager
-from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
+from todo.workflow import (NEW, ACTIVE, NEXT, ON_HOLD, RESOLVED, COMPLETED,
+                           FAILED, INCOMPLETE, STATUS_CHOICES,
+                           RESOLUTION_CHOICES)
 from todo.signals import status_changed
     
 from datetime import datetime, timedelta
@@ -23,7 +26,7 @@ class Step(Todo):
                                 blank=True)
     owner = models.ForeignKey(Actor, null=True, blank=True)
     order = models.PositiveIntegerField()
-    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=NEW)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
                                              null=True, blank=True)
     _has_children = models.NullBooleanField(null=True, blank=True)
@@ -121,21 +124,23 @@ class Step(Todo):
 
     def is_only_active(self):
         "Check if there's no more active steps under this step's parent."
-        return not bool(self.siblings_other().filter(status__in=(2, 3)).count())
+        active_siblings = self.siblings_other().filter(status__in=(ACTIVE, NEXT))
+        return not bool(active_siblings.count())
 
     def is_last_open(self):
         "Check if there's no more unresolved steps under this step's parent."
-        return not bool(self.siblings_other().filter(status__lt=5).count() )
+        open_siblings = self.siblings_other().filter(status__lt=RESOLVED)
+        return not bool(open_siblings.count() )
 
     def is_overdue(self):
-        if self.status != 3:
+        if self.status != NEXT:
             # continue only for steps whose status is 'next'
             return False
         if self._overdue is None:
             # FIXME this should be days; minutes are for testing
             allowed_timeinterval = timedelta(minutes=self.allowed_time)
             # get the last time the step was 'nexted'
-            last_activity_ts = self.get_latest_action(3).action_time
+            last_activity_ts = self.get_latest_action(NEXTED).timestamp
             self._overdue = datetime.now() > (last_activity_ts +
                                               allowed_timeinterval)
         return self._overdue
@@ -144,20 +149,20 @@ class Step(Todo):
         if self.has_children is True:
             self.activate_children(user)
             # it's `active`, because one of the children is `next`
-            self.status = 2
+            self.status = ACTIVE
         else:
             # no children, `next` it
-            self.status = 3
+            self.status = NEXT
         self.save()
-        status_changed.send(sender=self, user=user, action=self.status)
+        status_changed.send(sender=self, user=user, flag=self.status)
 
     def reset_time(self, user):
-        if self.status == 3:
+        if self.status == NEXT:
             # the step must be a 'next' step.  Resetting the timer is simply
             # sending the signal about the step being 'nexted' again.
-            status_changed.send(sender=self, user=user, action=self.status)
+            status_changed.send(sender=self, user=user, flag=NEXTED)
 
-    def resolve(self, user, resolution=1, bubble_up=True):
+    def resolve(self, user, resolution=COMPLETED, bubble_up=True):
         """Resolve the step.
 
         Resolve the current step and, if `bubble_up` is True, resolve the
@@ -183,10 +188,11 @@ class Step(Todo):
         parent.
 
         """
-        self.status = 5
+        self.status = RESOLVED
         self.resolution = resolution
         self.save()
-        status_changed.send(sender=self, user=user, action=self.status)
+        flag = RESOLVED + resolution
+        status_changed.send(sender=self, user=user, flag=flag)
 
         if not bubble_up:
             # don't do anything more
@@ -195,7 +201,7 @@ class Step(Todo):
             self.is_last_open()):
             if self.parent:
                 # resolve the parent Step(s)
-                if self.resolution == 2:
+                if self.resolution == FAILED:
                     # if the step has failed, resolve only the immediate parent
                     # and make a fresh copy of it.  The parent needs to be
                     # a Step, not the Task (can't clone a Task), hence check

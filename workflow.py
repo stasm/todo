@@ -1,18 +1,25 @@
-statuses = {
-    # int: (verb, adjective)
-    1: ('created', 'new'),
-    2: ('activated', 'active'),
-    3: ('nexted', 'next'),
-    4: ('put on hold', 'on hold'),
-    5: ('resolved', 'resolved'),
-}
+# statuses
+NEW = 1
+ACTIVE = 2
+NEXT = 3
+ON_HOLD = 4
+RESOLVED = 5
 
-STATUS_CHOICES = tuple([(i, adj) for i, (verb, adj) in statuses.items()])
+STATUS_CHOICES = (
+    (NEW, 'new'),
+    (ACTIVE, 'active'),
+    (NEXT, 'next'),
+    (ON_HOLD, 'on_hold'),
+    (RESOLVED, 'resolved'),
+)
 
-resolutions = {
-    1: 'success',
-    2: 'failure',
-    3: 'incomplete',
-}
+# resolutions
+COMPLETED = 1
+FAILED = 2
+INCOMPLETE = 3
 
-RESOLUTION_CHOICES = tuple([(i, res) for i, res in resolutions.items()])
+RESOLUTION_CHOICES = (
+    (COMPLETED, 'completed'),
+    (FAILED, 'failed'),
+    (INCOMPLETE, 'incomplete'),
+)

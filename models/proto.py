@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType
 
+from .action import CREATED
 from .actor import Actor
 from todo.signals import status_changed
 
@@ -159,7 +160,7 @@ class Proto(models.Model):
             }
         todo = self._spawn_instance(**custom_fields)
         todo.save()
-        status_changed.send(sender=todo, user=user, action=1)
+        status_changed.send(sender=todo, user=user, flag=CREATED)
         # remove fields that should not propagate onto the children
         custom_fields = self._prepare_fields_for_children(custom_fields, todo)
         self._spawn_children(user, cloning_allowed, **custom_fields)

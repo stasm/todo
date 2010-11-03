@@ -5,9 +5,8 @@ from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
 
 from todo.models import Step, Task, Tracker
+from todo.models.action import SNAPSHOT_UPDATED, BUGID_UPDATED
 from todo.forms import UpdateTodoForm
-from todo.signals import (status_changed, todo_updated, UPDATED,
-                          SNAPSHOT_UPDATED, BUGID_UPDATED)
 
 import urllib2
 from datetime import datetime
@@ -82,10 +81,7 @@ def update(request, obj, obj_id):
             message += '%s: %s' % (field, errorlist.as_text())
         return _status_response('error', message)
     todo = get_object_or_404(model, pk=obj_id)
-    for prop, new_value in form.cleaned_data.iteritems():
-        setattr(todo, prop, new_value)
-    todo.save()
-    todo_updated.send(sender=todo, user=request.user, action=UPDATED)
+    todo.update(request.user, form.cleaned_data)
     changed_objs = serialize('python', (todo,))
     return _status_response('ok', '%s updated.' % obj, changed_objs)
 
@@ -102,9 +98,8 @@ def update_snapshot(request, task_id):
         return _status_response('error', 'Unknown timestamp (%s)' %
                                 request.POST.get('snapshot_ts'))
     task = get_object_or_404(Task, pk=task_id)
-    task.snapshot_ts = new_snapshot_ts
-    task.save()
-    todo_updated.send(sender=task, user=request.user, action=SNAPSHOT_UPDATED)
+    task.update(request.user, {'snapshot_ts': new_snapshot_ts},
+                flag=SNAPSHOT_UPDATED)
     return _status_response('ok', 'Timestamp updated (%s)' %
                             task.snapshot_ts_iso())
 
@@ -122,7 +117,5 @@ def update_bugid(request, task_id):
         return _status_response('error', 'Incorrect value of the bug ID (%s)' %
                                 request.POST.get('bugid'))
     task = get_object_or_404(Task, pk=task_id)
-    task.bug = new_bugid
-    task.save()
-    todo_updated.send(sender=task, user=request.user, action=BUGID_UPDATED)
+    task.update(request.user, {'bug': new_bugid}, flag=BUGID_UPDATED)
     return _status_response('ok', 'Bug ID updated (%s)' % task.bugid)

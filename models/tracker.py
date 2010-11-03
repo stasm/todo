@@ -7,19 +7,24 @@ from .base import Todo
 from .project import Project
 from .proto import ProtoTracker
 from todo.managers import StatusManager
-from todo.workflow import STATUS_CHOICES, RESOLUTION_CHOICES
+from todo.workflow import (NEW, ACTIVE, NEXT, ON_HOLD, RESOLVED, COMPLETED,
+                           FAILED, INCOMPLETE, STATUS_CHOICES,
+                           RESOLUTION_CHOICES)
 from todo.signals import status_changed
 
 class TrackerInProject(models.Model):
     tracker = models.ForeignKey('Tracker', related_name="statuses")
     project = models.ForeignKey(Project, related_name="tracker_statuses")
-    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
+    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=NEW)
     resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
                                              null=True, blank=True)
 
     class Meta:
         app_label = 'todo'
         unique_together = ('tracker', 'project')
+
+    def __unicode__(self):
+        return '%s for %s' % (self.task, self.project)
 
 class Tracker(Todo):
     prototype = models.ForeignKey(ProtoTracker, related_name='trackers',
@@ -110,11 +115,12 @@ class Tracker(Todo):
         for task in self.tasks.all():
             task.activate(user)
 
-    def resolve(self, user, resolution=1):
-        self.status = 5
+    def resolve(self, user, resolution=COMPLETED):
+        self.status = RESOLVED
         self.resolution = resolution
         self.save()
-        status_changed.send(sender=self, user=user, action=self.status)
+        flag = RESOLVED + resolution
+        status_changed.send(sender=self, user=user, flag=flag)
 
     def get_bug(self):
         return self.bugid or self.alias
