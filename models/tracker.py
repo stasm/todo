@@ -24,7 +24,7 @@ class TrackerInProject(models.Model):
         unique_together = ('tracker', 'project')
 
     def __unicode__(self):
-        return '%s for %s' % (self.task, self.project)
+        return '%s for %s' % (self.tracker, self.project)
 
 class Tracker(Todo):
     prototype = models.ForeignKey(ProtoTracker, related_name='trackers',
