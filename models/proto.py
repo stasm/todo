@@ -5,31 +5,66 @@ from .action import CREATED
 from .actor import Actor
 from todo.signals import status_changed
 
+TRACKER_TYPE, TASK_TYPE, STEP_TYPE = range(1,4)
+
 PROTO_TYPE_CHOICES = (
-    (1, 'tracker'),
-    (2, 'task'),
-    (3, 'step'),
+    (TRACKER_TYPE, 'tracker'),
+    (TASK_TYPE, 'task'),
+    (STEP_TYPE, 'step'),
 )
 
 class Proto(models.Model):
     """Base prototype model.
+
+    This model should not be used independently.  You should always create and
+    work with ProtoTrackers, ProtoTasks and ProtoSteps instead.
     
     All relationships stored in the Nesting model instances work with this
-    model. This means that Nestings will give you Proto objects. Use
+    model.  This means that Nestings will give you Proto objects.  Use
     Proto.get_related_model to go from Proto to a specific proto model.
     
     """
     summary = models.CharField(max_length=200)
     type = models.PositiveIntegerField(choices=PROTO_TYPE_CHOICES)
 
+    # The type of the Proto object represented by an integer from
+    # PROTO_TYPE_CHOICES.  This must be implemented by the child classes
+    # inheriting from Proto.  See `Proto.save` for further docs.
+    _type = None
+
     class Meta:
         app_label = 'todo'
         ordering = ('type', 'summary',)
 
-    def __init__(self, *args, **kwargs):
-        super(Proto, self).__init__(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        """Save a Proto object in the DB.
+
+        If the object does not exist in the DB yet, the value of its `_type`
+        property (which is statically defined on the child models) will be
+        stored in a DB field called `type`.  This is done so that when a Proto
+        object is retrieved from the DB, it knows which of the three prototype
+        types it is (ProtoTracker, ProtoTask or ProtoStep).
+
+        This facilitates the workflow related to Nestings.  Since all Nestings
+        store relations between Proto objects, accessing nesting.parent and
+        nesting.child returns Proto objects.  And since all Proto objects know
+        their `type` (it's stored in the DB), it is possible to use
+        `get_related_model` to move from the retrived Proto object to the
+        corresponding ProtoTracker, ProtoTask or ProtoStep.
+
+        Note that this method will throw an AssertionError if called to create
+        a new vanilla Proto object (that does not exist in the DB).  This is on
+        purpose, as Proto objects are instead created automatically when you
+        create new ProtoTrackers, ProtoTasks and ProtoSteps.
+
+        """
         if self.id is None:
+            # the object does not exist in the DB yet
+            # make sure the `_type` property is defined
+            assert self._type is not None, '_type must not be None'
+            # store the type in the DB
             self.type = self._type
+        super(Proto, self).save(*args, **kwargs)
 
     def __unicode__(self):
         return "[%s] %s" % (self.get_type_display(), self.summary)
@@ -267,7 +302,7 @@ class ProtoTracker(Proto):
     # tuple of prototype's properties that can be inherited by a spawned object
     inheritable = ('summary', 'suffix')
     # `_type` is used by Proto.__init__ to set `type` in the DB correctly
-    _type = 1
+    _type = TRACKER_TYPE
 
     class Meta:
         app_label = 'todo'
@@ -297,7 +332,7 @@ class ProtoTask(Proto):
     # this is always False so no need to store in the DB
     clone_per_project = False
     inheritable = ('summary', 'suffix')
-    _type = 2
+    _type = TASK_TYPE
 
     class Meta:
         app_label = 'todo'
@@ -343,7 +378,7 @@ class ProtoStep(Proto):
     # this is always False so no need to store in the DB
     clone_per_locale = False
     inheritable = ('summary', 'owner', 'is_review', 'allowed_time')
-    _type = 3
+    _type = STEP_TYPE
 
     class Meta:
         app_label = 'todo'
