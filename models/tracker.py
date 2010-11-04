@@ -36,9 +36,6 @@ class Tracker(Todo):
                                blank=True)
     projects = models.ManyToManyField(Project, related_name='trackers',
                                       through=TrackerInProject)
-    status = models.PositiveIntegerField(choices=STATUS_CHOICES, default=1)
-    resolution = models.PositiveIntegerField(choices=RESOLUTION_CHOICES,
-                                             null=True, blank=True)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
 
