@@ -41,7 +41,11 @@ class ProtoTrackerAdmin(admin.ModelAdmin):
     # parent inlines, child inlines
     inlines = [TrackerNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary', 'suffix', 'clone_per_locale')}),
+            (None, {'fields': ('summary', 'suffix')}),
+            ('Advanced', {
+                'classes': ('collapse',),
+                'fields': ('clone_per_locale',),
+            }),
     )
 
 class ProtoTaskAdmin(admin.ModelAdmin):
@@ -59,6 +63,9 @@ class ProtoStepAdmin(admin.ModelAdmin):
     # parent inlines, parent inlines, child inlines
     inlines = [TaskNestingInline, StepNestingInline, NestingInline]
     fieldsets = (
-            (None, {'fields': ('summary', 'owner', 'is_review',
-                               'allowed_time', 'clone_per_project')}),
+            (None, {'fields': ('summary', 'owner', 'is_review')}),
+            ('Advanced', {
+                'classes': ('collapse',),
+                'fields': ('clone_per_project', 'allowed_time'),
+            }),
     )
