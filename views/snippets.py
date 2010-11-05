@@ -5,6 +5,8 @@ from django.core.urlresolvers import reverse
 
 from todo.models import Tracker, Task
 
+from itertools import groupby
+
 def task(request, task, redirect_view='todo.views.demo.task'):
     """A single task view snippet.
 
@@ -65,27 +67,20 @@ def tree(request, tracker=None, project=None, locale=None,
     how to use this snippet.
 
     """
-    # FIXME: needs refactoring to reduce the number of queries.
-    # Possible approach:
-    #   start with a list of open tasks, via selected_related('parent')
-    #   group them by parent
-    #   get parents of the parents in a single query, again with 
-    #     selected_related('parent')
-    #   repeat until there's no parents left
+    tracker_objects = Tracker.objects.select_related('parent')
+    task_objects = Task.objects.select_related('parent')
 
-    filters = {}
     if tracker is not None:
         trackers = (tracker,)
         tasks = []
     else:
-        trackers = Tracker.objects
-        tasks = Task.objects
+        # call `all` to get a new queryset to work with
+        trackers = tracker_objects.all()
+        tasks = task_objects.all()
         if project is not None:
-            filters.update(projects=project)
             trackers = trackers.filter(projects=project)
             tasks = tasks.filter(projects=project)
         if locale is not None:
-            filters.update(locale=locale)
             # return top-most trackers for the locale
             trackers = trackers.filter(locale=locale, parent__locale=None)
             # return top-most tasks for the locale
@@ -95,6 +90,48 @@ def tree(request, tracker=None, project=None, locale=None,
             trackers = trackers.filter(parent=None)
             # return top-level tasks for the project
             tasks = tasks.filter(parent=None)
+
+    cache = {}
+    depth = 0
+
+    # retrive all trackers and tasks in the tree and store them as flat lists
+    while trackers or tasks:
+        for tracker in trackers:
+            cache[tracker] = {
+                'trackers': {},
+                'tasks': {},
+            }
+        for task in tasks:
+            cache[task] = {}
+        tasks = task_objects.filter(parent__in=trackers)
+        trackers = tracker_objects.filter(parent__in=trackers)
+        depth += 1
+
+    # iterate over the cache a couple of times and group retrived trackers and
+    # tasks into a tree-like structure
+    tree = {
+        'trackers': {},
+        'tasks': {},
+    }
+    while depth:
+        # The key to understanding how thos loop works is the fact that nothing
+        # is removed from the `cache` at any point.  The `depth` variable makes
+        # sure the loop runs enough times to include all relations in the
+        # structure.
+        keys = sorted(cache.keys(), key=lambda k: k.parent)
+        for parent, children in groupby(keys, lambda k: k.parent):
+            for child in children:
+                # if there is no parent, store the child directly in `tree`
+                parent_node = tree if parent is None else cache[parent]
+                # put the child under its parent; the first time the loop 
+                # executes, `cache[child]` is just an empty dict for all
+                # children. In the following runs, however, it contains
+                # a subtree of trackers and tasks grouped by the loop before.
+                if isinstance(child, Tracker):
+                    parent_node['trackers'][child] = cache[child]
+                else:
+                    parent_node['tasks'][child] = cache[child]
+        depth -= 1
 
     facets = {
         'projects': [],
@@ -107,7 +144,9 @@ def tree(request, tracker=None, project=None, locale=None,
         'next_steps_owners': [],
         'next_steps': [],
     }
-    tree, facets = _make_tree(filters, trackers, tasks, [], facets) 
+    # recurse into the tree to retrieve the meta data about the tasks and
+    # store it in the tree (in corresponding task dicts) and as the facets
+    tree, facets = _get_facet_data(tree, facets)
 
     return render_to_string('todo/snippet_tree.html',
                             {'tree': tree,
@@ -126,46 +165,29 @@ def _update_facets(facets, task_properties):
         facets[prop] = list(set(facets[prop])) # uniquify the list
     return facets
 
-def _make_tree(filters, trackers, tasks, tracker_chain, facets):
-    """Construct the data tree about requested trackers.
+def _get_facet_data(tree, facets, tracker_chain=[]):
+    """Retrive meta data for every task in the tree.
 
-    The function recursively iterates over the given list of trackers
-    to create a data hierarchy with information about each tracker and
-    task. This is done so that all the necessary data is avaiable before 
-    the template is rendered, which in turn allows to populate the facets
-    used to navigate the tracker tree.
+    The function recurses into a tree of trackers and tasks and retrieves
+    information about every task it finds.  The data gathered this way is then
+    stored in corresponding tasks' dicts in the tree.  It is also used to
+    prepare data for the faceted interface that will allow to filter the tree.
 
     Arguments:
-    filters --
-    trackers -- an iterable of todo.models.Tracker instances that that tree
-                will be constructed for.
-    tasks -- an iterable of todo.models.Tracker instances that that tree
-             will be constructed for.
-    tracker_chain -- a list of prototype names of tracker which were already
-                     analyzed in the recursion. This is used to give tasks 
-                     a 'path' of trackers above them.
-    facets -- a dict with facet data.
+        tree -- a tree-like structure of dicts representing a hierarchy of
+                trackers and tasks
+        facets -- a dict with facet data
+        tracker_chain -- a list of prototype names of trackers which were
+                         already analyzed in the recursion. This is used to
+                         give tasks a breadcrumbs-like 'path' of trackers above
+                         them.
 
     """
-    # FIXME: The function works its way from the top to the bottom of the 
-    # tracker structure, which results in tons of queries being made. 
-    # A possible solution, as mentioned in todo.views.snippets.tree, might
-    # be to start from the tasks and go up.
-
-    tree = {'trackers': {}, 'tasks': {}}
-    for tracker in trackers:
-        child_trackers = tracker.children_all()
-        if 'projects' in filters:
-            child_trackers = child_trackers.filter(projects=filters['projects'])
-        if 'locale' in filters:
-            child_trackers = child_trackers.filter(locale=filters['locale'])
-        subtree, facets = _make_tree(filters,
-                                     child_trackers,
-                                     tracker.tasks.all(),
-                                     tracker_chain + [tracker],
-                                     facets)
-        tree['trackers'].update({tracker: subtree}) 
-    for task in tasks:
+    for tracker, subtree in tree['trackers'].iteritems():
+        subtree, facets = _get_facet_data(subtree, facets,
+                                          tracker_chain + [tracker])
+        tree['trackers'][tracker] = subtree 
+    for task in tree['tasks'].keys():
         task_properties = {
             'projects': [unicode(p) for p in task.projects.all()],
             'locales': [unicode(task.locale)],
@@ -181,6 +203,6 @@ def _make_tree(filters, trackers, tasks, tracker_chain, facets):
             'next_steps_owners': [unicode(step.owner)
                                   for step in task.next_steps()],
         }
-        tree['tasks'].update({task: task_properties})
+        tree['tasks'][task] = task_properties
         facets = _update_facets(facets, task_properties)
     return tree, facets
