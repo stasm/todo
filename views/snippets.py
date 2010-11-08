@@ -140,7 +140,6 @@ def tree(request, tracker=None, project=None, locale=None,
         'prototypes': [],
         'bugs': [],
         'trackers': [],
-        'tracker_prototypes': [],
         'next_steps_owners': [],
         'next_steps': [],
     }
@@ -190,17 +189,15 @@ def _get_facet_data(tree, facets, tracker_chain=[]):
     for task in tree['tasks'].keys():
         task_properties = {
             'projects': [unicode(p) for p in task.projects.all()],
-            'locales': [unicode(task.locale)],
+            'locales': [task.locale_repr],
             'statuses': ['%s for %s' % 
                        (s.get_status_display(), unicode(s.project)) for s in
                        task.statuses.all()],
-            'prototypes': [task.prototype.summary],
+            'prototypes': [task.prototype_repr],
             'bugs': [task.bugid],
             'trackers': [t.summary for t in tracker_chain],
-            'tracker_prototypes': [t.prototype.summary for t in 
-                                   tracker_chain if t.prototype],
             'next_steps': [unicode(step) for step in task.next_steps()],
-            'next_steps_owners': [unicode(step.owner)
+            'next_steps_owners': [step.owner_repr
                                   for step in task.next_steps()],
         }
         tree['tasks'][task] = task_properties

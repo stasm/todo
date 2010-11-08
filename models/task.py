@@ -49,6 +49,10 @@ class Task(Todo):
     latest_resolution_ts = models.DateTimeField(null=True, blank=True)
     # a cached string representation of the task
     _repr = models.CharField(max_length=250, blank=True)
+    # a cached string representation of the related prototype
+    prototype_repr = models.CharField(max_length=250, blank=True)
+    # a cached string representation of the related locale
+    locale_repr = models.CharField(max_length=250, blank=True)
 
     objects = StatusManager()
     
@@ -87,6 +91,15 @@ class Task(Todo):
                 self._repr = '[%s] %s' % (self.locale.code, self._repr)
             self.save()
         return self._repr
+
+    def save(self, *args, **kwargs):
+        if not self.id:
+            # the task doesn't exist in the DB yet
+            if not self.prototype_repr and self.prototype:
+                self.prototype_repr = self.prototype.summary
+            if not self.locale_repr and self.locale:
+                self.locale_repr = unicode(self.locale)
+        super(Task, self).save(*args, **kwargs)
 
     def assign_to_projects(self, projects):
         for project in projects:
