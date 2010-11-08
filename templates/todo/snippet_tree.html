@@ -227,7 +227,6 @@ QuickEditor.prototype = {
   {% for tracker, subtree in tree.trackers.iteritems %}
     <div class="tracker"> 
       <div class="todo_obj summary">
-        {% if tracker.locale %}[{{tracker.locale.code}}]{% endif %}
         <span class="noneditable">
           <span class="replace-summary">{{tracker}}</span>
           {% if perms.todo.change_tracker %}
@@ -257,7 +256,6 @@ QuickEditor.prototype = {
         {% endfor %}>
         {% if not task.is_resolved_all %}
           <span class="summary">
-            {% if task.locale %}[{{task.locale.code}}]{% endif %}
             <span class="noneditable">
               <a href="{% urlvar task_view task.pk %}" class="replace-summary">{{task}}</a>
               {% if perms.todo.change_task %}
@@ -273,7 +271,7 @@ QuickEditor.prototype = {
             </span>
           </span>
           {% for step in task.next_steps %}
-            <small class="next_step">{{step.owner}}: {{step.summary}}</small>
+            <small class="next_step">{{step.owner_repr}}: {{step}}</small>
           {% endfor %}
         {% else %}
           <div class="summary">{{task}} <a class="permalink" href="{% urlvar task_view task.pk %}">#</a></div>

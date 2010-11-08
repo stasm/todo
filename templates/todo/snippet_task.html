@@ -381,7 +381,7 @@ TimeResetter.prototype = {
             <input type="checkbox" name="failure" onclick="this.form.submit()"/>
           {% endif %}
           <span class="summary">
-            {% if step.owner %}<em>{{step.owner}}:</em>{% endif %}
+            {% if step.owner_repr %}<em>{{step.owner_repr}}:</em>{% endif %}
             {{step}}
             {% if step.is_overdue %}
               <span class="quickedit" data-url="{% url todo.views.api.reset_time step.pk %}">↺</span>
@@ -395,7 +395,7 @@ TimeResetter.prototype = {
           <input type="checkbox" disabled="disabled"/>
         {% endifequal %}
         <span>
-          {% if step.owner %}<em>{{step.owner}}:</em>{% endif %}
+          {% if step.owner_repr %}<em>{{step.owner_repr}}:</em>{% endif %}
           {{step}} {% ifequal step.resolution 2 %}<strong>(failed)</strong>{% endifequal %}
         </span>
       {% endif %}

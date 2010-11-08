@@ -25,7 +25,8 @@ class TaskAdmin(admin.ModelAdmin):
             }),
             ('Under the hood', {
                 'classes': ('collapse',),
-                'fields': ('prototype', 'snapshot_ts', 'latest_resolution_ts'),
+                'fields': ('prototype', 'snapshot_ts', 'latest_resolution_ts',
+                           '_repr'),
             }),
     )
 

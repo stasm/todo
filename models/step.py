@@ -37,6 +37,10 @@ class Step(Todo):
                                         verbose_name="Allowed time (in days)",
                                         help_text="Time the owner has to "
                                                   "complete the step.")
+    # a cached string representation of the step
+    _repr = models.CharField(max_length=250, blank=True)
+    # a cached string representation of the related owner
+    owner_repr = models.CharField(max_length=250, blank=True)
 
     objects = StatusManager()
 
@@ -53,6 +57,21 @@ class Step(Todo):
         self._overdue = None
         super(Step, self).__init__(*args, **kwargs)
 
+    def __unicode__(self):
+        """Return the cached representation of the object."""
+        if not self._repr:
+            self._repr = self.summary
+            if self.project:
+                self._repr = '%s %s' % (self._repr, self.project)
+            self.save()
+        return self._repr
+
+    def save(self, *args, **kwargs):
+        if not self.id and not self.owner_repr and self.owner:
+            # the step doesn't exist in the DB yet
+            self.owner_repr = unicode(self.owner)
+        super(Step, self).save(*args, **kwargs)
+
     def get_has_children(self):
         if self._has_children is None:
             self._has_children = len(self.children_all()) > 0
@@ -63,12 +82,6 @@ class Step(Todo):
         self.save()
 
     has_children = property(get_has_children, set_has_children)
-
-    def __unicode__(self):
-        if self.project:
-            return '%s %s' % (self.summary, self.project)
-        return self.summary
-
 
     @property
     def code(self):

@@ -38,6 +38,8 @@ class Tracker(Todo):
                                       through=TrackerInProject)
     bugid = models.PositiveIntegerField(null=True, blank=True)
     alias = models.SlugField(max_length=200, null=True, blank=True)
+    # a cached string representation of the tracker
+    _repr = models.CharField(max_length=250, blank=True)
 
     objects = StatusManager()
 
@@ -69,7 +71,13 @@ class Tracker(Todo):
         super(Todo, self).__init__(*args, **kwargs)
 
     def __unicode__(self):
-        return self.summary
+        """Return the cached representation of the object."""
+        if not self._repr:
+            self._repr = self.summary
+            if self.locale:
+                self._repr = '[%s] %s' % (self.locale.code, self._repr)
+            self.save()
+        return self._repr
 
     def assign_to_projects(self, projects):
         for project in projects:
