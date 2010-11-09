@@ -4,10 +4,10 @@
 <ul>
 {% for task in tasks %}
     <li>
-        <a href="{% urlvar task_view task.id %}">{{task.summary}}</a>
+        <a href="{% urlvar task_view task.id %}">{{task}}</a>
         Next steps:
         {% for step in task.next_steps %}
-            {{step.summary}} ({{step.owner}})
+            {{step}} ({{step.owner_repr}})
         {% endfor %}
     </li>
 {% endfor %}

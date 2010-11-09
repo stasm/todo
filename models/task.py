@@ -54,6 +54,9 @@ class Task(Todo):
     # a cached string representation of the related locale
     locale_repr = models.CharField(max_length=250, blank=True)
 
+    # non-permanently cached list of next steps
+    _next_steps = None
+
     objects = StatusManager()
     
     class Meta:
@@ -149,9 +152,17 @@ class Task(Todo):
         """
         return self.parent.tasks.all()
 
-    def next_steps(self):
-        "Get the next steps in the task."
-        return self.steps.next()
+    def set_next_steps(self, steps_list):
+        """Set the next steps of the task to a static list of steps."""
+        self._next_steps = steps_list
+
+    def get_next_steps(self):
+        """Get the next steps in the task."""
+        if not self._next_steps:
+            self._next_steps = self.steps.next()
+        return self._next_steps
+
+    next_steps = property(get_next_steps, set_next_steps)
 
     def resolve(self, user, project, resolution=COMPLETED):
         "Resolve the task."

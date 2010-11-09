@@ -3,7 +3,8 @@ from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 
-from todo.models import Tracker, Task
+from todo.models import Tracker, Task, Step
+from todo.workflow import NEXT
 
 from itertools import groupby
 
@@ -46,6 +47,14 @@ def showcase(request, project, locale, tasks_shown=5,
 
     """
     tasks = project.open_tasks(locale).order_by('-latest_resolution_ts')[:5]
+    # get all next steps for the current tasks and group them by task
+    next_steps = {}
+    step_objects = Step.objects.select_related('task').order_by('task')
+    flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
+    for task, steps in groupby(flat_next_steps, lambda s: s.task):
+        next_steps[task] = list(steps)
+    for task in tasks:
+        task.next_steps = next_steps[task]
     return render_to_string('todo/snippet_showcase.html',
                             {'tasks': tasks,
                              'task_view': task_view})
@@ -69,6 +78,7 @@ def tree(request, tracker=None, project=None, locale=None,
     """
     tracker_objects = Tracker.objects.select_related('parent')
     task_objects = Task.objects.select_related('parent')
+    step_objects = Step.objects.select_related('task').order_by('task')
 
     if tracker is not None:
         trackers = (tracker,)
@@ -92,9 +102,11 @@ def tree(request, tracker=None, project=None, locale=None,
             tasks = tasks.filter(parent=None)
 
     cache = {}
+    next_steps = {}
     depth = 0
 
-    # retrive all trackers and tasks in the tree and store them as flat lists
+    # 1. retrive all trackers and tasks in the tree and store them as flat
+    #    lists; for each level in the tree, get next steps for tasks
     while trackers or tasks:
         for tracker in trackers:
             cache[tracker] = {
@@ -103,12 +115,17 @@ def tree(request, tracker=None, project=None, locale=None,
             }
         for task in tasks:
             cache[task] = {}
+        # get all next steps for the current tasks and group them by task
+        flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
+        for task, steps in groupby(flat_next_steps, lambda s: s.task):
+            next_steps[task] = list(steps)
+        # prepare for the loop's next run
         tasks = task_objects.filter(parent__in=trackers)
         trackers = tracker_objects.filter(parent__in=trackers)
         depth += 1
 
-    # iterate over the cache a couple of times and group retrived trackers and
-    # tasks into a tree-like structure
+    # 2. iterate over the cache a couple of times and group retrived trackers
+    #    and tasks into a tree-like structure
     tree = {
         'trackers': {},
         'tasks': {},
@@ -133,6 +150,8 @@ def tree(request, tracker=None, project=None, locale=None,
                     parent_node['tasks'][child] = cache[child]
         depth -= 1
 
+    # 3. recurse into the tree to retrieve the meta data about the tasks and
+    #    store it in the tree (in corresponding task dicts) and as the facets
     facets = {
         'projects': [],
         'locales': [],
@@ -143,9 +162,51 @@ def tree(request, tracker=None, project=None, locale=None,
         'next_steps_owners': [],
         'next_steps': [],
     }
-    # recurse into the tree to retrieve the meta data about the tasks and
-    # store it in the tree (in corresponding task dicts) and as the facets
-    tree, facets = _get_facet_data(tree, facets)
+
+    def _get_facet_data(tree, tracker_chain=[]):
+        """Retrive meta data for every task in the tree.
+
+        The function recurses into a tree of trackers and tasks and retrieves
+        information about every task it finds.  The data gathered this way is
+        then stored in corresponding tasks' dicts in the tree.  It is also used
+        to prepare data for the faceted interface that will allow to filter the
+        tree.
+
+        Arguments:
+            tree -- a tree-like structure of dicts representing a hierarchy of
+                    trackers and tasks
+            tracker_chain -- a list of prototype names of trackers which were
+                             already analyzed in the recursion. This is used to
+                             give tasks a breadcrumbs-like 'path' of trackers
+                             above them.
+
+        """
+        for tracker, subtree in tree['trackers'].iteritems():
+            subtree = _get_facet_data(subtree, tracker_chain + [tracker])
+            tree['trackers'][tracker] = subtree 
+        for task in tree['tasks'].keys():
+            task_properties = {
+                'projects': [unicode(p) for p in task.projects.all()],
+                'locales': [task.locale_repr],
+                'statuses': ['%s for %s' % 
+                           (s.get_status_display(), unicode(s.project)) for s in
+                           task.statuses.all()],
+                'prototypes': [task.prototype_repr],
+                'bugs': [task.bugid],
+                'trackers': [t.summary for t in tracker_chain],
+                'next_steps': [unicode(step) for step in next_steps[task]],
+                'next_steps_owners': [step.owner_repr
+                                      for step in next_steps[task]],
+            }
+            task.next_steps = next_steps[task]
+            tree['tasks'][task] = task_properties
+            # Update facet data with properties of the task.
+            for prop, val in task_properties.iteritems():
+                facets[prop].extend(val)
+                facets[prop] = list(set(facets[prop])) # uniquify the list
+        return tree
+
+    tree = _get_facet_data(tree)
 
     return render_to_string('todo/snippet_tree.html',
                             {'tree': tree,
@@ -155,51 +216,3 @@ def tree(request, tracker=None, project=None, locale=None,
                             # RequestContext is needed for checking 
                             # the permissions of the user.
                             context_instance=RequestContext(request))
-
-def _update_facets(facets, task_properties):
-    "Update facet data with properties of a task."
-
-    for prop, val in task_properties.iteritems():
-        facets[prop].extend(val)
-        facets[prop] = list(set(facets[prop])) # uniquify the list
-    return facets
-
-def _get_facet_data(tree, facets, tracker_chain=[]):
-    """Retrive meta data for every task in the tree.
-
-    The function recurses into a tree of trackers and tasks and retrieves
-    information about every task it finds.  The data gathered this way is then
-    stored in corresponding tasks' dicts in the tree.  It is also used to
-    prepare data for the faceted interface that will allow to filter the tree.
-
-    Arguments:
-        tree -- a tree-like structure of dicts representing a hierarchy of
-                trackers and tasks
-        facets -- a dict with facet data
-        tracker_chain -- a list of prototype names of trackers which were
-                         already analyzed in the recursion. This is used to
-                         give tasks a breadcrumbs-like 'path' of trackers above
-                         them.
-
-    """
-    for tracker, subtree in tree['trackers'].iteritems():
-        subtree, facets = _get_facet_data(subtree, facets,
-                                          tracker_chain + [tracker])
-        tree['trackers'][tracker] = subtree 
-    for task in tree['tasks'].keys():
-        task_properties = {
-            'projects': [unicode(p) for p in task.projects.all()],
-            'locales': [task.locale_repr],
-            'statuses': ['%s for %s' % 
-                       (s.get_status_display(), unicode(s.project)) for s in
-                       task.statuses.all()],
-            'prototypes': [task.prototype_repr],
-            'bugs': [task.bugid],
-            'trackers': [t.summary for t in tracker_chain],
-            'next_steps': [unicode(step) for step in task.next_steps()],
-            'next_steps_owners': [step.owner_repr
-                                  for step in task.next_steps()],
-        }
-        tree['tasks'][task] = task_properties
-        facets = _update_facets(facets, task_properties)
-    return tree, facets
