@@ -56,6 +56,9 @@ class Task(Todo):
 
     # non-permanently cached list of next steps
     _next_steps = None
+    # non-permanently cached bool describing whether or not the task has been
+    # resolved on all related projects; see `is_resolved_all` below.
+    _is_resolved_all = None
 
     objects = StatusManager()
     
@@ -108,9 +111,29 @@ class Task(Todo):
         for project in projects:
             TaskInProject.objects.create(task=self, project=project)
 
-    def is_resolved_all(self):
-        """Check if the task is resolved for all related projects."""
-        return not self.statuses.filter(status__lt=RESOLVED).count()
+    def is_resolved_all(self, statuses=None):
+        """Check if the task is resolved for all related projects.
+
+        The outcome (a boolean) is temporarily cached as a property of the
+        Task object.
+
+        Arguments:
+            statuses -- a list of TaskInProject objects that will be checked
+                        against. Optional. If omitted, `self.statuses` will be
+                        used (making a query in consequence).
+
+        """
+        if self._is_resolved_all is None:
+            if statuses is None:
+                statuses = self.statuses
+            for status in statuses:
+                if status.status != RESOLVED:
+                    self._is_resolved_all = False
+                    break
+            else:
+                # if the loop finished normally
+                self._is_resolved_all = True
+        return self._is_resolved_all
 
     @property
     def code(self):

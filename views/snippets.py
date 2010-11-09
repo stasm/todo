@@ -3,8 +3,8 @@ from django.template.loader import render_to_string
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 
-from todo.models import Tracker, Task, Step
-from todo.workflow import NEXT
+from todo.models import Tracker, Task, Step, TaskInProject
+from todo.workflow import NEXT, RESOLVED
 
 from itertools import groupby
 
@@ -79,6 +79,8 @@ def tree(request, tracker=None, project=None, locale=None,
     tracker_objects = Tracker.objects.select_related('parent')
     task_objects = Task.objects.select_related('parent')
     step_objects = Step.objects.select_related('task').order_by('task')
+    status_objects = TaskInProject.objects.select_related('task', 'project')
+    status_objects = status_objects.order_by('task')
 
     if tracker is not None:
         trackers = (tracker,)
@@ -103,6 +105,7 @@ def tree(request, tracker=None, project=None, locale=None,
 
     cache = {}
     next_steps = {}
+    statuses = {}
     depth = 0
 
     # 1. retrive all trackers and tasks in the tree and store them as flat
@@ -119,6 +122,10 @@ def tree(request, tracker=None, project=None, locale=None,
         flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
         for task, steps in groupby(flat_next_steps, lambda s: s.task):
             next_steps[task] = list(steps)
+        # get all statuses for the current tasks and group them by task
+        flat_statuses = status_objects.filter(task__in=tasks)
+        for task, task_statuses in groupby(flat_statuses, lambda s: s.task):
+            statuses[task] = list(task_statuses)
         # prepare for the loop's next run
         tasks = task_objects.filter(parent__in=trackers)
         trackers = tracker_objects.filter(parent__in=trackers)
@@ -186,11 +193,11 @@ def tree(request, tracker=None, project=None, locale=None,
             tree['trackers'][tracker] = subtree 
         for task in tree['tasks'].keys():
             task_properties = {
-                'projects': [unicode(p) for p in task.projects.all()],
+                'projects': [unicode(s.project) for s in statuses[task]],
                 'locales': [task.locale_repr],
                 'statuses': ['%s for %s' % 
-                           (s.get_status_display(), unicode(s.project)) for s in
-                           task.statuses.all()],
+                             (s.get_status_display(), unicode(s.project))
+                             for s in statuses[task]],
                 'prototypes': [task.prototype_repr],
                 'bugs': [task.bugid],
                 'trackers': [t.summary for t in tracker_chain],
@@ -199,6 +206,9 @@ def tree(request, tracker=None, project=None, locale=None,
                                       for step in next_steps[task]],
             }
             task.next_steps = next_steps[task]
+            # call this now so that when it's called from the template, the
+            # cached value is used
+            task.is_resolved_all(statuses[task])
             tree['tasks'][task] = task_properties
             # Update facet data with properties of the task.
             for prop, val in task_properties.iteritems():
