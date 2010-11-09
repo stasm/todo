@@ -89,23 +89,30 @@ def tree(request, tracker=None, project=None, locale=None,
         # call `all` to get a new queryset to work with
         trackers = tracker_objects.all()
         tasks = task_objects.all()
+        # trackers come in 3 types:
+        # 1. no projects, no locale -- so-called 'generic' trackers
+        # 2. projects, no locale
+        # 3. projects, locale
         if project is not None:
+            # requesting type 2 or 3
             trackers = trackers.filter(projects=project)
             tasks = tasks.filter(projects=project)
         if locale is not None:
-            # return top-most trackers for the locale
+            # requesting type 3
+            # return top-most trackers/tasks for the locale
             trackers = trackers.filter(locale=locale, parent__locale=None)
-            # return top-most tasks for the locale
             tasks = tasks.filter(locale=locale, parent__locale=None)
         else:
-            # return top-level trackers for the project
-            trackers = trackers.filter(parent=None)
-            # return top-level tasks for the project
-            tasks = tasks.filter(parent=None)
+            # requesting type 2
+            # return top-most trackers/tasks for the project
+            trackers = trackers.filter(parent__projects=None)
+            tasks = tasks.filter(parent__projects=None)
 
+    # these dicts will be used to store objects returned by the queries
     cache = {}
     next_steps = {}
     statuses = {}
+    # the depth of the tree, used as a loop's counter in step 2 below
     depth = 0
 
     # 1. retrive all trackers and tasks in the tree and store them as flat
@@ -145,8 +152,15 @@ def tree(request, tracker=None, project=None, locale=None,
         keys = sorted(cache.keys(), key=lambda k: k.parent)
         for parent, children in groupby(keys, lambda k: k.parent):
             for child in children:
-                # if there is no parent, store the child directly in `tree`
-                parent_node = tree if parent is None else cache[parent]
+                if parent is None or parent not in cache:
+                    # if there is no parent or the parent is outside of the 
+                    # scope of displayed trackers and tasks (e.g. a generic
+                    # tracker which is not assigned to any projects while we're
+                    # displaying trackers specific to a certain project), 
+                    # store the child as a top-level node directly in `tree`.
+                    parent_node = tree
+                else:
+                    parent_node = cache[parent]
                 # put the child under its parent; the first time the loop 
                 # executes, `cache[child]` is just an empty dict for all
                 # children. In the following runs, however, it contains
