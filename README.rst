@@ -1,9 +1,9 @@
 Installation
 ============
 
-#. Put the `todo` directory in your Python path.
+#. Put the ``todo`` directory in your Python path.
 
-#. Add `todo` to your `INSTALLED_APPS` setting.
+#. Add ``todo`` to your ``INSTALLED_APPS`` setting.
 
 #. Add the following line to your global URL patterns:
 
@@ -11,10 +11,10 @@ Installation
 
 #. Sync the database.
 
-#. Copy `todo/static` to wherever you serve your static files from.
+#. Copy ``todo/static`` to wherever you serve your static files from.
 
-#. Include the following code snippet in the `HEAD` section of every view that
-   will display `todo`'s snippets::
+#. Include the following code snippet in the ``HEAD`` section of every view
+   that will display ``todo``'s snippets::
 
     <link rel="stylesheet" type="text/css" href="{% url static path='todo/todo.css' %}" />
 
@@ -32,12 +32,12 @@ Installation
 
 
 Integration
-=============
+===========
 
 In order to enable *todo* for your app, follow these steps:
 
 #. Add a one-to-one relation to your app's project model definition pointing to
-`todo.models.Project` with `related_name="origin"`::
+   ``todo.models.Project``::
 
     from todo.models import Project as TodoProject
 
@@ -45,7 +45,7 @@ In order to enable *todo* for your app, follow these steps:
         ...
         todo = models.OneToOneField(TodoProject, related_name="origin")
 
-#. Create or modify views where you want to use the `todo` snippets. You must
+#. Create or modify views where you want to use the ``todo`` snippets. You must
    have at least two views:
    
    * a single task view,
@@ -93,10 +93,10 @@ In order to enable *todo* for your app, follow these steps:
         return render_to_response('yourapp/single_tracker.html',
                                   {'tree_div': tree_div,})
 
-   See `todo.views.snippets` and `todo.views.demo` for more documentation.
+   See ``todo.views.snippets`` and ``todo.views.demo`` for more documentation.
 
-#. Add the `todo` snippets' `divs` to your templates. Wrap them in a `div` with
-   the `todo` class. For example:
+#. Add the ``todo`` snippets' ``divs`` to your templates. Wrap them in
+   a ``div`` with the ``todo`` class. For example:
 
     ``<div class="todo">{{task_div}}</div>``
 
