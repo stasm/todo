@@ -24,7 +24,6 @@ $.fn.slugify = function(obj) {
   {% block intro %}{% endblock %}
 
   <form action="." method="post">
-    {% csrf_token %}
     {{ form.non_field_errors }}
     {% block fields %}{% endblock %}
     <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
