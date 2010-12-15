@@ -46,8 +46,13 @@ def showcase(request, project, locale, tasks_shown=5,
     See todo.views.demo.combined for an example of how to use this snippet.
 
     """
-    tasks = project.open_tasks(locale).order_by('-latest_resolution_ts')[:5]
-    # get all next steps for the current tasks and group them by task
+    tasks = project.open_tasks(locale).order_by('-latest_resolution_ts')
+    # Force-evaluate the query before it is used in `task__in` filter below.  
+    # This is needed because MySQL 5.1 doesn't support LIMIT and IN in one 
+    # query.
+    tasks = list(tasks[:tasks_shown])
+    # instead of querying for next steps for every tasks separately, get all 
+    # next steps for the current tasks and group them by task
     next_steps = {}
     step_objects = Step.objects.select_related('task').order_by('task')
     flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
@@ -145,7 +150,7 @@ def tree(request, tracker=None, project=None, locale=None,
         'tasks': {},
     }
     while depth:
-        # The key to understanding how thos loop works is the fact that nothing
+        # The key to understanding how this loop works is the fact that nothing
         # is removed from the `cache` at any point.  The `depth` variable makes
         # sure the loop runs enough times to include all relations in the
         # structure.
