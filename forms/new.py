@@ -29,8 +29,10 @@ class TrackerChoiceField(forms.ModelChoiceField):
         return "%d: %s" % (tracker.pk, tracker.summary)
 
 class ChooseProjectLocaleForm(forms.Form):
-    projects = ProjectMultipleChoiceField(queryset=Project.objects.all())
-    locales = LocaleMultipleChoiceField(queryset=Locale.objects.all())
+    _projects = Project.objects.order_by('label')
+    projects = ProjectMultipleChoiceField(queryset=_projects)
+    _locales = Locale.objects.order_by('code')
+    locales = LocaleMultipleChoiceField(queryset=_locales)
 
 class ChoosePrototypeForm(forms.Form):
     tracker_proto = ProtoChoiceField(queryset=ProtoTracker.objects.all(),
