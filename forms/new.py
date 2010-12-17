@@ -168,7 +168,7 @@ class CreateNewWizard(FormWizard):
         tracker_proto = clean.pop('tracker_proto')
         task_proto = clean.pop('task_proto')
         prototype = tracker_proto or task_proto
-        if prototype.clone_per_locale is True:
+        if prototype.clone_per_locale:
             for todo in prototype.spawn_per_locale(request.user, **clean):
                 todo.activate(request.user)
         else:
