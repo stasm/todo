@@ -1,7 +1,6 @@
 from django.db import models
-from django.template.defaultfilters import slugify
 
-from itertools import chain
+from todo.workflow import ON_HOLD
 
 class Project(models.Model):
     """ e.g. 'Firefox 4.0'
@@ -23,7 +22,7 @@ class Project(models.Model):
         all = tasks.count()
         # status and resolution are kept on the intermediary `TaskInProject`
         # model
-        open = tasks.filter(statuses__status__lt=4).count()
+        open = tasks.filter(statuses__status__lt=ON_HOLD).distinct().count()
         return {'all': all,
                 'open': open,
                 'completion': 100 * (all - open) / all if all != 0 else 0,
