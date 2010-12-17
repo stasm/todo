@@ -1,5 +1,5 @@
-from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
+from django.utils.safestring import mark_safe
 from django.template import RequestContext
 from django.core.urlresolvers import reverse
 
@@ -23,12 +23,15 @@ def task(request, task, redirect_view='todo.views.demo.task'):
 
     """
     redirect_url = reverse(redirect_view, args=[task.pk])
-    return render_to_string('todo/snippet_task.html',
-                            {'task': task,
-                             'redirect_url': redirect_url,},
-                            # RequestContext is needed for checking 
-                            # the permissions of the user.
-                            context_instance=RequestContext(request))
+    div = render_to_string('todo/snippet_task.html',
+                           {'task': task,
+                            'redirect_url': redirect_url,},
+                           # RequestContext is needed for checking 
+                           # the permissions of the user.
+                           context_instance=RequestContext(request))
+    return {
+        'div': mark_safe(div),
+    }
 
 def showcase(request, project, locale, tasks_shown=5,
              task_view='todo.views.demo.task'):
@@ -60,9 +63,13 @@ def showcase(request, project, locale, tasks_shown=5,
         next_steps[task] = list(steps)
     for task in tasks:
         task.next_steps = next_steps[task]
-    return render_to_string('todo/snippet_showcase.html',
-                            {'tasks': tasks,
-                             'task_view': task_view})
+    div = render_to_string('todo/snippet_showcase.html',
+                           {'tasks': tasks,
+                            'task_view': task_view})
+    return {
+        'empty': not bool(tasks),
+        'div': mark_safe(div),
+    }
 
 def tree(request, tracker=None, project=None, locale=None,
          task_view='todo.views.demo.task',
@@ -112,6 +119,8 @@ def tree(request, tracker=None, project=None, locale=None,
             # return top-most trackers/tasks for the project
             trackers = trackers.filter(parent__projects=None)
             tasks = tasks.filter(parent__projects=None)
+    # is there anything to show?
+    empty = not (bool(trackers) or bool(tasks))
 
     # these dicts will be used to store objects returned by the queries
     cache = {}
@@ -237,11 +246,15 @@ def tree(request, tracker=None, project=None, locale=None,
 
     tree = _get_facet_data(tree)
 
-    return render_to_string('todo/snippet_tree.html',
-                            {'tree': tree,
-                             'facets': facets,
-                             'task_view': task_view,
-                             'tracker_view': tracker_view},
-                            # RequestContext is needed for checking 
-                            # the permissions of the user.
-                            context_instance=RequestContext(request))
+    div = render_to_string('todo/snippet_tree.html',
+                           {'tree': tree,
+                            'facets': facets,
+                            'task_view': task_view,
+                            'tracker_view': tracker_view},
+                           # RequestContext is needed for checking 
+                           # the permissions of the user.
+                           context_instance=RequestContext(request))
+    return {
+        'empty': empty,
+        'div': mark_safe(div),
+    }

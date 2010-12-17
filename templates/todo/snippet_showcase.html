@@ -10,5 +10,7 @@
             {{step}} ({{step.owner_repr}})
         {% endfor %}
     </li>
+{% empty %}
+    <li>No tasks to show.</li>
 {% endfor %}
 </ul>
