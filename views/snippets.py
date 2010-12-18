@@ -127,6 +127,7 @@ def tree(request, tracker=None, project=None, locale=None,
 
     # these dicts will be used to store objects returned by the queries
     cache = {}
+    next_steps = {}
     statuses = {}
     # the depth of the tree, used as a loop's counter in step 2 below
     depth = 0
@@ -144,7 +145,7 @@ def tree(request, tracker=None, project=None, locale=None,
         # get all next steps for the current tasks and group them by task
         flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
         for task, steps in groupby(flat_next_steps, lambda s: s.task):
-            task.next_steps = list(steps)
+            next_steps[task] = list(steps)
         # get all statuses for the current tasks and group them by task
         flat_statuses = status_objects.filter(task__in=tasks)
         for task, task_statuses in groupby(flat_statuses, lambda s: s.task):
@@ -222,6 +223,7 @@ def tree(request, tracker=None, project=None, locale=None,
             subtree = _get_facet_data(subtree, tracker_chain + [tracker])
             tree['trackers'][tracker] = subtree 
         for task in tree['tasks'].keys():
+            task.next_steps = next_steps[task]
             task_properties = {
                 'projects': [unicode(s.project) for s in statuses[task]],
                 'locales': [task.locale_repr],
