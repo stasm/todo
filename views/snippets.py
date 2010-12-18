@@ -62,7 +62,10 @@ def showcase(request, project, locale, tasks_shown=5,
     for task, steps in groupby(flat_next_steps, lambda s: s.task):
         next_steps[task] = list(steps)
     for task in tasks:
-        task.next_steps = next_steps[task]
+        try:
+            task.next_steps = next_steps[task]
+        except KeyError:
+            task.next_steps = []
     div = render_to_string('todo/snippet_showcase.html',
                            {'tasks': tasks,
                             'task_view': task_view})
@@ -124,7 +127,6 @@ def tree(request, tracker=None, project=None, locale=None,
 
     # these dicts will be used to store objects returned by the queries
     cache = {}
-    next_steps = {}
     statuses = {}
     # the depth of the tree, used as a loop's counter in step 2 below
     depth = 0
@@ -142,7 +144,7 @@ def tree(request, tracker=None, project=None, locale=None,
         # get all next steps for the current tasks and group them by task
         flat_next_steps = step_objects.filter(task__in=tasks, status=NEXT)
         for task, steps in groupby(flat_next_steps, lambda s: s.task):
-            next_steps[task] = list(steps)
+            task.next_steps = list(steps)
         # get all statuses for the current tasks and group them by task
         flat_statuses = status_objects.filter(task__in=tasks)
         for task, task_statuses in groupby(flat_statuses, lambda s: s.task):
@@ -229,11 +231,10 @@ def tree(request, tracker=None, project=None, locale=None,
                 'prototypes': [task.prototype_repr],
                 'bugs': [task.bugid],
                 'trackers': [t.summary for t in tracker_chain],
-                'next_steps': [unicode(step) for step in next_steps[task]],
+                'next_steps': [unicode(step) for step in task.next_steps],
                 'next_steps_owners': [step.owner_repr
-                                      for step in next_steps[task]],
+                                      for step in task.next_steps],
             }
-            task.next_steps = next_steps[task]
             # call this now so that when it's called from the template, the
             # cached value is used
             task.is_resolved_all(statuses[task])
