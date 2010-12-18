@@ -245,6 +245,9 @@ def tree(request, tracker=None, project=None, locale=None,
         return tree
 
     tree = _get_facet_data(tree)
+    # sort the facets alphabetically
+    for k, v in facets.iteritems():
+        facets[k] = sorted(v)
 
     div = render_to_string('todo/snippet_tree.html',
                            {'tree': tree,
