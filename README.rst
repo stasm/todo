@@ -76,30 +76,39 @@ In order to enable *todo* for your app, follow these steps:
     def single_task(request, task_id):
         from todo.models import Task
         task = get_object_or_404(Task, pk=task_id)
-        task_div = snippets.task(request, task,
-                                 redirect_view='yourapp.views.single_task')
-        task_div = mark_safe(task_div)
+        task_snippet = snippets.task(request, task,
+                                     redirect_view='yourapp.views.single_task')
         return render_to_response('yourapp/single_task.html',
-                                  {'task_div': task_div,})
+                                  {'task_snippet': task_snippet,})
 
     def single_tracker(request, tracker_id):
         from todo.models import Tracker
         tracker = get_object_or_404(Tracker, pk=tracker_id)
-        tree_div = snippets.tree(request, tracker=tracker,
-                                 project=None, locale=None,
-                                 task_view='yourapp.views.single_task',
-                                 tracker_view='yourapp.views.single_tracker')
-        tree_div = mark_safe(tree_div)
+        tree = snippets.tree(request, tracker=tracker,
+                             project=None, locale=None,
+                             task_view='yourapp.views.single_task',
+                             tracker_view='yourapp.views.single_tracker')
         return render_to_response('yourapp/single_tracker.html',
-                                  {'tree_div': tree_div,})
+                                  {'tree': tree,})
 
    See ``todo.views.snippets`` and ``todo.views.demo`` for more documentation.
 
 #. Add the ``todo`` snippets' ``divs`` to your templates. Wrap them in
    a ``div`` with the ``todo`` class. For example:
 
-    ``<div class="todo">{{task_div}}</div>``
+    ``<div class="todo">{{task.div}}</div>``
 
    or
 
-    ``<div class="todo">{{tree_div}}</div>``
+    ``<div class="todo">{{tree.div}}</div>``
+
+   For views showing more than a single task, you can use the ``empty`` element 
+   of the dictionary returned by the snippet to show a customized message in 
+   case there is nothing to display. For instance::
+
+    {% if not tree.empty %}
+      <div class="todo">{{tree.div}}</div>
+    {% else %}
+      <p>No trackers or tasks to show.</p>
+    {% endif %}
+

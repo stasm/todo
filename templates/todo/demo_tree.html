@@ -3,5 +3,9 @@
 
 {% block content %}
   <h2>Tracker tree</h2>
-  <div class="todo">{{tree_div}}</div>
+  {% if not tree.empty %}
+    <div class="todo">{{tree.div}}</div>
+  {% else %}
+    <p>No trackers or tasks.</p>
+  {% endif %}
 {% endblock %}

@@ -3,5 +3,9 @@
 
 {% block content %}
   <h2>Open Tasks</h2>
-  <div class="todo">{{open_tasks_div}}</div>
+  {% if not open_tasks.empty %}
+    <div class="todo">{{open_tasks.div}}</div>
+  {% else %}
+    <p>No open tasks.</p>
+  {% endif %}
 {% endblock %}
