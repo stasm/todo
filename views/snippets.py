@@ -4,7 +4,7 @@ from django.template import RequestContext
 from django.core.urlresolvers import reverse
 
 from todo.models import Tracker, Task, Step, TaskInProject
-from todo.workflow import NEXT, RESOLVED
+from todo.workflow import NEXT
 
 from itertools import groupby
 

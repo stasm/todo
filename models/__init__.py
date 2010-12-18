@@ -1,10 +1,9 @@
-from django.contrib.admin.models import LogEntry
-from django.contrib.contenttypes.models import ContentType
 try:
     from django.dispatch import receiver
 except ImportError:
     from todo.signals import receiver
 
+from todo.workflow import RESOLVED
 from todo.signals import status_changed, todo_updated
 
 from .action import Action
@@ -31,7 +30,7 @@ def log_status_change(sender, user, flag, **kwargs):
     """
     action = Action.objects.log(user, sender, flag)
 
-    if isinstance(sender, Step) and action >= 5:
+    if isinstance(sender, Step) and action >= RESOLVED:
         # a Step has just been resolved, let's store the time of this change on
         # the related Task for faster queries. We don't need to send the signal
         # again for the task as the action has already been recorded for the

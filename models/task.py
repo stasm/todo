@@ -1,5 +1,4 @@
 from django.db import models
-from django.core.urlresolvers import reverse
 
 from life.models import Locale
 
@@ -13,8 +12,6 @@ from todo.workflow import (NEW, ACTIVE, NEXT, ON_HOLD, RESOLVED, COMPLETED,
                            RESOLUTION_CHOICES)
 from todo.signals import status_changed
     
-from datetime import datetime
-
 class TaskInProject(models.Model):
     task = models.ForeignKey('Task', related_name="statuses")
     project = models.ForeignKey(Project, related_name="task_statuses")
