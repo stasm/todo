@@ -122,6 +122,12 @@ def tree(request, tracker=None, project=None, locale=None,
             # return top-most trackers/tasks for the project
             trackers = trackers.filter(parent__projects=None)
             tasks = tasks.filter(parent__projects=None)
+    # force-evaluate the querysets to reduce queries' amount and complexity;
+    # bool() and while are faster for lists and passing a list to a 
+    # `filter(task__in=tasks` results in a simple WHERE ... IN (id1, id2, etc) 
+    # instead of an extra JOIN.
+    trackers = list(trackers)
+    tasks = list(tasks)
     # is there anything to show?
     empty = not (bool(trackers) or bool(tasks))
 
@@ -151,8 +157,8 @@ def tree(request, tracker=None, project=None, locale=None,
         for task, task_statuses in groupby(flat_statuses, lambda s: s.task):
             statuses[task] = list(task_statuses)
         # prepare for the loop's next run
-        tasks = task_objects.filter(parent__in=trackers)
-        trackers = tracker_objects.filter(parent__in=trackers)
+        tasks = list(task_objects.filter(parent__in=trackers))
+        trackers = list(tracker_objects.filter(parent__in=trackers))
         depth += 1
 
     # 2. iterate over the cache a couple of times and group retrived trackers
