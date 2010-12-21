@@ -5,30 +5,13 @@ Installation
 
 #. Add ``todo`` to your ``INSTALLED_APPS`` setting.
 
-#. Add the following line to your global URL patterns:
+#. Add the following line to your global URL patterns::
 
-    ``(r'^todo/', include('todo.urls')),``
+    (r'^todo/', include('todo.urls')),
 
 #. Sync the database.
 
 #. Copy ``todo/static`` to wherever you serve your static files from.
-
-#. Include the following code snippet in the ``HEAD`` section of every view
-   that will display ``todo``'s snippets::
-
-    <link rel="stylesheet" type="text/css" href="{% url static path='todo/todo.css' %}" />
-
-    <style type="text/css">
-        .todo #outofdate {
-            background-image: url({% url static path="todo/warning.png" %});
-        }
-        .todo #uptodate {
-            background-image: url({% url static path="todo/okay.png" %});
-        }
-        .todo #checking div {
-            background: url({% url static path="loadingAnimation.gif" %}) no-repeat 0 13px;
-        }
-    </style>
 
 
 Integration
@@ -43,7 +26,15 @@ In order to enable *todo* for your app, follow these steps:
 
     class YourProject(models.Model):
         ...
-        todo = models.OneToOneField(TodoProject, related_name="origin")
+        todo = models.OneToOneField(TodoProject, related_name="yourapp")
+
+#. Modify the database accordingly. For example::
+
+    ALTER TABLE yourapp_yourproject 
+    ADD COLUMN `todo_id` integer NOT NULL UNIQUE;
+
+   You can also run `python manage.py sql yourapp` to see what column definiton 
+   Django expects from the addition in the previous step.
 
 #. Create or modify views where you want to use the ``todo`` snippets. You must
    have at least two views:
@@ -69,7 +60,6 @@ In order to enable *todo* for your app, follow these steps:
    Here's an example of how these views can look like::
 
     from django.shortcuts import get_object_or_404, render_to_response
-    from django.utils.safestring import mark_safe
 
     from todo.views import snippets
 
@@ -94,13 +84,13 @@ In order to enable *todo* for your app, follow these steps:
    See ``todo.views.snippets`` and ``todo.views.demo`` for more documentation.
 
 #. Add the ``todo`` snippets' ``divs`` to your templates. Wrap them in
-   a ``div`` with the ``todo`` class. For example:
+   a ``div`` with the ``todo`` class. For example::
 
-    ``<div class="todo">{{task.div}}</div>``
+    <div class="todo">{{task.div}}</div>
 
-   or
+   or::
 
-    ``<div class="todo">{{tree.div}}</div>``
+    <div class="todo">{{tree.div}}</div>
 
    For views showing more than a single task, you can use the ``empty`` element 
    of the dictionary returned by the snippet to show a customized message in 
@@ -112,3 +102,22 @@ In order to enable *todo* for your app, follow these steps:
       <p>No trackers or tasks to show.</p>
     {% endif %}
 
+#. Include the following code snippet in the ``HEAD`` section of every view
+   that will display ``todo``'s snippets::
+
+    <link rel="stylesheet" type="text/css" href="{% url static path='todo/todo.css' %}" />
+
+#. Include the following code snippet in the ``HEAD`` section of every view 
+   that will display a single task::
+
+    <style type="text/css">
+        .todo #outofdate {
+            background-image: url({% url static path="todo/warning.png" %});
+        }
+        .todo #uptodate {
+            background-image: url({% url static path="todo/okay.png" %});
+        }
+        .todo #checking div {
+            background: url({% url static path="loadingAnimation.gif" %}) no-repeat 0 13px;
+        }
+    </style>
