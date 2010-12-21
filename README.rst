@@ -36,6 +36,29 @@ In order to enable *todo* for your app, follow these steps:
    You can also run `python manage.py sql yourapp` to see what column definiton 
    Django expects from the addition in the previous step.
 
+#. Optionally, add the new ``todo`` field on your project's model to its admin 
+   panel::
+
+    from django.contrib import admin
+
+    from yourapp.models import YourProject
+
+    class YourProjectAdmin(admin.ModelAdmin):
+        ...
+        fieldsets = (
+                ...
+                ('Integration', {
+                    'classes': ('collapse',),
+                    'fields': ('todo',),
+                }),
+        )
+
+    admin.site.register(YourProject, YourProjectAdmin)
+
+#. Create ``todo.models.Project`` objects corresponding to your app's projects. 
+   You'll need to create one object for each project you have. This can be 
+   easily done via your app's admin panel.
+
 #. Create or modify views where you want to use the ``todo`` snippets. You must
    have at least two views:
    
