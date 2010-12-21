@@ -100,22 +100,11 @@ TimeResetter.prototype = {
     
       getBug : function getBug() {
         $('#checking').fadeIn('slow');
-        if (BzAPI.bugid) {
-          BzAPI.getCommentsAndHistory();
-          return;
-        }
-        // no bug id was assigned to the task. try to search for a bug
-        // matching the value of the task's alias.
-        var url = BzAPI.apibase + 'bug?field0-0-0=alias&type0-0-0=equals&value0-0-0=' + BzAPI.bugalias;
-        $.getJSON(url, function(data) {
-            var bug = data['bugs'].shift();
-            if (!bug)
-              BzAPI.changeStatusToNotFound();
-            else {
-              BzAPI.updateBugID(bug.id)
-              BzAPI.getCommentsAndHistory();
-            }
-        })
+        BzAPI.getCommentsAndHistory();
+      },
+
+      getBugID : function getBugID() {
+        return BzAPI.bugid || BzAPI.bugalias;
       },
       
       updateBugID : function updateBugID(bugid) {
@@ -127,9 +116,10 @@ TimeResetter.prototype = {
       },
       
       getCommentsAndHistory : function getCommentsAndHistory() {
-        var url = BzAPI.apibase + 'bug/' + BzAPI.bugid + '?include_fields=_default,comments,history';
+        var url = BzAPI.apibase + 'bug/' + BzAPI.getBugID() + '?include_fields=_default,comments,history';
         $.getJSON(url, function(data) {
-            //BzAPI.attachments = data['attachments'];
+            if (!BzAPI.bugid)
+              BzAPI.updateBugID(data['id']);
             BzAPI.activity = data['comments'].concat(data['history']);
             BzAPI.activity.sort(BzAPI.sortTimestampStrings);
             BzAPI.showActivity();
