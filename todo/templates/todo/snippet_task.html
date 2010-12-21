@@ -162,7 +162,7 @@ TimeResetter.prototype = {
             status = 'obsolete';
             checked_disabled = 'checked="checked" disabled="disabled"';
           }
-          var commenter = (a.changer) ? a.changer.name : a.author.real_name;
+          var commenter = (a.changer) ? a.changer.name : a.creator.real_name;
           var when = time.split('T').join(' ').replace(/Z$/g, " UTC");
           if (a.text) {
             // it's a comment
