@@ -30,7 +30,7 @@ def log_status_change(sender, user, flag, **kwargs):
     """
     action = Action.objects.log(user, sender, flag)
 
-    if isinstance(sender, Step) and action >= RESOLVED:
+    if isinstance(sender, Step) and action.flag >= RESOLVED:
         # a Step has just been resolved, let's store the time of this change on
         # the related Task for faster queries. We don't need to send the signal
         # again for the task as the action has already been recorded for the
