@@ -1,4 +1,4 @@
-from django.db import models
+from django.db import models, reset_queries
 from django.contrib.contenttypes.models import ContentType
 
 from .action import CREATED
@@ -260,6 +260,11 @@ class Proto(models.Model):
                     # in the fields, which means that the user intends to make
                     # use of it (it will override the suffix)
                     fields['alias'] = '-'.join((alias, loc.code))
+            # if settings.DEBUG is True, clear django.db.connection.queries 
+            # before a per-locale tree is spawned; spawning generates huge
+            # amount of queries and keeping track of all of them for debuging 
+            # purposes is too much for Python
+            reset_queries()
             yield self.spawn(user, locale=loc, cloning_allowed=cloning_allowed,
                              **fields)
 
