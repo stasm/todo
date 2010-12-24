@@ -82,12 +82,29 @@ class ChooseParentForm(forms.Form):
 
         """
         super(ChooseParentForm, self).__init__(*args, **kwargs)
-        (locale,) = locales if len(locales) == 1 else (None,)
-        _q = Tracker.objects.select_related('locale')
-        _q = _q.filter(Q(locale=locale) | Q(locale=None),
-                       Q(projects=projects) | Q(projects=None))
+        trackers = Tracker.objects.select_related('locale')
+        # always show the generic trackers, no matter what; `statuses=None` is 
+        # like `projects=None` but avoids an unnecessary JOIN
+        possible_parents = trackers.filter(locale=None, statuses=None)
+        # make sure they're displayed on top of the list (`statuses` will be 
+        # None for them)
+        possible_parents = possible_parents.order_by('statuses', 'pk')
+        if len(locales) == 1:
+            # if there's only one locale selected, we also want to show regular 
+            # trackers related to this locale and to the exactly same set of 
+            # projects
+            (locale,) = locales
+            specific = trackers.filter(locale=locale)
+            for project in projects:
+                # every project narrows down the list of possible parents; the 
+                # objective is to end with a list of trackers that are related 
+                # to all selected projects (IN would match any, not all)
+                specific = specific.filter(projects=project)
+            # concatenate generic and specific trackers into a single QuerySet
+            possible_parents = possible_parents | specific
         parent = TrackerChoiceField(label='Existing parent tracker',
-                                    queryset=_q, required=False)
+                                    queryset=possible_parents,
+                                    required=False)
         self.fields['parent_tracker'] = parent
 
     def clean(self):

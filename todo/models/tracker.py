@@ -91,7 +91,8 @@ class Tracker(Todo):
         return ('admin:todo_tracker_change', [self.id])
 
     def is_generic(self):
-        return self.prototype is None
+        # just check the ID, no need to retrieve the prototype if it exists
+        return self.prototype_id is None
 
     def clone(self):
         return self.prototype.spawn(summary=self.summary, parent=self.parent,
