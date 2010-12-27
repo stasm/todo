@@ -117,15 +117,28 @@ TimeResetter.prototype = {
       
       getCommentsAndHistory : function getCommentsAndHistory() {
         var url = BzAPI.apibase + 'bug/' + BzAPI.getBugID() + '?include_fields=_default,comments,history';
-        $.getJSON(url, function(data) {
+        $.ajax({
+          url: url,
+          dataType: 'json',
+          success: function(data) {
             if (!BzAPI.bugid)
               BzAPI.updateBugID(data['id']);
             BzAPI.activity = data['comments'].concat(data['history']);
             BzAPI.activity.sort(BzAPI.sortTimestampStrings);
             BzAPI.showActivity();
-        })
+            },
+          error: function(request) {
+            // jQuery doesn't pass the response data to the error callback, so 
+            // we need to parse it on our own.
+            // FIXME after upgrading to jQuery 1.4.1+, use the cross-browser 
+            // $.parseJSON here?  
+            data = JSON.parse(request.responseText);
+            if (data.error && (data.code == 100 || data.code == 101 || data.code == 102))
+                BzAPI.changeStatusToNotFound(data.message);
+          },
+        });
       },
-      
+
       sortTimestampStrings : function sortTimestampStrings(a, b) {
         var a_ts = a.change_time || a.creation_time;
         var b_ts = b.change_time || b.creation_time;
@@ -299,7 +312,8 @@ TimeResetter.prototype = {
         $('.show_all').text('show obsolete');
       },
       
-      changeStatusToNotFound : function changeStatusToNotFound() {
+      changeStatusToNotFound : function changeStatusToNotFound(message) {
+        $('#status-error-msg').text(message);
         $('.status:visible').fadeOut('slow', function() {
           $('.status#notfound').fadeIn('slow');
         });
@@ -403,7 +417,7 @@ TimeResetter.prototype = {
     <div>(checking bug status)</div>
   </div>
   <div class="status" id="notfound">
-    <div><h3>No relevant bug found.</h3></div>
+    <div><h3>No relevant bug found.</h3><em id="status-error-msg"></em></div>
   </div>
   <div class="status" id="uptodate">
     <h3>Status of this task is up-to-date.</h3>
