@@ -3,7 +3,6 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django import forms
 from django.contrib.formtools.wizard import FormWizard
-from django.db.models import Q
 
 from life.models import Locale
 from todo.models import Project, ProtoTask, ProtoTracker, Tracker
