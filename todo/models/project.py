@@ -6,7 +6,6 @@ class Project(models.Model):
     """ e.g. 'Firefox 4.0'
     """
     label = models.CharField(max_length=50)
-    code = models.SlugField(max_length=50, unique=True)
 
     class Meta:
         app_label = 'todo'
