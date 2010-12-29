@@ -8,10 +8,6 @@ from django.db.models import Q
 from life.models import Locale
 from todo.models import Project, ProtoTask, ProtoTracker, Tracker
 
-class ProjectMultipleChoiceField(forms.ModelMultipleChoiceField):
-    def label_from_instance(self, project):
-        return "%s (%s)" % (project.label, project.code)
-
 class LocaleMultipleChoiceField(forms.ModelMultipleChoiceField):
     def label_from_instance(self, locale):
         return "%s / %s" % (locale.code, locale.name)
@@ -30,7 +26,7 @@ class TrackerChoiceField(forms.ModelChoiceField):
 
 class ChooseProjectLocaleForm(forms.Form):
     _projects = Project.objects.order_by('label')
-    projects = ProjectMultipleChoiceField(queryset=_projects)
+    projects = forms.ModelMultipleChoiceField(queryset=_projects)
     _locales = Locale.objects.order_by('code')
     locales = LocaleMultipleChoiceField(queryset=_locales)
 
