@@ -1,6 +1,6 @@
 from django.db import models
 
-from todo.workflow import ON_HOLD
+from todo.workflow import NEW, ACTIVE, NEXT, ON_HOLD
 
 class Project(models.Model):
     """ e.g. 'Firefox 4.0'
@@ -28,4 +28,5 @@ class Project(models.Model):
                }
 
     def open_tasks(self, locale):
-        return self.tasks.filter(locale=locale, statuses__status__in=(1, 2))
+        return self.tasks.filter(locale=locale,
+                                 statuses__status__in=(NEW, ACTIVE, NEXT))
