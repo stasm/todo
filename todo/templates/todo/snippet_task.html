@@ -355,11 +355,11 @@ TimeResetter.prototype = {
       <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
       {% for status in task.statuses.all %}
         <small>[
-          <input type="checkbox" name="project_code" value="{{status.project.code}}" onclick="this.form.submit()"
+          <input type="checkbox" name="project_id" value="{{status.project_id}}" onclick="this.form.submit()"
                {% if not perms.todo.change_task %}disabled="disabled"{% endif %}
                {% ifequal status.status 5 %}checked="checked" disabled="disabled"{% endifequal %}
         />
-        {{status.project.code}}]</small>
+        {{status.project}}]</small>
       {% endfor %}
     </form>
   {% endif %}

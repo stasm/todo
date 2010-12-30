@@ -19,7 +19,7 @@ class UpdateTodoForm(forms.Form):
 
 class ResolveTaskForm(forms.Form):
     redirect_url = forms.CharField()
-    project_code = forms.CharField()
+    project_id = forms.IntegerField()
 
 class ResolveSimpleStepForm(forms.Form):
     redirect_url = forms.CharField()

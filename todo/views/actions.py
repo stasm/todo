@@ -13,8 +13,8 @@ def resolve_task(request, task_id):
     form = ResolveTaskForm(request.POST)
     if form.is_valid():
         redirect_url = form.cleaned_data['redirect_url']
-        project_code = form.cleaned_data['project_code']
-        project = get_object_or_404(Project, code=project_code)
+        project_id = form.cleaned_data['project_id']
+        project = get_object_or_404(Project, pk=project_id)
         task.resolve(request.user, project)
         return HttpResponseRedirect(redirect_url)
         
