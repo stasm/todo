@@ -2,9 +2,9 @@ from django.db import models
 from django.db.models import Q
 from django.contrib.contenttypes import generic
 
-from .action import Action, ACTIVATED, UPDATED
+from .action import Action, UPDATED
 from todo.workflow import NEW, ACTIVE, NEXT
-from todo.signals import status_changed, todo_updated
+from todo.signals import todo_updated
 
 class TodoInterface(object):
     """An interface class for all todo objects."""
@@ -52,6 +52,9 @@ class TodoInterface(object):
     def activate(self):
         raise NotImplementedError()
 
+    def activate_children(self):
+        raise NotImplementedError()
+
 class Todo(TodoInterface, models.Model):
     """Common methods for all todo objects (trackers, tasks, steps)"""
 
@@ -79,12 +82,6 @@ class Todo(TodoInterface, models.Model):
 
     def get_latest_action(self, flag=None):
         return self.get_actions(flag).latest('timestamp')
-
-    def activate(self, user):
-        self.activate_children(user)
-        self.status = ACTIVE
-        self.save()
-        status_changed.send(sender=self, user=user, flag=ACTIVATED)
 
     def activate_children(self, user):
         to_activate = self.children_all().filter(Q(is_auto_activated=True) |

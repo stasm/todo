@@ -3,6 +3,7 @@ from django.contrib.contenttypes.models import ContentType
 
 from .action import CREATED
 from .actor import Actor
+from todo.workflow import ACTIVE, NEXT
 from todo.signals import status_changed
 
 TRACKER_TYPE, TASK_TYPE, STEP_TYPE = range(1,4)
@@ -81,7 +82,7 @@ class Proto(models.Model):
 
         return getattr(self, 'proto%s' % self.get_type_display())
 
-    def _spawn_instance(self, **custom_fields):
+    def _spawn_instance(self, user, activate, **custom_fields):
         "Create an instance of the model related to the proto."
 
         related_model = self.get_related_model()
@@ -90,10 +91,10 @@ class Proto(models.Model):
         # models can define additional accepted fields (e.g. 'suffix')
         accepted_fields += related_model.extra_fields
         # remove projects from custom_fields since related_model.__init__ 
-        # (regardless of which model it stands for) does not accept them as
+        # (regardless of which model it stands for) does not accept them as 
         # argument; store the value for later use, though.
         projects = custom_fields.pop('projects', None)
-        # remove empty/unknown values from custom_fields and overwrite other
+        # remove empty/unknown values from custom_fields and overwrite other 
         # attributes
         custom_fields = [(k, v) for k, v in custom_fields.items()
                                 if v and k in accepted_fields]
@@ -102,12 +103,22 @@ class Proto(models.Model):
         # custom fields override fields from the proto
         fields.update(custom_fields)
         todo = related_model(prototype=self, **fields)
-        todo.save()
-        if projects:
-            # in order to create relations between Trackers/Tasks and Project,
-            # create required {Tracker,Task}InProject objects handling the
-            # many-to-many relation.
-            todo.assign_to_projects(projects)
+        if self.type == STEP_TYPE:
+            if activate and todo.should_be_activated():
+                # a Step can only be related to a single Project (or, more 
+                # often, to no projects at all), so its status is stored 
+                # directly as a property.
+                todo.status = ACTIVE
+            todo.save()
+        else:
+            # save it so that it has an ID
+            todo.save()
+            # in order to create relations between Trackers/Tasks and Projects, 
+            # create required {Tracker,Task}InProject objects handling the 
+            # many-to-many relation; set the status to 'active' is requested.
+            todo.assign_to_projects(projects,
+                                    status=ACTIVE if activate else None)
+        status_changed.send(sender=todo, user=user, flag=CREATED)
         return todo
 
     def _prepare_fields_for_children(self, custom_fields, todo):
@@ -137,10 +148,12 @@ class Proto(models.Model):
                 del custom_fields[prop]
         return custom_fields
 
-    def _spawn_children(self, user, cloning_allowed, **custom_fields):
+    def _spawn_children(self, user, activate, cloning_allowed,
+                        **custom_fields):
         "Create children of the todo object."
 
-        for nesting in self.nestings_where_parent.all():
+        children = []
+        for nesting in self.nestings_where_parent.select_related('child'):
             child = nesting.child.get_proto_object()
             # steps inside task/steps inherit the following
             # properties from the nesting, not the proto itself
@@ -150,16 +163,24 @@ class Proto(models.Model):
             # let's not do that on the original `custom_fields` which 
             # will be used by other nestings in the loop
             fields = custom_fields.copy()
+            if activate and child.type == STEP_TYPE:
+                activate = nesting.should_be_activated()
             if cloning_allowed['locale'] and child.clone_per_locale:
-                # `spawn_per_locale` returns an iterator
-                list(child.spawn_per_locale(user, **fields))
+                spawned = child.spawn_per_locale(user, activate=activate,
+                                                 **fields)
             elif cloning_allowed['project'] and child.clone_per_project:
-                # `spawn_per_project` returns an iterator
-                list(child.spawn_per_project(user, **fields))
+                spawned = child.spawn_per_project(user, activate=activate,
+                                                  **fields)
             else:
-                child.spawn(user, cloning_allowed, **fields)
+                # a tuple because it needs to be iterable in the next line
+                spawned = (child.spawn(user, activate=activate,
+                                       cloning_allowed=cloning_allowed,
+                                       **fields),)
+            children.extend(spawned)
+        return children
 
-    def spawn(self, user, cloning_allowed=None, **custom_fields):
+    def spawn(self, user, activate=True, cloning_allowed=None,
+              **custom_fields):
         """Create an instance of the model related to the proto, with children.
         
         This method creates an instance of the model related to the current
@@ -193,15 +214,20 @@ class Proto(models.Model):
                 'locale': True,
                 'project': True,
             }
-        todo = self._spawn_instance(**custom_fields)
-        todo.save()
-        status_changed.send(sender=todo, user=user, flag=CREATED)
+        todo = self._spawn_instance(user, activate=activate, **custom_fields)
         # remove fields that should not propagate onto the children
         custom_fields = self._prepare_fields_for_children(custom_fields, todo)
-        self._spawn_children(user, cloning_allowed, **custom_fields)
+        children = self._spawn_children(user, activate=activate,
+                                        cloning_allowed=cloning_allowed,
+                                        **custom_fields)
+        if (self.type == STEP_TYPE and activate and
+            todo.status == ACTIVE and not children):
+            # if a Step has no children, mark it as 'next' instead of 'active'
+            todo.status = NEXT
+            todo.save()
         return todo
 
-    def spawn_per_locale(self, user, **fields):
+    def spawn_per_locale(self, user, activate=True, **fields):
         """Create multiple todo objects from a single prototype per locale.
 
         If `locales` iterable is passed in `fields`, the prototype will be used
@@ -217,10 +243,9 @@ class Proto(models.Model):
             'locale': False,
             'project': True,
         }
-        # to avoid conflicts, locale and locales are deleted
-        # from custom_fields and are not passed to children
-        # directly (we don't want to clone more then once in a single
-        # tracker tree).
+        # to avoid conflicts, locale and locales are deleted from custom_fields 
+        # and are not passed to children directly (we don't want to clone more 
+        # then once in a single tracker tree).
         locale = fields.pop('locale', None)
         locales = fields.pop('locales', None)
         if not locales:
@@ -261,14 +286,14 @@ class Proto(models.Model):
                     # use of it (it will override the suffix)
                     fields['alias'] = '-'.join((alias, loc.code))
             # if settings.DEBUG is True, clear django.db.connection.queries 
-            # before a per-locale tree is spawned; spawning generates huge
-            # amount of queries and keeping track of all of them for debuging 
+            # before a per-locale tree is spawned; spawning generates huge 
+            # amount of queries and keeping track of all of them for debugging 
             # purposes is too much for Python
             reset_queries()
-            yield self.spawn(user, locale=loc, cloning_allowed=cloning_allowed,
-                             **fields)
+            yield self.spawn(user, activate=activate, locale=loc,
+                             cloning_allowed=cloning_allowed, **fields)
 
-    def spawn_per_project(self, user, **fields):
+    def spawn_per_project(self, user, activate=True, **fields):
         """Create multiple todo objects from a single prototype per project.
 
         This method should only be used for steps (it will have no effect in
@@ -283,9 +308,9 @@ class Proto(models.Model):
         if not projects:
             projects = [None]
         for project in projects:
-            yield self.spawn(user, project=project, 
+            yield self.spawn(user, activate=activate, project=project,
                              cloning_allowed=cloning_allowed, **fields)
-        
+
 class ProtoTracker(Proto):
     """Proto Tracker model.
 
@@ -424,3 +449,6 @@ class Nesting(models.Model):
     
     def __unicode__(self):
        return "%s in %s" % (self.child, self.parent)
+
+    def should_be_activated(self):
+        return self.is_auto_activated or self.order == 1

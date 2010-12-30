@@ -181,9 +181,8 @@ class CreateNewWizard(FormWizard):
         task_proto = clean.pop('task_proto')
         prototype = tracker_proto or task_proto
         if prototype.clone_per_locale:
-            for todo in prototype.spawn_per_locale(request.user, **clean):
-                todo.activate(request.user)
+            # spawn_per_locale is a generator
+            list(prototype.spawn_per_locale(request.user, **clean))
         else:
-            todo = prototype.spawn(request.user, **clean) 
-            todo.activate(request.user)
+            prototype.spawn(request.user, **clean)
         return HttpResponseRedirect(reverse('todo.views.created'))

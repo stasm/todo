@@ -2,6 +2,7 @@ from django.db import models
 
 from life.models import Locale
 
+from .action import ACTIVATED
 from .base import Todo
 from .project import Project
 from .proto import ProtoTask
@@ -104,9 +105,10 @@ class Task(Todo):
                 self.locale_repr = unicode(self.locale)
         super(Task, self).save(*args, **kwargs)
 
-    def assign_to_projects(self, projects):
+    def assign_to_projects(self, projects, status=NEW):
         for project in projects:
-            TaskInProject.objects.create(task=self, project=project)
+            TaskInProject.objects.create(task=self, project=project,
+                                         status=status)
 
     def is_resolved_all(self, statuses=None):
         """Check if the task is resolved for all related projects.
@@ -183,6 +185,15 @@ class Task(Todo):
         return self._next_steps
 
     next_steps = property(get_next_steps, set_next_steps)
+
+    def activate(self, user):
+        "Activate the tracker across all related projects."
+
+        self.activate_children(user)
+        for status in self.statuses.all():
+            status.status = ACTIVE
+            status.save()
+            status_changed.send(sender=status, user=user, flag=ACTIVATED)
 
     def resolve(self, user, project, resolution=COMPLETED):
         "Resolve the task."

@@ -2,6 +2,7 @@ from django.db import models
 
 from life.models import Locale
 
+from .action import ACTIVATED
 from .base import Todo
 from .project import Project
 from .proto import ProtoTracker
@@ -78,9 +79,10 @@ class Tracker(Todo):
             self.save()
         return self._repr
 
-    def assign_to_projects(self, projects):
+    def assign_to_projects(self, projects, status=NEW):
         for project in projects:
-            TrackerInProject.objects.create(tracker=self, project=project)
+            TrackerInProject.objects.create(tracker=self, project=project,
+                                            status=status)
     
     @property
     def code(self):
@@ -113,6 +115,15 @@ class Tracker(Todo):
         else:
             return self.parent.children_all()
 
+    def activate(self, user):
+        "Activate the tracker across all related projects."
+
+        self.activate_children(user)
+        for status in self.statuses.all():
+            status.status = ACTIVE
+            status.save()
+            status_changed.send(sender=status, user=user, flag=ACTIVATED)
+
     def activate_children(self, user):
         "Activate child trackers and tasks."
         for child in self.children_all():
@@ -120,12 +131,14 @@ class Tracker(Todo):
         for task in self.tasks.all():
             task.activate(user)
 
-    def resolve(self, user, resolution=COMPLETED):
-        self.status = RESOLVED
-        self.resolution = resolution
-        self.save()
+    def resolve(self, user, project, resolution=COMPLETED):
+        "Resolve the tracker."
+        status = self.statuses.get(project=project)
+        status.status = RESOLVED
+        status.resolution = resolution
+        status.save()
         flag = RESOLVED + resolution
-        status_changed.send(sender=self, user=user, flag=flag)
+        status_changed.send(sender=status, user=user, flag=flag)
 
     def get_bug(self):
         return self.bugid or self.alias

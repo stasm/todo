@@ -90,9 +90,6 @@ class Step(Todo):
     def get_admin_url(self):
         return ('admin:todo_step_change', [self.id])
 
-    def assign_to_projects(self, projects):
-        pass
-
     def clone(self, user):
         "Clone the step using the protype used to create it."
         return self.prototype.spawn(user, summary=self.summary, task=self.task,
@@ -156,8 +153,11 @@ class Step(Todo):
                                               allowed_timeinterval)
         return self._overdue
 
+    def should_be_activated(self):
+        return self.is_auto_activated or self.order == 1
+
     def activate(self, user):
-        if self.has_children is True:
+        if self.has_children:
             self.activate_children(user)
             # it's `active`, because one of the children is `next`
             self.status = ACTIVE
@@ -218,8 +218,9 @@ class Step(Todo):
                     # a Step, not the Task (can't clone a Task), hence check
                     # for self.parent.
                     bubble_up = False
-                    clone = self.parent.clone(user)
-                    clone.activate(user)
+                    # `clone` will call the prototype's `spawn` method which by 
+                    # default activates the created todos
+                    self.parent.clone(user)
                 self.parent.resolve(user, self.resolution, bubble_up)
             else:
                 # no parent means this is a top-level step and the task is
