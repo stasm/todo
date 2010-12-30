@@ -73,7 +73,7 @@ class Step(Todo):
 
     def get_has_children(self):
         if self._has_children is None:
-            self._has_children = len(self.children_all()) > 0
+            self._has_children = bool(self.children_all().count())
         return self._has_children
 
     def set_has_children(self, value):
