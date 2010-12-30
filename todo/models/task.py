@@ -124,7 +124,7 @@ class Task(Todo):
         """
         if self._is_resolved_all is None:
             if statuses is None:
-                statuses = self.statuses
+                statuses = self.statuses.all()
             for status in statuses:
                 if status.status != RESOLVED:
                     self._is_resolved_all = False

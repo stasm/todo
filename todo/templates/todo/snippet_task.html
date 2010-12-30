@@ -349,7 +349,9 @@ TimeResetter.prototype = {
 <div id="task" class="{% if task.is_resolved_all %}resolved{% endif %} {% if task.bug %}column left wide{% endif %}">
 <h3>
   {% if task.is_resolved_all %}
-    <input type="checkbox" checked="checked" disabled="disabled"/>
+    {% for status in task.statuses.all %}
+      <small>[ <input type="checkbox" checked="checked" disabled="disabled"/> {{status.project}}]</small>
+    {% endfor %}
   {% else %}
     <form action="{% url todo.views.actions.resolve_task task.id %}" method="post">
       <input type="hidden" name="redirect_url" value="{{redirect_url}}"/>
