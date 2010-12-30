@@ -229,7 +229,12 @@ def tree(request, tracker=None, project=None, locale=None,
             subtree = _get_facet_data(subtree, tracker_chain + [tracker])
             tree['trackers'][tracker] = subtree 
         for task in tree['tasks'].keys():
-            task.next_steps = next_steps[task]
+            try:
+                task.next_steps = next_steps[task]
+            except KeyError:
+                # the task might be inactive or resolved, and thus might have 
+                # no next steps
+                task.next_steps = []
             task_properties = {
                 'projects': [unicode(s.project) for s in statuses[task]],
                 'locales': [task.locale_repr],
