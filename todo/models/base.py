@@ -49,6 +49,15 @@ class TodoInterface(object):
     def __unicode__(self):
         raise NotImplementedError()
 
+    def format_repr(self, **kwargs):
+        """Get a formatted string representation of the todo object.
+
+        Kwargs can be used to pass additional information needed to create the 
+        value of the representation.
+
+        """
+        raise NotImplementedError()
+
     @property
     def code(self):
         raise NotImplementedError()
@@ -94,6 +103,21 @@ class TodoInterface(object):
 
 class Todo(TodoInterface, models.Model):
     """Common methods for all todo objects (trackers, tasks, steps)"""
+
+    def __unicode__(self):
+        """Return the cached representation of the object."""
+        return self.repr
+
+    def get_repr(self):
+        if not self._repr:
+            self._repr = self.format_repr()
+            self.save()
+        return self._repr
+
+    def set_repr(self, value):
+        self._repr = value
+
+    repr = property(get_repr, set_repr)
 
     # signals log actions using LogEntry
     actions = generic.GenericRelation(Action, object_id_field="subject_id",

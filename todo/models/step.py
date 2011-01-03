@@ -93,14 +93,15 @@ class Step(Todo):
         self._overdue = None
         super(Step, self).__init__(*args, **kwargs)
 
-    def __unicode__(self):
-        """Return the cached representation of the object."""
-        if not self._repr:
-            self._repr = self.summary
-            if self.project:
-                self._repr = '%s %s' % (self._repr, self.project)
-            self.save()
-        return self._repr
+    def format_repr(self, **kwargs):
+        """Get a formatted string representation of the todo object."""
+
+        _repr = self.summary
+        # if kwargs are given, mask self.project using the project in kwargs
+        project = kwargs.get('project', None) if kwargs else self.project
+        if project:
+            _repr = '%s %s' % (_repr, project)
+        return _repr
 
     def save(self, *args, **kwargs):
         if not self.id and not self.owner_repr and self.owner:

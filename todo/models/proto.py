@@ -146,6 +146,9 @@ class Proto(models.Model):
         # custom fields override fields from the proto
         fields.update(custom_fields)
         todo = related_model(prototype=self, **fields)
+        # store the string representation of the todo as its property before 
+        # it is saved, in order to avoid a query made by todo.get_repr
+        todo.repr = todo.format_repr(**fields)
         if self.type == STEP_TYPE:
             if activate and todo.should_be_activated():
                 # a Step can only be related to a single Project (or, more 

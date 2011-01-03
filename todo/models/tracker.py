@@ -107,14 +107,15 @@ class Tracker(Todo):
             kwargs['alias'] = '-'.join(bits)
         super(Todo, self).__init__(*args, **kwargs)
 
-    def __unicode__(self):
-        """Return the cached representation of the object."""
-        if not self._repr:
-            self._repr = self.summary
-            if self.locale:
-                self._repr = '[%s] %s' % (self.locale.code, self._repr)
-            self.save()
-        return self._repr
+    def format_repr(self, **kwargs):
+        """Get a formatted string representation of the todo object."""
+
+        _repr = self.summary
+        # if kwargs are given, mask self.locale using the locale in kwargs
+        locale = kwargs.get('locale', None) if kwargs else self.locale
+        if locale:
+            _repr = '[%s] %s' % (locale.code, _repr)
+        return _repr
 
     def assign_to_projects(self, projects, status=NEW):
         for project in projects:
