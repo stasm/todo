@@ -270,7 +270,11 @@ class Proto(models.Model):
             todo.status == ACTIVE and not children):
             # if a Step has no children, mark it as 'next' instead of 'active'
             todo.status = NEXT
-            todo.save()
+            # todo was already saved in _spawn_instance, so we don't need 
+            # Django to check (with an extra SELECT) if it needs to make an 
+            # INSERT or an UPDATE here. See <http://docs.djangoproject.com/en/ 
+            # 1.1/ref/models/instances/#how-django-knows-to-update-vs-insert>.
+            todo.save(force_update=True)
         return todo
 
     def spawn_per_locale(self, user, activate=True, **fields):
