@@ -56,8 +56,33 @@ In order to enable *todo* for your app, follow these steps:
     admin.site.register(YourProject, YourProjectAdmin)
 
 #. Create ``todo.models.Project`` objects corresponding to your app's projects. 
-   You'll need to create one object for each project you have. This can be 
-   easily done via your app's admin panel.
+   You'll need to create one object for each project you have.  This can be 
+   easily done via your app's admin panel or using the ``createtodoprojects`` 
+   management command supplied by ``todo``.
+
+   To use the ``createtodoprojects`` command pass the name of your app::
+
+    python manage.py createtodoprojects yourapp
+
+   The command looks by default for a model called *Project* in your app's 
+   models. If you named it differently, specify the correct name with the 
+   ``--model`` option::
+
+    python manage.py createtodoprojects --model YourProject yourapp
+
+   One todo.Project object will be created for each of your projects.  The 
+   default label for todo.Project is whatever ``unicode(yourproject)`` returns.  
+   You can override this by passing a Python statement to the ``--label`` 
+   option. An exception will be raised if the syntax is not valid.  The 
+   statement is evaluated in the current environment of the command, so be 
+   careful not to delete your projects accidentally.  Example::
+
+     python manage.py createtodoprojects \
+       --model YourProject \
+       --label '"%s %s" % (project.line.name, project.version)' \
+       yourapp
+
+   The label is always truncated to the first 50 characters.
 
 #. Create or modify views where you want to use the ``todo`` snippets. You must
    have at least two views:
