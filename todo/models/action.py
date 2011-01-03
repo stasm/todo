@@ -107,9 +107,14 @@ class ActionManager(models.Manager):
         """
         if message is None:
             message = actions[flag]
-        action = self.model(timestamp=None, user=user, subject=subject,
-                            flag=flag, subject_repr=subject_repr,
-                            message=message)
+        action = self.model(
+            timestamp=None,
+            user=user,
+            subject=subject,
+            flag=flag,
+            subject_repr=subject_repr or unicode(subject),
+            message=message
+        )
         action.save()
 
         # create an entry in the admin panel's log (if admin is enabled)
