@@ -8,26 +8,29 @@ from todo.models import Project as TodoProject
 class Command(AppCommand):
     args = 'APP'
     option_list = AppCommand.option_list + (
-        make_option('-m',
-                    '--model',
-                    action='store',
-                    type='string',
-                    dest='model',
-                    help="A model in APP for which todoprojects will be "
-                         "created. The default is 'Project'."),
-        make_option('-l',
-                    '--label',
-                    action='store',
-                    type='string',
-                    dest='label',
-                    help="A Python statement that will be evaluated to create "
-                         "labels for the todoprojects. For each of your APP's "
-                         "projects, its model's instance is available as the "
-                         "`project` variable, which can be used in the "
-                         "statement. Example: '\"%s %s\" % (project.line, "
-                         "project.version)'. The default is "
-                         "'unicode(project)'. The label will be truncated to "
-                         "first 50 characters."),
+        make_option(
+            '-m',
+            '--model',
+            action='store',
+            type='string',
+            dest='model',
+            help="A model in APP for which todoprojects will be created. The "
+                 "default is 'Project'."
+        ),
+        make_option(
+            '-l',
+            '--label',
+            action='store',
+            type='string',
+            dest='label',
+            help="A Python statement that will be evaluated to create labels "
+                 "for the todoprojects. For each of your APP's projects, its "
+                 "model's instance is available as the `project` variable, "
+                 "which can be used in the statement. Example: '\"%s %s\" % "
+                 "(project.line, project.version)'. The default is "
+                 "'unicode(project)'. The label will be truncated to first 50 "
+                 "characters."
+        ),
     )
 
     help = 'Creates todo.Project objects for each instance of project model ' \
@@ -39,7 +42,7 @@ class Command(AppCommand):
             model = getattr(app, model_name)
         except AttributeError:
             raise CommandError('Could not find model "%s" in app "%s". '
-                               'Make sure the --model option is correct'
+                               'Make sure the --model option is correct.'
                                % (model_name, app))
         for project in model.objects.all():
             if options['label']:
