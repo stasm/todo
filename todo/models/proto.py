@@ -110,9 +110,15 @@ class Proto(models.Model):
     def get_related_model(self):
         "Get the model class that the proto spawns."
 
-        ct = ContentType.objects.get(app_label="todo", 
-                                     model=self.get_type_display())
-        return ct.model_class()
+        from todo.models import Tracker, Task, Step
+        if self.type == TRACKER_TYPE:
+            return Tracker
+        elif self.type == TASK_TYPE:
+            return Task
+        elif self.type == STEP_TYPE:
+            return Step
+        else:
+            raise TypeError('The Prototype object has an unknown type.')
 
     def get_proto_object(self):
         "Move from Proto instance to Proto{Tracker,Task,Step} instance"
