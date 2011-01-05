@@ -40,12 +40,15 @@ from django.db import models
 from todo.workflow import NEW, ACTIVE, NEXT, ON_HOLD
 
 class Project(models.Model):
-    """ e.g. 'Firefox 4.0'
-    """
     label = models.CharField(max_length=50)
+    # ID of the ContentType object representing the project-equivalent model 
+    # in an app using todo
+    model_ct_id = models.PositiveIntegerField("Id of the related model's "
+                                              "content type")
 
     class Meta:
         app_label = 'todo'
+        unique_together = ('label', 'model_ct_id')
 
     def __unicode__(self):
         return '%s' % self.label

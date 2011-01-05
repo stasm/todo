@@ -60,27 +60,23 @@ In order to enable *todo* for your app, follow these steps:
    easily done via your app's admin panel or using the ``createtodoprojects`` 
    management command supplied by ``todo``.
 
-   To use the ``createtodoprojects`` command pass the name of your app::
+   To use the ``createtodoprojects`` command pass the name of the model from 
+   your app that you use to store your projects.  You can specify more than 
+   one model.  Use the app_label.model_label syntax::
 
-    python manage.py createtodoprojects yourapp
-
-   The command looks by default for a model called *Project* in your app's 
-   models. If you named it differently, specify the correct name with the 
-   ``--model`` option::
-
-    python manage.py createtodoprojects --model YourProject yourapp
+    python manage.py createtodoprojects yourapp.YourProject
 
    One todo.Project object will be created for each of your projects.  The 
    default label for todo.Project is whatever ``unicode(yourproject)`` returns.  
-   You can override this by passing a Python statement to the ``--label`` 
-   option. An exception will be raised if the syntax is not valid.  The 
-   statement is evaluated in the current environment of the command, so be 
-   careful not to delete your projects accidentally.  Example::
+   You can override this by passing a Python statement in the ``--label`` 
+   option. An exception will be raised if the syntax is not valid or if the 
+   statement doesn't evaluate to a string.  The statement is evaluated in the 
+   current environment of the command, so be careful not to delete your 
+   projects accidentally.  Example::
 
      python manage.py createtodoprojects \
-       --model YourProject \
        --label '"%s %s" % (project.line.name, project.version)' \
-       yourapp
+       yourapp.YourProject
 
    The label is always truncated to the first 50 characters.
 
