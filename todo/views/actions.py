@@ -39,12 +39,14 @@ from django.views.decorators.http import require_POST
 from django.contrib.auth.decorators import permission_required
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 
 from todo.models import Project, Task, Step
 from todo.forms import *
 
 @require_POST
 @permission_required('todo.change_task')
+@transaction.commit_on_success
 def resolve_task(request, task_id):
     task = get_object_or_404(Task, pk=task_id)
     form = ResolveTaskForm(request.POST)
@@ -57,6 +59,7 @@ def resolve_task(request, task_id):
         
 @require_POST
 @permission_required('todo.change_step')
+@transaction.commit_on_success
 def resolve_step(request, step_id):
     step = get_object_or_404(Step, pk=step_id)
     if not step.is_review:

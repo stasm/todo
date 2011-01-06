@@ -40,6 +40,7 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django.core.serializers import serialize
 from django.core.serializers.json import DjangoJSONEncoder
+from django.db import transaction
 
 from todo.models import Step, Task, Tracker
 from todo.models.action import SNAPSHOT_UPDATED, BUGID_UPDATED
@@ -77,6 +78,7 @@ def _status_response(status, message, data=None):
                         mimetype='application/javascript')
 
 @require_POST
+@transaction.autocommit
 def reset_time(request, step_id):
     "Reset the last activity timestamp for a Step to now."
 
@@ -95,6 +97,7 @@ def reset_time(request, step_id):
                             "again." % step.allowed_time)
 
 @require_POST
+@transaction.autocommit
 def update(request, obj, obj_id):
     """Update various properties of a todo object.
 
@@ -123,6 +126,7 @@ def update(request, obj, obj_id):
     return _status_response('ok', '%s updated.' % obj, changed_objs)
 
 @require_POST
+@transaction.autocommit
 def update_snapshot(request, task_id):
     "Specifically update the snapshot timestamp."
 
@@ -141,6 +145,7 @@ def update_snapshot(request, task_id):
                             task.snapshot_ts_iso())
 
 @require_POST
+@transaction.autocommit
 def update_bugid(request, task_id):
     "Specifically update the bug ID."
 

@@ -40,6 +40,7 @@ from django.core.urlresolvers import reverse
 from django.contrib.auth.decorators import permission_required
 from django import forms
 from django.contrib.formtools.wizard import FormWizard
+from django.db import transaction
 
 from life.models import Locale
 from todo.models import Project, ProtoTask, ProtoTracker, Tracker
@@ -195,6 +196,7 @@ class CreateNewWizard(FormWizard):
     
     @permission_required('todo.create_tracker')
     @permission_required('todo.create_task')
+    @transaction.commit_on_success
     def done(self, request, form_list):
         clean = {}
         for form in form_list:
