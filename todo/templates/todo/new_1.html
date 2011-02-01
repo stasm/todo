@@ -41,36 +41,19 @@ the terms of any one of the MPL, the GPL or the LGPL.
 {% endcomment %}
 
 {% block intro %}
-  <p>Optionally, you can group the todo items that will be created under
-  a common parent for easier tracking (recommended).</p>
+  <p>Next, choose relevant locales.</p>
 {% endblock %}
 
 {% block fields %}
   <table>
-    <tr>
-      <th>{{ form.parent_tracker.label }}</th>
-      <td>{{ form.parent_tracker }}</td>
-      <td>{{ form.parent_tracker.errors }}</td>
-    </tr>
+    {% for field in form %}
+      <tr>
+        <th>{{ field.label }}</th>
+        <td>{{ field }}</th>
+        <td>{{ field.errors }}</td>
+      </tr>
+    {% endfor %}
   </table>
-  <p>Or, create a new generic tracker:</p>
-  <table>
-    <tr>
-      <th>{{ form.parent_summary.label }}</th>
-      <td>{{ form.parent_summary }}</td>
-      <td>{{ form.parent_summary.errors }}</td>
-    </tr>
-    <tr>
-      <th>{{ form.parent_alias.label }}</th>
-      <td>{{ form.parent_alias }}</td>
-      <td>{{ form.parent_alias.errors }}</td>
-    </tr>
-  </table>
-
-  <script type="application/javascript;version=1.8">
-    var alias = $('#{{ form.parent_alias.auto_id }}');
-    alias.slugify(alias);
-  </script>
 {% endblock %}
 
 {% block submit %}

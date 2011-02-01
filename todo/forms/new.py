@@ -61,11 +61,57 @@ class TrackerChoiceField(forms.ModelChoiceField):
             return "Generic %d: %s" % (tracker.pk, tracker.summary)
         return "%d: %s" % (tracker.pk, tracker.summary)
 
-class ChooseProjectLocaleForm(forms.Form):
-    _projects = Project.objects.order_by('label')
-    projects = forms.ModelMultipleChoiceField(queryset=_projects)
-    _locales = Locale.objects.order_by('code')
-    locales = LocaleMultipleChoiceField(queryset=_locales)
+class ChooseProjectFactory(object):
+    """Factory class returning ChooseProjectForm instances.
+
+    When an instance of this class is called, an instance of ChooseProjectForm 
+    is returned.  See the docstring at `todo.forms.new.ChooseParentFactory` for 
+    the explanation of why this is needed.
+
+    """
+    def __init__(self, projects=None):
+        self.projects = projects or Project.objects.order_by('label')
+
+    def __call__(self, *args, **kwargs):
+        return ChooseProjectForm(self.projects, *args, **kwargs)
+
+class ChooseProjectForm(forms.Form):
+    """Actual choose-project form, instantiated by the factory.
+
+    It only has one field, 'projects', which is set up dynamically when the 
+    factory is called.
+
+    """
+    def __init__(self, projects, *args, **kwargs):
+        super(ChooseProjectForm, self).__init__(*args, **kwargs)
+        _projects = forms.ModelMultipleChoiceField(queryset=projects)
+        self.fields['projects'] = _projects
+
+class ChooseLocaleFactory(object):
+    """Factory class returning ChooseLocaleFactory instances.
+
+    When an instance of this class is called, an instance of ChooseLocaleForm 
+    is returned.  See the docstring at `todo.forms.new.ChooseParentFactory` for 
+    the explanation of why this is needed.
+
+    """
+    def __init__(self, locales=None):
+        self.locales = locales or Locale.objects.order_by('code')
+
+    def __call__(self, *args, **kwargs):
+        return ChooseLocaleForm(self.locales, *args, **kwargs)
+
+class ChooseLocaleForm(forms.Form):
+    """Actual choose-locale form, instantiated by the factory.
+
+    It only has one field, 'locales', which is set up dynamically when the 
+    factory is called.
+
+    """
+    def __init__(self, locales, *args, **kwargs):
+        super(ChooseLocaleForm, self).__init__(*args, **kwargs)
+        _locales = LocaleMultipleChoiceField(queryset=locales)
+        self.fields['locales'] = _locales
 
 class ChoosePrototypeForm(forms.Form):
     tracker_proto = ProtoChoiceField(queryset=ProtoTracker.objects.all(),
@@ -128,10 +174,14 @@ class ChooseParentForm(forms.Form):
             # projects
             (locale,) = locales
             specific = trackers.filter(locale=locale)
-            for project in projects:
-                # every project narrows down the list of possible parents; the 
+            for p in projects:
+                # If the form is embedded in another application, `p` is not an 
+                # instance of `todo.models.Project` and instead points to an 
+                # instance of that other application's equivalent of a project.
+                project = getattr(p, 'todo', None) or p
+                # Every project narrows down the list of possible parents; the 
                 # objective is to end with a list of trackers that are related 
-                # to all selected projects (IN would match any, not all)
+                # to all selected projects (IN would match any, not all).
                 specific = specific.filter(projects=project)
             # concatenate generic and specific trackers into a single QuerySet
             possible_parents = possible_parents | specific
@@ -153,12 +203,13 @@ class ChooseParentFactory(object):
     When an instance of this class is called, an instance of ChooseParentForm
     is returned. 
 
-    This is because FormWizard.get_form(step) returns an instance of a form
-    assuming that FormWizard.form_list[step] is a form class. In order to
-    dynamically pre-configure the ChooseParentForm based on project and locale
-    choices made earlier the 3rd step of the wizard is not a class, but an
-    instance of ChooseParentFactory which knows how to instantiate
-    ChooseParentForm.
+    This is because FormWizard.get_form(step) returns an instance of the 
+    step-th form by calling FormWizard.form_list[step]() as if it always was 
+    a form class.  In order to be able to dynamically pre-configure the 
+    ChooseParentForm form based on project and locale choices made in the 
+    previous steps, the 3rd form of the wizard is not a class, but instead is 
+    an instance of ChooseParentFactory which knows how to instantiate 
+    ChooseParentForm when called.
 
     """
     def __init__(self, projects=None, locales=None):
@@ -169,22 +220,82 @@ class ChooseParentFactory(object):
         return ChooseParentForm(self.projects, self.locales, *args, **kwargs)
 
 class CreateNewWizard(FormWizard):
+
+    def __init__(self, formlist, **config):
+        super(CreateNewWizard, self).__init__(formlist)
+        # set up the first step according to the config
+        self.form_list[0] = ChooseProjectFactory(config.get('projects', None))
+        # save the rest of the config
+        self.locale_filter = config.get('locale_filter', None)
+        self.get_template = config.get('get_template', self.get_template)
+        self.task_view = config.get('task_view', None)
+        self.tracker_view = config.get('tracker_view', None)
+        self.thankyou_view = config.get('thankyou_view', 'todo.views.created')
+
     def get_template(self, step):
+        """Return the name of the template to use for the given step.
+
+        Given a zero-based index of the step, return a string with the name 
+        of the template to use for this step.
+
+        Note that this method can be overwritten by specifying a custom 
+        `get_template` function in the config, when initializing the wizard.
+
+        Arguments:
+            step - a zero-based index of the step (integer)
+
+        Returns:
+            a string - the name of the template to use for the step
+
+        """
         return 'todo/new_%d.html' % step
 
     def process_step(self, request, form, step):
+        """Process the previous or the current step.
+
+        Every time the FormWizard's URL is hit, this method is run first for 
+        all previous steps (for i in range(current_step), and then for the 
+        current step as well.  This allows to process all earlier input and 
+        transfer the user's choices from one step to another.  It's also 
+        possible to dynamically modify the FormWizard's state here, depending 
+        on the choices made in previous steps.
+
+        Arguments:
+            request -- the current request object,
+            form -- the form object to process,
+            step -- a zero-based index of the form to process in the wizard's 
+                    form_list.
+
+        """
         clean = {}
         if form.is_valid():
             clean = form.cleaned_data
+
         if clean and step == 0:
-            projects = clean['projects']
-            locales = clean['locales']
-            self.form_list[1] = ChooseParentFactory(projects, locales)
+            self.projects = clean['projects']
+            # see what locales are available for those projects and set up the 
+            # next step accordingly
+            locales = Locale.objects.order_by('code')
+            if callable(self.locale_filter):
+                # if the todo-enabled app doesn't define its own filter 
+                # function, don't bother running a default
+                for p in self.projects:
+                    # the QuerySets are AND-ed
+                    locales = locales & self.locale_filter(p)
+            self.form_list[1] = ChooseLocaleFactory(locales)
+        if clean and step == 1:
+            self.locales = clean['locales']
+            # with projects and locales already chosen before, see which 
+            # trackers could be potential parents for the whole batch
+            self.form_list[2] = ChooseParentFactory(self.projects,
+                                                    self.locales)
             self.extra_context.update({
-                'locale_code': (locales[0].code if len(locales) == 1
+                'locale_code': (self.locales[0].code if len(self.locales) == 1
                                 else 'ab-CD'),
             })
-        if clean and step == 1:
+        if clean and step == 2:
+            # the data gathering is almost complete.  let the user see how the 
+            # final outcome will look like based on the previous choices.
             parent_tracker = clean['parent_tracker']
             parent_alias = clean['parent_alias']
             self.extra_context.update({
@@ -193,6 +304,35 @@ class CreateNewWizard(FormWizard):
                 'parent_locale': (parent_tracker.locale if parent_tracker 
                                   else None),
             })
+
+    def get_redirect_url(self, spawned_items, type_is_tracker, parent):
+        """Return the URL to redirect to after a successful POST.
+
+        Given the list of spawned items, their type and the parent, look at the 
+        configuration settings of the wizard and figure out the best URL to 
+        redirect to after a successful POST.
+
+        Arguments:
+            spawned_items -- a list of todo items spawned from a prototype,
+            type_is_tracker -- a boolean; True if the prototype used was 
+                               a ProtoTracker, False if it was a ProtoTask,
+            parent -- a tracker that is the parent of the items in 
+                      spawned_items.
+
+        Returns:
+            a string -- the URL to redirect to (to be used in 
+                        a HttpResponseRedirect)
+
+        """
+        if parent and self.tracker_view:
+            # if the parent tracker exists, always redirect to it
+            return reverse(self.tracker_view, args=[parent.pk])
+        view = self.tracker_view if type_is_tracker else self.task_view
+        if view and len(spawned_items) == 1:
+            # we have one item that we can redirect to
+            return reverse(view, args=[spawned_items[0].pk])
+        # fall back to the generic 'thank you' page
+        return reverse(self.thankyou_view)
     
     @permission_required('todo.create_tracker')
     @permission_required('todo.create_task')
@@ -219,9 +359,16 @@ class CreateNewWizard(FormWizard):
         tracker_proto = clean.pop('tracker_proto')
         task_proto = clean.pop('task_proto')
         prototype = tracker_proto or task_proto
+        # finally, make sure the projects passed to the prototype are instances 
+        # of `todo.models.Project`
+        clean['projects'] = [getattr(p, 'todo', None) or p 
+                             for p in clean['projects']]
         if prototype.clone_per_locale:
             # spawn_per_locale is a generator
-            list(prototype.spawn_per_locale(request.user, **clean))
+            spawned = list(prototype.spawn_per_locale(request.user, **clean))
         else:
-            prototype.spawn(request.user, **clean)
-        return HttpResponseRedirect(reverse('todo.views.created'))
+            spawned = [prototype.spawn(request.user, **clean)]
+        redirect_url = self.get_redirect_url(spawned,
+                                             prototype == tracker_proto,
+                                             parent)
+        return HttpResponseRedirect(redirect_url)

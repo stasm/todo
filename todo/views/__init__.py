@@ -37,13 +37,18 @@
 
 from django.shortcuts import render_to_response
 
-from todo.forms.new import (CreateNewWizard, ChooseProjectLocaleForm,
-                            ChoosePrototypeForm, ChooseParentFactory)
+from todo.forms.new import (CreateNewWizard, ChooseProjectFactory,
+                            ChooseLocaleFactory, ChooseParentFactory,
+                            ChoosePrototypeForm)
 
-def new(request):
-    wizard = CreateNewWizard([ChooseProjectLocaleForm,
-                            ChooseParentFactory(),
-                            ChoosePrototypeForm])
+def new(request, **wizard_config):
+    # instantiate the factories, which, when called, will create actual forms 
+    # dynamically based on the user's input in previous steps
+    wizard = CreateNewWizard([ChooseProjectFactory(),
+                              ChooseLocaleFactory(),
+                              ChooseParentFactory(),
+                              ChoosePrototypeForm],
+                             **wizard_config)
     return wizard(request)
 
 def created(request):

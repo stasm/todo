@@ -62,7 +62,7 @@ $.fn.slugify = function(obj) {
   <p>Step {{ step }} of {{ step_count }}</p>
   {% block intro %}{% endblock %}
 
-  <form action="." method="post">
+  <form action="" method="post">
     {{ form.non_field_errors }}
     {% block fields %}{% endblock %}
     <input type="hidden" name="{{ step_field }}" value="{{ step0 }}" />
