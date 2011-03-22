@@ -53,6 +53,8 @@ api_patterns = patterns('todo.views.api',
      'todo-api-update-tracker'),
 )
 
+# the generic create-new wizard views;  apps implementing todo should provide 
+# their own views instead of using these.
 new_patterns = patterns('',
     (r'^$', 'todo.views.new'),
     (r'^created$', 'todo.views.created'),
@@ -65,6 +67,7 @@ demo_patterns = patterns('todo.views.demo',
     (r'^showcase$', 'showcase'),
     (r'^tracker/(?P<tracker_id>\d+)$', 'tracker'),
     (r'^trackers$', 'trackers'),
+    (r'^new-todo$', 'new_todo'), 
 )
 
 urlpatterns = patterns('',

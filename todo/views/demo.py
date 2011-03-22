@@ -39,6 +39,7 @@ from django.shortcuts import get_object_or_404, render_to_response
 from django.utils.safestring import mark_safe
 
 from todo.views import snippets
+from todo.views import new as create_new_wizard
 
 def task(request, task_id):
     from todo.models import Task
@@ -88,3 +89,35 @@ def trackers(request):
                          tracker_view='todo.views.demo.tracker')
     return render_to_response('todo/demo_tree.html',
                               {'tree': tree,})
+
+def new_todo(request):
+    from todo.models import Project
+    from life.models import Locale
+    def locale_filter(project):
+        """Get a QuerySet of Locales related to the project.
+
+        This function will be run after the user selects a project to 
+        create new todos for in the create-new interface.  It allows you to 
+        narrow the list of available locales to those that actually make 
+        sense for the project chosen by the user.  The returned locales 
+        will be displayed in a select box in the form wizard.
+
+        """
+        # a silly example: display only Locales whose code starts with the 
+        # second letter of the project label
+        return Locale.objects.filter(code__istartswith=project.label[1])
+
+    # a silly example: display only projects whose label starts with 'f'
+    projects = Project.objects.filter(label__istartswith='f')
+
+    config = {
+        'projects': projects,
+        'locale_filter': locale_filter,
+        # same as the default
+        'get_template': lambda step: 'todo/new_%d.html' % step,
+        'task_view': 'todo.views.demo.task',
+        'tracker_view': 'todo.views.demo.tracker',
+        # same as the default
+        'thankyou_view': 'todo.views.created',
+    }
+    return create_new_wizard(request, **config)
