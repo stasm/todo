@@ -221,10 +221,15 @@ class ChooseParentFactory(object):
 
 class CreateNewWizard(FormWizard):
 
-    def __init__(self, formlist, **config):
+    def __init__(self, **config):
+        formlist = [
+            # set up the first step according to the config
+            ChooseProjectFactory(config.get('projects', None)),
+            ChooseLocaleFactory(),
+            ChooseParentFactory(),
+            ChoosePrototypeForm,
+        ]
         super(CreateNewWizard, self).__init__(formlist)
-        # set up the first step according to the config
-        self.form_list[0] = ChooseProjectFactory(config.get('projects', None))
         # save the rest of the config
         self.locale_filter = config.get('locale_filter', None)
         self.get_template = config.get('get_template', self.get_template)

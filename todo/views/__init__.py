@@ -37,18 +37,14 @@
 
 from django.shortcuts import render_to_response
 
-from todo.forms.new import (CreateNewWizard, ChooseProjectFactory,
-                            ChooseLocaleFactory, ChooseParentFactory,
-                            ChoosePrototypeForm)
+from todo.forms.new import CreateNewWizard
 
 def new(request, **wizard_config):
-    # instantiate the factories, which, when called, will create actual forms 
-    # dynamically based on the user's input in previous steps
-    wizard = CreateNewWizard([ChooseProjectFactory(),
-                              ChooseLocaleFactory(),
-                              ChooseParentFactory(),
-                              ChoosePrototypeForm],
-                             **wizard_config)
+    # The wizard's forms are set up in `CreateNewWizard.__init__`.  If you 
+    # need to use different list of forms, simply subclass CreateNewWizard 
+    # and instantiate it directly in your app's `new` view (thus skipping 
+    # this view, which is but a simple wrapper).
+    wizard = CreateNewWizard(**wizard_config)
     return wizard(request)
 
 def created(request):
