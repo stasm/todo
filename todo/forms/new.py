@@ -69,8 +69,8 @@ class ChooseProjectFactory(object):
     the explanation of why this is needed.
 
     """
-    def __init__(self, projects=None):
-        self.projects = projects or Project.objects.order_by('label')
+    def __init__(self, projects):
+        self.projects = projects
 
     def __call__(self, *args, **kwargs):
         return ChooseProjectForm(self.projects, *args, **kwargs)
@@ -95,8 +95,8 @@ class ChooseLocaleFactory(object):
     the explanation of why this is needed.
 
     """
-    def __init__(self, locales=None):
-        self.locales = locales or Locale.objects.order_by('code')
+    def __init__(self, locales):
+        self.locales = locales
 
     def __call__(self, *args, **kwargs):
         return ChooseLocaleForm(self.locales, *args, **kwargs)
@@ -221,11 +221,15 @@ class ChooseParentFactory(object):
 
 class CreateNewWizard(FormWizard):
 
+    default_projects = Project.objects.order_by('label')
+    default_locales = Locale.objects.order_by('code')
+
     def __init__(self, **config):
         formlist = [
             # set up the first step according to the config
-            ChooseProjectFactory(config.get('projects', None)),
-            ChooseLocaleFactory(),
+            ChooseProjectFactory(config.get('projects',
+                                            self.default_projects)),
+            ChooseLocaleFactory(self.default_locales),
             ChooseParentFactory(),
             ChoosePrototypeForm,
         ]
@@ -280,10 +284,10 @@ class CreateNewWizard(FormWizard):
             self.projects = clean['projects']
             # see what locales are available for those projects and set up the 
             # next step accordingly
-            locales = Locale.objects.order_by('code')
+            locales = self.default_locales
+            # if the todo-enabled app doesn't define its own filter function, 
+            # don't bother running the default (which does nothing)
             if callable(self.locale_filter):
-                # if the todo-enabled app doesn't define its own filter 
-                # function, don't bother running a default
                 for p in self.projects:
                     # the QuerySets are AND-ed
                     locales = locales & self.locale_filter(p)
@@ -332,10 +336,12 @@ class CreateNewWizard(FormWizard):
         if parent and self.tracker_view:
             # if the parent tracker exists, always redirect to it
             return reverse(self.tracker_view, args=[parent.pk])
+
         view = self.tracker_view if type_is_tracker else self.task_view
         if view and len(spawned_items) == 1:
-            # we have one item that we can redirect to
+            # we have one item that we can redirect to and a view to use
             return reverse(view, args=[spawned_items[0].pk])
+
         # fall back to the generic 'thank you' page
         return reverse(self.thankyou_view)
     
