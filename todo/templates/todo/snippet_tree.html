@@ -141,10 +141,7 @@ Filter.prototype = {
              .parentsUntil('#tracker-tree').addClass('selected');
     });    
 
-    // TODO: empty() in jquery?
-    // TODO: XOR
-
-    if ( ! $('.selected') ) {
+    if ( $('.selected').length == 0 ) {
       $('#tracker-tree').hide();
       $('#empty-filter-msg').show();
     } else {
@@ -275,7 +272,7 @@ QuickEditor.prototype = {
 </script>
 
 <div id="empty-filter-msg" class="column left wide">
-  <em>Nothing to show!</em>
+  <em>No matches.  Please change the filtering criteria.</em>
 </div>
 
 <div id="tracker-tree" class="column left wide">
