@@ -134,13 +134,15 @@ class Task(Todo):
             _repr = '[%s] %s' % (locale.code, _repr)
         return _repr
 
-    def save(self, *args, **kwargs):
-        if not self.id:
+    def save(self, force=False, *args, **kwargs):
+        if not self.id or force:
             # the task doesn't exist in the DB yet
-            if not self.prototype_repr and self.prototype:
+            if self.prototype and (not self.prototype_repr or force):
                 self.prototype_repr = self.prototype.summary
-            if not self.locale_repr and self.locale:
+            if self.locale and (not self.locale_repr or force):
                 self.locale_repr = unicode(self.locale)
+            if not self._repr or force:
+                self.repr = self.format_repr()
         super(Task, self).save(*args, **kwargs)
 
     def assign_to_projects(self, projects, status=NEW):

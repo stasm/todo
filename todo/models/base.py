@@ -165,6 +165,12 @@ class Todo(TodoInterface, models.Model):
         """
         for prop, new_value in properties.iteritems():
             setattr(self, prop, new_value)
-        self.save()
+        # if any of these properties change, we need to force the update of all 
+        # cached representation strings stored on the todo object
+        force_needed = ('summary', 'locale', 'prototype')
+        if any(prop in force_needed for prop in properties.keys()):
+            self.save(force=True)
+        else:
+            self.save()
         if send_signal:
             todo_updated.send(sender=self, user=user, flag=flag)

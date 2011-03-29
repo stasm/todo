@@ -268,14 +268,14 @@ QuickEditor.prototype = {
     <div class="tracker"> 
       <div class="todo_obj summary">
         <span class="noneditable">
-          <span class="replace-summary">{{tracker}}</span>
+          <span class="replace-_repr">{{tracker}}</span>
           {% if perms.todo.change_tracker %}
             <small class="quickedit">✎</small>
           {% endif %}
         </span>
         <span class="editable">
           <form action="{% url todo-api-update-tracker tracker.id %}" method="post">
-            <input type="text" name="summary" data-default="{{tracker}}"/>
+            <input type="text" name="summary" data-default="{{tracker.summary}}"/>
             <input type="text" name="bug" data-default="{{tracker.bug|default_if_none:''}}"/>
             <input type="submit" value="OK"/> <span class="cancel">Cancel</span>
           </form>
@@ -297,14 +297,14 @@ QuickEditor.prototype = {
         {% if not task.is_resolved_all %}
           <span class="summary">
             <span class="noneditable">
-              <a href="{% urlvar task_view task.pk %}" class="replace-summary">{{task}}</a>
+              <a href="{% urlvar task_view task.pk %}" class="replace-_repr">{{task}}</a>
               {% if perms.todo.change_task %}
                 <span class="quickedit">✎</span>
               {% endif %}
             </span>
             <span class="editable">
               <form action="{% url todo-api-update-task task.id %}" method="post">
-                <input type="text" name="summary" data-default="{{task}}"/>
+                <input type="text" name="summary" data-default="{{task.summary}}"/>
                 <input type="text" name="bug" data-default="{{task.bug|default_if_none:''}}"/>
                 <input type="submit" value="OK"/> <span class="cancel">Cancel</span>
               </form>

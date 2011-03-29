@@ -117,6 +117,12 @@ class Tracker(Todo):
             _repr = '[%s] %s' % (locale.code, _repr)
         return _repr
 
+    def save(self, force=False, *args, **kwargs):
+        if (not self.id and not self._repr) or force:
+            # the tracker doesn't exist in the DB yet
+            self.repr = self.format_repr()
+        super(Tracker, self).save(*args, **kwargs)
+
     def assign_to_projects(self, projects, status=NEW):
         for project in projects:
             TrackerInProject.objects.create(tracker=self, project=project,
