@@ -109,12 +109,17 @@ Filter.prototype = {
   exec: function exec() {
     var self = this;
 
+    // Start by resetting all todo objects (trackers and tasks) 
+    // to non-selected status.  This is because the user can refine 
+    // the filtering after a first pass, in which case the selected 
+    // for trackers might not be accurate.
+    $('.selected').removeClass('selected');
+
     // If no facets have any selected checkboxes,
     // the tracker tree is displayed in its entirety.
     // No tasks are filtered out.
     if ($.isEmptyObject(self.criteria)) {
       $('#tracker-tree').removeClass('filter-is-on');
-      self.tasks.removeClass('selected');
       return;
     }
 
@@ -128,13 +133,21 @@ Filter.prototype = {
         if (! passed) {
           // Facets are ANDed together. If at least one criterion
           // doesn't pass, the task should not be selected.
-          $(this).removeClass('selected');
-          return true; // continue to the next task
+          return true; // continue to the next task in the `each` loop
         }
       }
       // If we're here, that means that all criteria checks have passed.
-      $(this).addClass('selected');
+      $(this).addClass('selected')
+             .parentsUntil('#tracker-tree').addClass('selected');
     });    
+
+    if ( $('.selected').length == 0 ) {
+      $('#tracker-tree').hide();
+      $('#empty-filter-msg').show();
+    } else {
+      $('#tracker-tree').show();
+      $('#empty-filter-msg').hide();
+    }
   },
 
   check_criterion: function check_criterion(prop, task_div) {
@@ -143,11 +156,8 @@ Filter.prototype = {
       var passed = this.criteria[prop].some(function(value, i, values){
         return task_props.indexOf(value) != -1;
       })
-      if (passed)
-        return true;
-      return false;
+      return passed;
   }
-
 }
 
 function QuickEditor(todo) {
@@ -260,6 +270,10 @@ QuickEditor.prototype = {
 }
 
 </script>
+
+<div id="empty-filter-msg" class="column left wide">
+  <em>No matches.  Please change the filtering criteria.</em>
+</div>
 
 <div id="tracker-tree" class="column left wide">
 {% recurse_children %}
